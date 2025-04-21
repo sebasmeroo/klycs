@@ -1,0 +1,28 @@
+/* Estilo para el botón flotante de vista previa */
+.floating-view-button {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #4a80ff;
+  color: white;
+  padding: 0.75rem 1.25rem;
+  border-radius: 9999px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  text-decoration: none;
+  font-weight: 600;
+  z-index: 100;
+  transition: all 0.2s ease;
+}
+
+.floating-view-button:hover {
+  background-color: #2563eb;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+}
+
+.floating-view-button svg {
+  margin-right: 0.5rem;
+} 

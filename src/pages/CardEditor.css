@@ -1,0 +1,210 @@
+/* CardEditor.css - Estilos modernos y responsivos para el editor de tarjetas */
+
+.card-editor-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  font-family: 'Inter', system-ui, sans-serif;
+  background: #f8fafc;
+}
+
+.card-editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2.5rem;
+}
+
+.card-editor-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #22223b;
+  margin: 0;
+}
+
+.header-buttons {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.history-button, .settings-button {
+  background: none;
+  border: none;
+  color: #4b5563;
+  font-size: 1.1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.history-button:hover, .settings-button:hover {
+  color: #6366f1;
+}
+
+.card-editor-content {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 3rem;
+}
+
+.card-editor-form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.card-editor-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+  padding: 2rem 2rem 1.5rem 2rem;
+}
+
+.form-section {
+  margin-bottom: 1.5rem;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #22223b;
+  margin-bottom: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.form-label {
+  font-weight: 500;
+  font-size: 1rem;
+  color: #4b5563;
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  font-size: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+  color: #22223b;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.form-control:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px #6366f133;
+  outline: none;
+}
+
+.card-preview-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 0.5rem;
+}
+
+.card-preview {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.09);
+  width: 100%;
+  max-width: 420px;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+  border: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+}
+
+.card-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 18px;
+}
+
+.card-editor-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2rem;
+  gap: 1.5rem;
+}
+
+.aspect-ratio-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.aspect-ratio-label {
+  font-weight: 500;
+  color: #4b5563;
+}
+.aspect-ratio-value {
+  font-weight: 600;
+  color: #22223b;
+  background: #f1f5f9;
+  padding: 0.25rem 0.8rem;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.generate-button {
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.85rem 2.2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+  box-shadow: 0 2px 8px rgba(99,102,241,0.08);
+}
+.generate-button:hover {
+  background: #4f46e5;
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 4px 16px rgba(99,102,241,0.13);
+}
+
+@media (max-width: 1024px) {
+  .card-editor-content {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  .card-preview-container {
+    margin-top: 2rem;
+    order: -1;
+  }
+}
+
+@media (max-width: 600px) {
+  .card-editor-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  .card-editor-form {
+    padding: 1.2rem 0.7rem 1rem 0.7rem;
+  }
+  .card-preview {
+    max-width: 100%;
+    min-height: 180px;
+  }
+  .card-editor-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  .generate-button {
+    width: 100%;
+  }
+} 

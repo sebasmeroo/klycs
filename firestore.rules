@@ -1,0 +1,72 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Permitir a cualquiera leer documentos de usuarios (para la visualización pública de perfiles)
+    // Pero solo el propietario puede crear o actualizar sus datos
+    match /users/{userId} {
+      allow read: if true; // Permitir lectura pública
+      allow create, update, delete: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Permitir a cualquiera leer perfiles públicos a través de username
+    match /usernames/{username} {
+      allow read: if true;
+      allow create, update: if request.auth != null && 
+                            request.resource.data.uid == request.auth.uid;
+    }
+    
+    // Reglas para tarjetas
+    match /cards/{cardId} {
+      // Permitir lectura pública para visualización
+      allow read: if true;
+      
+      // Solo el propietario de la tarjeta puede crear, actualizar o eliminar
+      allow create: if request.auth != null;
+      
+      // Arreglamos la regla para permitir actualizaciones incluso si el documento no existe en la colección cards
+      // o si el usuario es dueño de la tarjeta en sus datos personales
+      allow update, delete: if request.auth != null && 
+                           (
+                            // Si no existe el documento, permitir la actualización (esto cubre el caso de actualización inicial)
+                            resource == null || 
+                            // Si existe, verificar si el usuario es el dueño
+                            resource.data.userId == request.auth.uid ||
+                            // O está en la lista de propietarios
+                            (resource.data.owners != null && request.auth.uid in resource.data.owners) || 
+                            // O verificar si la tarjeta está en el array de tarjetas del usuario
+                            exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+                            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.cards != null &&
+                            cardId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.cards
+                           );
+    }
+    
+    // Permitir lectura de datos de ventas solo al vendedor y comprador
+    match /sales/{saleId} {
+      allow read: if request.auth != null && 
+                  (request.auth.uid == resource.data.sellerId || 
+                   request.auth.uid == resource.data.buyerId);
+    }
+    
+    // Reglas para descargas
+    match /downloads/{downloadId} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.buyerId;
+    }
+    
+    // Reglas para vistas de perfil, clics de enlaces y vistas de productos (analíticas)
+    match /profileViews/{viewId} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.profileId;
+      allow create: if true;
+    }
+    
+    match /linkClicks/{clickId} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.profileId;
+      allow create: if true;
+    }
+    
+    match /productViews/{viewId} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.profileId;
+      allow create: if true;
+    }
+  }
+}

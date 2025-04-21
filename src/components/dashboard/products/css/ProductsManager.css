@@ -1,0 +1,797 @@
+/* Estilos para el componente ProductsManager */
+.products-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  /* Fondo degradado sutil para modernizar */
+  background: linear-gradient(135deg, #141414, #272727);
+  border-radius: 10px;
+  border: 2px solid #6366f1;
+}
+
+.products-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 3px solid #6366f1;
+  padding-bottom: 10px;
+}
+
+.products-header h2 {
+  color: #ffffff;
+}
+
+/* Estilos para el botón de añadir producto */
+.add-product-button-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.add-product-toggle-btn {
+  background-color: #6366f1;
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.add-product-toggle-btn:hover {
+  background-color: #4f46e5;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.products-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+  padding: 24px;
+}
+
+@media (max-width: 768px) {
+  .products-list {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+}
+
+.product-card {
+  position: relative; /* Para posicionar el botón de edición */
+  /* Layout vertical sin hover */
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #333;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #161616;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  transform: none !important;
+  transition: none !important;
+}
+
+.products-list .product-image {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+}
+
+/* Mostrar siempre la información del producto */
+.product-info {
+  display: flex !important;
+  opacity: 1 !important;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  background-color: #161616;
+}
+
+/* Anular efecto hover que mostraba info */
+.product-card:hover .product-info {
+  display: flex !important;
+  opacity: 1 !important;
+}
+
+/* Título y precio grandes dentro del hover */
+.product-info .product-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #ff9f02;
+  margin: 0;
+}
+.product-info .product-price {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #e0e0e0;
+  margin: 0;
+}
+
+/* Descripción y acciones */
+.product-info .product-description {
+  font-size: 0.875rem;
+  color: #a0a0a0;
+  margin: 0;
+}
+.product-info .product-url {
+  font-size: 0.875rem;
+  color: #3b82f6;
+  margin: 0;
+}
+.product-info .product-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.product-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #e0e0e0;
+  margin: 0;
+}
+
+.product-description {
+  font-size: 0.875rem;
+  color: #a0a0a0;
+  margin: 0;
+}
+
+.product-price {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #ff9f02;
+  margin: 0;
+}
+
+.product-url {
+  font-size: 0.875rem;
+  color: #3b82f6;
+  margin: 0;
+}
+
+.product-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+/* Botones circulares sólidos sin animaciones innecesarias */
+.product-btn {
+  background-color: #ffffff;
+  border: none;
+  color: #333333;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.product-btn.delete {
+  background-color: #ef4444;
+  color: #ffffff;
+}
+
+.product-btn.share {
+  background-color: #10b981;
+  color: #ffffff;
+}
+
+.product-btn:hover {
+  filter: brightness(90%);
+}
+
+.product-button-group {
+  display: none; /* Ocultar acciones para estilo feed */
+}
+
+.product-button-group .product-delete-btn {
+  display: inline-flex;
+  background: none;
+  color: #e53e3e;
+  padding: 4px;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.product-button-group .product-add-btn,
+.product-button-group .product-edit-btn,
+.product-button-group .product-share-btn {
+  /* Ocultar botones de otras acciones */
+  display: none;
+}
+
+.product-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background-color: #2a2a2a;
+  /* Sin animación */
+}
+
+.product-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.product-input {
+  padding: 10px;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background-color: #1f1f1f;
+  color: #fff;
+}
+
+.product-textarea {
+  padding: 10px;
+  border: 1px solid #444;
+  border-radius: 4px;
+  min-height: 100px;
+  resize: vertical;
+  background-color: #1f1f1f;
+  color: #fff;
+}
+
+.product-share-btn {
+  background-color: #6366f1;
+  color: white;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.product-share-btn:hover {
+  background-color: #4f46e5;
+}
+
+.product-auto-share {
+  margin-top: 15px;
+  padding: 10px;
+  background-color: #fff4e6;
+  border-radius: 4px;
+  border-left: 3px solid #ff8c00;
+} 
+
+/* Estilos adicionales para la versión antigua */
+.products-editor-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.product-editor-item {
+  border: 1px solid #ffa94d;
+  border-radius: 8px;
+  padding: 15px;
+  background-color: white;
+  box-shadow: 0 2px 5px rgba(255, 140, 0, 0.2);
+}
+
+.product-editor-item.inactive {
+  opacity: 0.5;
+}
+
+.product-editor-details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.product-editor-image img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid #ffd8a8;
+}
+
+.product-editor-info {
+  margin-top: 10px;
+}
+
+.product-editor-name {
+  font-weight: bold;
+  font-size: 18px;
+  color: #e67700;
+}
+
+.product-editor-price {
+  color: #ff6b00;
+  font-weight: bold;
+}
+
+.product-editor-description {
+  color: #666;
+  font-size: 14px;
+}
+
+.product-editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 5px;
+}
+
+.btn-icon.delete {
+  color: #f44336;
+}
+
+.preview-section {
+  margin-top: 20px;
+  border: 1px solid #ffa94d;
+  background-color: #fff8f0;
+}
+
+.preview-container {
+  padding: 15px;
+}
+
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 15px;
+}
+
+.product-preview-item {
+  border: 1px solid #ffd8a8;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.2s;
+  background-color: white;
+}
+
+.product-preview-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(255, 140, 0, 0.2);
+}
+
+.product-preview-image img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+
+.product-preview-info {
+  padding: 15px;
+}
+
+.product-preview-name {
+  margin: 0 0 8px;
+  font-size: 16px;
+  color: #e67700;
+}
+
+.product-preview-price {
+  color: #ff6b00;
+  font-weight: bold;
+  margin: 0 0 10px;
+}
+
+.product-preview-description {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+}
+
+/* Estilos adicionales para la alerta */
+.alert.alert-error {
+  background-color: #ffe8e6;
+  border: 1px solid #f44336;
+  color: #d32f2f;
+}
+
+.alert.alert-success {
+  background-color: #ffe8d9;
+  border: 1px solid #ff8c00;
+  color: #e67700;
+}
+
+/* Minimal summary reubicado y flex */
+.product-summary {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: none !important;
+  padding: 4px 8px !important;
+  /* pointer-events: none removed to allow clicks */
+  z-index: 10 !important;
+}
+
+/* Asegurar que los botones respondan al click */
+.product-summary-actions,
+.product-badge {
+  pointer-events: auto;
+}
+
+.product-summary-info {
+  pointer-events: auto;
+}
+
+.product-badge {
+  background: #ff4757;
+  color: #fff;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+.product-summary-actions {
+  gap: 4px;
+}
+
+.product-action-btn.edit {
+  color: #fff !important;
+  font-size: 18px;
+  background: none;
+  border: none;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  opacity: 1 !important;
+}
+
+.product-action-btn.delete {
+  color: #e53e3e;
+}
+
+.product-action-btn.delete:hover {
+  color: #c53030;
+}
+
+.product-action-btn.share {
+  color: #3b82f6;
+}
+
+.product-action-btn.share:hover {
+  color: #1e40af;
+}
+
+.product-fav-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: #fff;
+}
+
+.product-price-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.product-original-price {
+  font-size: 12px;
+  color: #aaa;
+  text-decoration: line-through;
+}
+
+/* Estilo para overlay de precio en esquina inferior derecha */
+.product-price-overlay {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 4px 8px;
+  border-radius: 4px;
+  z-index: 3;
+}
+
+.product-price-overlay .product-price {
+  font-size: 16px;
+  color: #2ed573;
+  font-weight: bold;
+}
+
+.product-price-overlay .product-original-price-inline {
+  font-size: 12px;
+  color: #ccc;
+  text-decoration: line-through;
+}
+
+/* Estilos para botones de acción minimalistas */
+.product-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.product-action-btn {
+  transition: none !important;
+}
+
+/* ---- Reset para diseño estático ---- */
+.product-details,
+.product-summary,
+.product-price-overlay {
+  display: none !important;
+}
+
+/* Botón de lápiz en esquina superior derecha */
+.product-img-edit-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  cursor: pointer;
+  padding: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.product-img-edit-btn .edit-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.product-img-edit-btn .edit-label {
+  display: none;
+  margin-left: 6px;
+  color: #ffffff;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.product-img-edit-btn:hover .edit-label {
+  display: inline-block;
+}
+
+/* Asegurar no hay animaciones en hover del producto */
+.product-card:hover, .product-img-edit-btn:hover {
+  transition: none !important;
+  transform: none !important;
+}
+
+/* Ocultar panel de edición in-situ si existiera */
+.edit-panel {
+  display: none !important;
+}
+
+/* Animaciones de entrada y salida para modal */
+@keyframes slideModalIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes slideModalOut {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(100%); opacity: 0; }
+}
+
+/* Overlay del modal lateral */
+.edit-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  padding: 0 10px;
+}
+
+/* Contenedor del modal lateral */
+.edit-modal {
+  background: #2a2a2a;
+  width: 60%;
+  max-width: 600px;
+  min-width: 320px;
+  height: 100vh;
+  padding: 20px;
+  position: relative;
+  overflow-y: auto;
+  box-shadow: -4px 0 8px rgba(0,0,0,0.3);
+}
+
+/* Animación de apertura */
+.edit-modal.opening {
+  animation: slideModalIn 0.3s ease-out forwards;
+}
+
+/* Animación de cierre */
+.edit-modal.closing {
+  animation: slideModalOut 0.3s ease-in forwards;
+}
+
+@media (max-width: 768px) {
+  .edit-modal {
+    width: 100%;
+  }
+}
+
+/* Dar estilo al contenido interno del modal */
+.edit-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 40px;
+}
+
+/* Preview de la imagen en modal */
+.edit-modal-form .product-image {
+  max-width: 150px !important;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 auto 10px;
+  border: 1px solid #444;
+  border-radius: 4px;
+}
+
+/* Estilos personalizados para el input file en modal */
+.edit-modal-form input[type="file"] {
+  background: #1f1f1f;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 8px;
+  color: #ffffff;
+  cursor: pointer;
+}
+.edit-modal-form input[type="file"]::-webkit-file-upload-button,
+.edit-modal-form input[type="file"]::file-selector-button {
+  background: #6366f1;
+  border: none;
+  color: #ffffff;
+  padding: 6px 12px;
+  margin-right: 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.edit-modal-form input[type="file"]::file-selector-button:hover {
+  background: #4f46e5;
+}
+
+/* Campos responsivos */
+.edit-modal-form input,
+.edit-modal-form textarea {
+  width: 100%;
+}
+
+/* Botón cerrar */
+.modal-close-btn {
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-size: 1.5rem;
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  cursor: pointer;
+}
+
+/* Estilos para grupo de imagen y selector */
+.image-upload-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.upload-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.modal-preview {
+  max-width: 120px;
+  border: 1px solid #444;
+  border-radius: 4px;
+}
+.modal-file-input {
+  flex-grow: 1;
+  background: #1f1f1f;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 8px;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+/* Preview del producto al lado izquierdo del modal */
+.edit-modal-preview {
+  margin: 10px;
+  max-width: 350px;
+  width: 350px;
+  padding: 10px;
+}
+
+/* Ajuste de la card de preview */
+.edit-modal-preview .product-card {
+  margin: 0;
+  box-shadow: none;
+  background: none;
+  border: none;
+}
+
+.edit-modal-preview .product-image {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+/* Botones dentro del modal */
+.modal-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+.modal-buttons .product-add-btn,
+.modal-buttons .btn-secondary {
+  flex: 1;
+}
+
+/* Botón Guardar Cambios visible */
+.modal-buttons .product-add-btn {
+  background-color: #6366f1;
+  color: #ffffff;
+  border: none;
+  padding: 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  display: inline-block;
+}
+.modal-buttons .product-add-btn:hover {
+  background-color: #4f46e5;
+}
+
+/* Animar cierre también para preview */
+.edit-modal-preview.closing {
+  animation: slideModalOut 0.3s ease-in forwards;
+}
+
+/* Animar entrada para preview */
+.edit-modal-preview.opening {
+  animation: slideModalIn 0.3s ease-out forwards;
+}
+
+.modal-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 350px;
+  height: 350px;
+  background: #1a1a1a;
+  border: 2px dashed #444;
+  border-radius: 4px;
+}
+.placeholder-icon {
+  width: 40px;
+  height: 40px;
+  color: #888;
+}
+.placeholder-text {
+  margin-top: 8px;
+  color: #888;
+  font-size: 0.875rem;
+} 

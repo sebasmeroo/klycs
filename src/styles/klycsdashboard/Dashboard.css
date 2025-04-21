@@ -1,0 +1,382 @@
+/* Klycs Dashboard CSS - Dark Theme */
+
+/* Variables de colores */
+:root {
+  --klycs-primary: #ff9f02;
+  --klycs-primary-hover: #e69000;
+  --klycs-bg: #0c0c0c;
+  --klycs-sidebar-bg: #161616;
+  --klycs-text: #e0e0e0;
+  --klycs-text-light: #a0a0a0;
+  --klycs-border: #333333;
+  --klycs-hover-bg: #2a2a2a;
+  --klycs-active: #ff9f02;
+  --klycs-active-text: #ffffff;
+  --klycs-card-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --klycs-card-bg: #1e1e1e;
+  --klycs-icon-color: #a0a0a0;
+  --klycs-text-secondary: #a0a0a0;
+  --klycs-accent: #ff9f02;
+  --klycs-accent-hover: #e69000;
+  --klycs-success: #10b981;
+  --klycs-error: #ef4444;
+  --klycs-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Layout principal */
+.klycs-dashboard {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--klycs-bg);
+  color: var(--klycs-text);
+}
+
+/* Barra lateral */
+.klycs-sidebar {
+  width: 250px;
+  background-color: var(--klycs-sidebar-bg);
+  border-right: 1px solid var(--klycs-border);
+  position: fixed;
+  height: 100vh;
+  overflow-y: auto;
+  padding: 1.5rem 0;
+  box-shadow: 1px 0 3px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+}
+
+/* Logo */
+.klycs-logo {
+  padding: 0 1.5rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  color: var(--klycs-text);
+}
+
+.klycs-logo img {
+  height: 32px;
+  width: auto;
+}
+
+/* Pro button */
+.klycs-pro-button {
+  margin: 1rem 1.5rem;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(90deg, #ff9f02 0%, #ffb44d 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.klycs-pro-button:hover {
+  background: linear-gradient(90deg, #e69000 0%, #e6a041 100%);
+  transform: translateY(-1px);
+}
+
+.klycs-pro-button span {
+  margin-right: 0.5rem;
+}
+
+/* Menú de navegación */
+.klycs-nav {
+  margin-top: 1.5rem;
+}
+
+.klycs-nav-item {
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  color: var(--klycs-text);
+  font-weight: 500;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  border-radius: 0 8px 8px 0;
+  margin: 0.25rem 0.5rem 0.25rem 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.klycs-nav-item:hover {
+  background-color: var(--klycs-hover-bg);
+  transform: translateX(3px);
+}
+
+.klycs-nav-item:hover::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 100%;
+  background-color: #cffe00;
+  animation: slide-in 0.3s ease-out;
+}
+
+@keyframes slide-in {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.klycs-nav-item.active,
+.klycs-nav-item.settings-active {
+  color: #000000;
+  background-color: #cffe00;
+  border-left: 3px solid #cffe00;
+}
+
+.klycs-nav-item.active i,
+.klycs-nav-item.active svg,
+.klycs-nav-item.settings-active i,
+.klycs-nav-item.settings-active svg {
+  color: #000000;
+}
+
+.klycs-nav-item i, 
+.klycs-nav-item svg {
+  margin-right: 0.75rem;
+  width: 20px;
+  height: 20px;
+  color: var(--klycs-icon-color);
+  transition: color 0.3s ease;
+}
+
+.klycs-nav-item:hover i,
+.klycs-nav-item:hover svg {
+  color: #cffe00;
+}
+
+.klycs-nav-item .arrow {
+  margin-left: auto;
+  opacity: 0.5;
+  font-size: 0.8rem;
+  transition: transform 0.3s ease;
+}
+
+/* Separador */
+.klycs-separator {
+  height: 1px;
+  background-color: var(--klycs-border);
+  margin: 1rem 0;
+}
+
+/* Contenido principal */
+.klycs-main-content {
+  flex: 1;
+  margin-left: 250px;
+  padding: 2rem;
+  background-color: var(--klycs-bg);
+}
+
+/* Encabezado de usuario */
+.klycs-user-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  background-color: var(--klycs-card-bg);
+  padding: 1.5rem;
+  border-radius: 16px;
+  box-shadow: var(--klycs-card-shadow);
+  border: 1px solid var(--klycs-border);
+}
+
+.klycs-user-info {
+  display: flex;
+  align-items: center;
+}
+
+.klycs-user-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: #333333;
+  overflow: hidden;
+  margin-right: 1rem;
+  border: 1px solid var(--klycs-border);
+}
+
+.klycs-user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.klycs-user-welcome h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--klycs-text);
+}
+
+.klycs-user-welcome p {
+  font-size: 0.875rem;
+  color: var(--klycs-text-light);
+  margin: 0.25rem 0 0 0;
+}
+
+/* Tarjetas de métricas */
+.klycs-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.klycs-metric-card {
+  background-color: var(--klycs-card-bg);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: var(--klycs-card-shadow);
+  border: 1px solid var(--klycs-border);
+}
+
+.klycs-metric-title {
+  font-size: 0.875rem;
+  color: var(--klycs-text-light);
+  margin-bottom: 0.5rem;
+}
+
+.klycs-metric-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--klycs-text);
+  margin-bottom: 0.5rem;
+}
+
+.klycs-metric-period {
+  font-size: 0.75rem;
+  color: var(--klycs-text-light);
+}
+
+/* Perfil de usuario */
+.klycs-user-profile {
+  position: relative;
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  color: var(--klycs-text);
+  margin-top: 2rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 12px;
+  margin: 2rem 0.5rem 0 0.5rem;
+  border: 1px solid transparent;
+}
+
+.klycs-user-profile:hover {
+  background-color: var(--klycs-hover-bg);
+  border-color: var(--klycs-border);
+}
+
+.klycs-user-profile-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #333333;
+  overflow: hidden;
+  margin-right: 0.75rem;
+  border: 1px solid var(--klycs-border);
+}
+
+.klycs-user-profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.klycs-user-profile-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--klycs-text);
+}
+
+.klycs-user-profile .arrow {
+  margin-left: auto;
+  opacity: 0.5;
+  font-size: 0.8rem;
+}
+
+/* Estilo para las tarjetas de contenido */
+.card {
+  background-color: #0c0c0c;
+  border-radius: 16px;
+  box-shadow: var(--klycs-card-shadow);
+  border: 1px solid var(--klycs-border);
+  color: var(--klycs-text);
+}
+
+/* Estilo para formularios y controles */
+input, select, textarea {
+  background-color: #2a2a2a;
+  border: 1px solid var(--klycs-border);
+  color: var(--klycs-text);
+  border-radius: 8px;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--klycs-primary);
+  outline: none;
+}
+
+/* Elementos de cantidad */
+.quantity-control {
+  display: flex;
+  align-items: center;
+}
+
+.quantity-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--klycs-border);
+  background: transparent;
+  color: var(--klycs-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.quantity-value {
+  margin: 0 10px;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* Media queries */
+@media (max-width: 768px) {
+  .klycs-sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    width: 240px;
+  }
+  
+  .klycs-sidebar.open {
+    transform: translateX(0);
+  }
+  
+  .klycs-main-content {
+    margin-left: 0;
+    padding: 1rem;
+  }
+  
+  .klycs-metrics {
+    grid-template-columns: 1fr;
+  }
+  
+  .klycs-mobile-menu-button {
+    display: block;
+  }
+} 

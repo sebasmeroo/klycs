@@ -1,0 +1,413 @@
+.cards-container {
+  width: 100%;
+  background-color: #0c0c0c;
+}
+
+.cards-header {
+  margin-bottom: 1.5rem;
+}
+
+.cards-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+}
+
+.cards-description {
+  color: #64748b;
+  margin-bottom: 1.5rem;
+}
+
+/* Formulario de creación de tarjetas */
+.card-form {
+  /* formulario plano, fondo oscuro */
+  display: block;
+  background-color: #1a1a1a;
+  color: #fff;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 2rem;
+}
+
+.card-form-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 1.25rem;
+}
+
+.card-form-group {
+  margin-bottom: 1.25rem;
+}
+
+.card-form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #4b5563;
+}
+
+.card-form-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #444;
+  border-radius: 8px;
+  font-size: 1rem;
+  background-color: #222;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.card-form-input:focus {
+  outline: none;
+  border-color: #f97316;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.card-form-textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #444;
+  border-radius: 8px;
+  font-size: 1rem;
+  min-height: 100px;
+  resize: vertical;
+  background-color: #222;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.card-form-textarea:focus {
+  outline: none;
+  border-color: #f97316;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.card-form-file-input {
+  margin-top: 0.5rem;
+}
+
+.card-form-image-preview {
+  margin-top: 1rem;
+  width: 100%;
+  max-width: 200px;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  object-fit: cover;
+}
+
+.card-form-checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.card-form-checkbox {
+  margin-right: 0.5rem;
+}
+
+.card-form-checkbox-label {
+  font-size: 0.95rem;
+  color: #4b5563;
+}
+
+.card-form-submit {
+  background-color: #f97316;
+  color: #ffffff;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.card-form-submit:hover {
+  background-color: #e85a1b;
+}
+
+.card-form-submit:disabled {
+  background-color: #94a3b8;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Lista de tarjetas */
+.cards-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.cards-item {
+  border-radius: 8px;
+  border: 1px solid #333;
+  background-color: #111;
+}
+
+.cards-item:hover {
+  background-color: #222;
+}
+
+.cards-item-inactive {
+  opacity: 0.7;
+  border: 1px dashed #cbd5e1;
+}
+
+.card-image-container {
+  position: relative;
+  width: 100%;
+  height: 160px;
+  overflow: hidden;
+  background-color: #f1f5f9;
+}
+
+.card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.card-active-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: #10b981;
+  color: white;
+  border-radius: 20px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.card-inactive-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: #94a3b8;
+  color: white;
+  border-radius: 20px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.card-content {
+  padding: 1rem;
+}
+
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 0.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-description {
+  color: #aaa;
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.card-views {
+  display: flex;
+  align-items: center;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.card-views-icon {
+  margin-right: 0.25rem;
+}
+
+.card-date {
+  color: #94a3b8;
+  font-size: 0.75rem;
+}
+
+.card-links-count {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  background-color: #f1f5f9;
+  color: #64748b;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  margin-right: 0.5rem;
+}
+
+.card-link-badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  background-color: #e0f2fe;
+  color: #0369a1;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  margin-right: 0.5rem;
+}
+
+.card-actions {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.card-button {
+  background-color: transparent;
+  border: none;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.card-button:hover {
+  background-color: #333;
+}
+
+.card-button-primary {
+  /* fondo naranja plano */
+  color: #fff;
+  background-color: #f97316;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+}
+
+.card-button-primary:hover {
+  background-color: #e85a1b;
+}
+
+.card-button-danger {
+  color: #ef4444;
+}
+
+.card-button-danger:hover {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.card-url {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  margin-top: 0.5rem;
+  background-color: #f8fafc;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: #64748b;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.card-copy-button {
+  background: none;
+  border: none;
+  color: #6366f1;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.2rem;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.card-copy-button:hover {
+  background-color: #ede9fe;
+}
+
+.cards-loading {
+  text-align: center;
+  margin: 2rem 0;
+  color: #64748b;
+}
+
+.cards-alert {
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.cards-alert-success {
+  background-color: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.cards-alert-error {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+/* Media queries */
+@media (max-width: 768px) {
+  .cards-list {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .cards-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Botón para mostrar/ocultar el formulario */
+.toggle-form-button {
+  /* estilo plano sin sombra */
+  background-color: #f97316;
+  color: #fff;
+  transition: background-color 0.2s;
+  border: none;
+  border-radius: 4px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.toggle-form-button:hover {
+  background-color: #e85a1b;
+}
+
+.toggle-form-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Ocultar el formulario */
+.card-form-hidden {
+  display: none; /* oculto el formulario */
+}

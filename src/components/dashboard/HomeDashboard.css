@@ -1,0 +1,382 @@
+.home-dashboard {
+  background-color: #121212;
+  color: white;
+  padding: 25px;
+  border-radius: 10px;
+}
+
+.dashboard-title {
+  font-size: 1.8rem;
+  margin-bottom: 20px;
+  color: white;
+  text-align: center;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.dashboard-card {
+  background-color: #1e1e1e;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+h2 {
+  color: white;
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.5rem;
+  border-bottom: 2px solid #333;
+  padding-bottom: 10px;
+}
+
+h3 {
+  color: #e0e0e0;
+  font-size: 1.1rem;
+  margin-bottom: 10px;
+}
+
+/* Sección de Tips */
+.tips-section ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.tips-section li {
+  margin-bottom: 12px;
+  display: flex;
+  align-items: flex-start;
+  line-height: 1.4;
+}
+
+.tips-section strong {
+  color: #ff8c00;
+}
+
+/* Sección de Analíticas */
+.analytics-metrics {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.metric {
+  text-align: center;
+  flex: 1;
+  padding: 10px;
+}
+
+.metric-value {
+  display: block;
+  font-size: 2rem;
+  font-weight: bold;
+  color: #ff8c00;
+  margin-bottom: 5px;
+}
+
+.metric-label {
+  font-size: 0.9rem;
+  color: #bbb;
+}
+
+/* Gráfico de líneas naranja */
+.chart-container {
+  margin-top: 15px;
+}
+
+.orange-line-chart {
+  height: 150px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 5px;
+  position: relative;
+}
+
+.orange-line-chart::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to top, rgba(255, 140, 0, 0.05), rgba(255, 140, 0, 0.01));
+  pointer-events: none;
+}
+
+.chart-bar {
+  width: 8%;
+  background: linear-gradient(to top, #ff8c00, #ff4500);
+  border-radius: 3px 3px 0 0;
+  position: relative;
+}
+
+.chart-bar::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  background-color: #ff8c00;
+  top: 0;
+  left: 0;
+}
+
+.chart-labels {
+  display: flex;
+  justify-content: space-between;
+}
+
+.chart-labels span {
+  font-size: 0.8rem;
+  color: #999;
+  flex: 1;
+  text-align: center;
+}
+
+/* Gráfico de barras verde */
+.popular-links .links-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+.popular-links li {
+  margin-bottom: 15px;
+}
+
+.link-title {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.green-bar-chart {
+  height: 25px;
+  background-color: #2a2a2a;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(to right, #1db954, #4ade80);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 10px;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: bold;
+  transition: width 0.5s ease;
+}
+
+/* Sección de Guía */
+.steps-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.step {
+  display: flex;
+  align-items: flex-start;
+}
+
+.step-number {
+  width: 30px;
+  height: 30px;
+  background-color: #ff8c00;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  margin-right: 15px;
+  flex-shrink: 0;
+}
+
+.step-content {
+  flex: 1;
+}
+
+.step-content h3 {
+  margin: 0 0 5px 0;
+}
+
+.step-content p {
+  margin: 0;
+  color: #bbb;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .analytics-metrics {
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+  }
+  
+  .metric {
+    width: 100%;
+  }
+}
+
+/* Estado de carga */
+.dashboard-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  font-size: 1.1rem;
+  color: #bbb;
+}
+
+/* Encabezado de tarjeta con botón */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.card-header h2 {
+  margin: 0;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.view-all-button {
+  background-color: transparent;
+  border: 1px solid #ff8c00;
+  color: #ff8c00;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-all-button:hover {
+  background-color: #ff8c00;
+  color: #1e1e1e;
+}
+
+/* Mensaje de sin datos */
+.no-data-message {
+  color: #bbb;
+  text-align: center;
+  font-style: italic;
+  padding: 15px 0;
+}
+
+/* Tooltip para barras del gráfico */
+.chart-bar {
+  position: relative;
+}
+
+.chart-bar:hover::after {
+  content: attr(data-value) ' visitas';
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #ff8c00;
+  color: #121212;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  white-space: nowrap;
+  z-index: 1;
+}
+
+/* Filtro de tarjetas */
+.dashboard-filter {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dashboard-filter label {
+  font-size: 0.9rem;
+  color: #bbb;
+}
+
+.card-filter-select {
+  background-color: #1e1e1e;
+  color: white;
+  border: 1px solid #333;
+  border-radius: 5px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.card-filter-select:focus {
+  outline: none;
+  border-color: #ff8c00;
+}
+
+/* Sección de tarjetas populares */
+.top-cards .cards-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+.top-cards li {
+  margin-bottom: 15px;
+}
+
+.card-title {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+/* Sección de fuentes de tráfico */
+.referrers-section .referrers-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+.referrers-section li {
+  margin-bottom: 15px;
+}
+
+.referrer-title {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.orange-bar-chart {
+  height: 25px;
+  background-color: #2a2a2a;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.referrers-section .progress-bar {
+  background: linear-gradient(to right, #ff8c00, #ff4500);
+}
+
+/* Responsive para el filtro */
+@media (max-width: 768px) {
+  .dashboard-filter {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .card-filter-select {
+    width: 100%;
+  }
+} 

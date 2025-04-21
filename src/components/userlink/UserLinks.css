@@ -1,0 +1,202 @@
+/* UserLinks.css - Estilos para los enlaces en vistas de perfil compartidas */
+
+/* Contenedor principal de enlaces */
+.user-links-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 0.8rem;
+  padding: 0.5rem;
+  max-width: 500px;
+  margin: 1.5rem auto;
+}
+
+/* Estilos base del botón de enlace */
+.user-link-button {
+  display: flex;
+  width: 100%;
+  padding: 1rem 1.5rem;
+  margin-bottom: 0.5rem;
+  justify-content: space-between;
+  align-items: center;
+  
+  /* Estilos de apariencia */
+  background-color: #6366f1;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  
+  /* Tipografía */
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: center;
+  
+  /* Efectos de transición */
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(99, 102, 241, 0.2);
+  
+  /* Asegurar que el contenido se mantenga en una línea */
+  overflow: hidden;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.user-link-icon {
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  margin-right: 0.75rem;
+}
+
+.user-link-title {
+  flex: 1;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-link-arrow {
+  margin-left: 0.75rem;
+  font-size: 1.2rem;
+  opacity: 0.8;
+  transition: transform 0.3s ease;
+}
+
+.user-link-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  background-color: #4f46e5;
+  color: white;
+  text-decoration: none;
+}
+
+.user-link-button:hover .user-link-arrow {
+  transform: translateX(3px);
+  opacity: 1;
+}
+
+.user-link-button:active {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(99, 102, 241, 0.3);
+}
+
+/* Estilos específicos para redes sociales */
+.user-link-instagram {
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+}
+.user-link-instagram:hover {
+  background: linear-gradient(45deg, #e6683c 0%, #dc2743 25%, #cc2366 50%, #bc1888 75%, #a51379 100%);
+}
+
+.user-link-twitter {
+  background-color: #1DA1F2;
+}
+.user-link-twitter:hover {
+  background-color: #0d8bd9;
+}
+
+.user-link-facebook {
+  background-color: #4267B2;
+}
+.user-link-facebook:hover {
+  background-color: #365899;
+}
+
+.user-link-youtube {
+  background-color: #FF0000;
+}
+.user-link-youtube:hover {
+  background-color: #cc0000;
+}
+
+.user-link-linkedin {
+  background-color: #0077B5;
+}
+.user-link-linkedin:hover {
+  background-color: #00669e;
+}
+
+.user-link-github {
+  background-color: #333333;
+}
+.user-link-github:hover {
+  background-color: #242424;
+}
+
+.user-link-tiktok {
+  background: linear-gradient(90deg, #25F4EE, #000000, #FE2C55);
+}
+.user-link-tiktok:hover {
+  background: linear-gradient(90deg, #20e2db, #000000, #e42a4e);
+}
+
+.user-link-spotify {
+  background-color: #1DB954;
+}
+.user-link-spotify:hover {
+  background-color: #1aa64b;
+}
+
+.user-link-whatsapp {
+  background-color: #25D366;
+}
+.user-link-whatsapp:hover {
+  background-color: #20b956;
+}
+
+.user-link-telegram {
+  background-color: #0088cc;
+}
+.user-link-telegram:hover {
+  background-color: #0077b3;
+}
+
+.user-link-default {
+  /* El estilo base ya está aplicado */
+}
+
+/* Estilos para botones agrupados por categorías */
+.user-links-category {
+  margin-bottom: 1.5rem;
+}
+
+.user-links-category-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 0.8rem;
+  color: #4b5563;
+  text-align: center;
+}
+
+/* Responsive */
+@media screen and (max-width: 768px) {
+  .user-link-button {
+    padding: 0.85rem 1.25rem;
+    font-size: 0.95rem;
+  }
+  
+  .user-link-icon, .user-link-arrow {
+    font-size: 1.1rem;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .user-link-button {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .user-link-icon, .user-link-arrow {
+    font-size: 1rem;
+  }
+  
+  .user-link-icon {
+    margin-right: 0.5rem;
+  }
+  
+  .user-link-arrow {
+    margin-left: 0.5rem;
+  }
+} 

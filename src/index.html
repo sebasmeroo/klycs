@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mi Linktree Avanzado</title>
+  <link rel="stylesheet" href="linktree-advanced.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="linktree-container">
+    <!-- Sección de perfil -->
+    <div class="profile">
+      <img src="https://via.placeholder.com/150" alt="Foto de perfil" class="profile-image">
+      <h1 class="profile-name neon-effect">Juan Pérez</h1>
+      <div class="profile-username">@juanperez</div>
+      <p class="profile-bio">Desarrollador web especializado en React y diseño de interfaces. Amante del café y la música.</p>
+      
+      <div class="profile-social">
+        <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
+        <a href="#" class="social-icon"><i class="fab fa-twitter"></i></a>
+        <a href="#" class="social-icon"><i class="fab fa-github"></i></a>
+        <a href="#" class="social-icon"><i class="fab fa-linkedin"></i></a>
+      </div>
+    </div>
+    
+    <!-- Enlaces principales -->
+    <div class="links-container">
+      <a href="#" class="link-item">
+        <div class="link-icon"><i class="fas fa-globe"></i></div>
+        <div class="link-title">Mi sitio web personal</div>
+        <div class="link-arrow"><i class="fas fa-chevron-right"></i></div>
+      </a>
+      
+      <a href="#" class="link-item">
+        <div class="link-icon"><i class="fas fa-video"></i></div>
+        <div class="link-title">Mi canal de YouTube</div>
+        <div class="link-arrow"><i class="fas fa-chevron-right"></i></div>
+      </a>
+      
+      <a href="#" class="link-item">
+        <div class="link-icon"><i class="fas fa-podcast"></i></div>
+        <div class="link-title">Escucha mi podcast sobre desarrollo</div>
+        <div class="link-arrow"><i class="fas fa-chevron-right"></i></div>
+      </a>
+      
+      <a href="#" class="link-item gradient-background">
+        <div class="link-icon" style="color: white;"><i class="fas fa-bolt"></i></div>
+        <div class="link-title" style="color: white;">Suscríbete a mi newsletter</div>
+        <div class="link-arrow" style="color: white;"><i class="fas fa-chevron-right"></i></div>
+      </a>
+    </div>
+    
+    <!-- Sección de productos -->
+    <h2 class="products-title">Mis productos y servicios</h2>
+    
+    <div class="products-grid">
+      <div class="product-card">
+        <img src="https://via.placeholder.com/400x200" alt="Curso React" class="product-image">
+        <div class="product-details">
+          <span class="product-badge">Curso</span>
+          <h3 class="product-title">React desde cero</h3>
+          <p class="product-description">Aprende React.js desde lo más básico hasta crear aplicaciones complejas con hooks, context y más.</p>
+          <div class="product-footer">
+            <div class="product-price">€49.99</div>
+            <a href="#" class="product-button">Comprar</a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="product-card">
+        <img src="https://via.placeholder.com/400x200" alt="Mentoría" class="product-image">
+        <div class="product-details">
+          <span class="product-badge">Servicio</span>
+          <h3 class="product-title">Mentoría 1:1</h3>
+          <p class="product-description">Sesiones personalizadas para ayudarte a mejorar tus habilidades de desarrollo y avanzar en tu carrera.</p>
+          <div class="product-footer">
+            <div class="product-price">€79.99</div>
+            <a href="#" class="product-button">Reservar</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Elemento con efecto de cristal (glass morphism) -->
+    <div class="glass-effect w-full py-4 px-4 mb-5 mt-6 text-center" style="border-radius: var(--radius-md);">
+      <h3 class="mb-2">¿Necesitas ayuda personalizada?</h3>
+      <p class="mb-3">Contáctame para discutir tu proyecto y cómo puedo ayudarte.</p>
+      <a href="#" class="product-button">Contactar</a>
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer">
+      <p>Hecho con <i class="fas fa-heart" style="color: var(--error);"></i> por <span class="brand">Juan Pérez</span></p>
+      <p class="mt-1">© 2023 Todos los derechos reservados</p>
+    </div>
+  </div>
+  
+  <script>
+    // Opcional: Agregar pequeñas animaciones o interacciones
+    document.addEventListener('DOMContentLoaded', function() {
+      // Añadir la clase 'float' a la imagen de perfil para un efecto sutil
+      const profileImage = document.querySelector('.profile-image');
+      profileImage.classList.add('float');
+      
+      // Añadir animación a los enlaces al cargar la página
+      const links = document.querySelectorAll('.link-item');
+      links.forEach((link, index) => {
+        link.style.opacity = '0';
+        link.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+          link.style.transition = 'all 0.5s ease';
+          link.style.opacity = '1';
+          link.style.transform = 'translateY(0)';
+        }, 100 + (index * 100));
+      });
+    });
+  </script>
+</body>
+</html> 

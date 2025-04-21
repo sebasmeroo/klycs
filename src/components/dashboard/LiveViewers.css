@@ -1,0 +1,139 @@
+.live-viewers-container {
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.live-viewers-container h3 {
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+  color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.viewer-count {
+  background-color: #4c84ff;
+  color: white;
+  border-radius: 20px;
+  padding: 2px 8px;
+  font-size: 0.8rem;
+  font-weight: normal;
+  display: inline-block;
+  min-width: 25px;
+  text-align: center;
+}
+
+.loading-indicator {
+  text-align: center;
+  color: #666;
+  font-size: 0.9rem;
+  padding: 15px 0;
+}
+
+.no-viewers-message {
+  text-align: center;
+  color: #999;
+  font-style: italic;
+  padding: 20px 0;
+  border: 1px dashed #eee;
+  border-radius: 8px;
+}
+
+.viewers-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.viewer-item {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border-bottom: 1px solid #f5f5f5;
+  transition: background-color 0.2s;
+  position: relative;
+}
+
+.viewer-item:last-child {
+  border-bottom: none;
+}
+
+.viewer-item:hover {
+  background-color: #f9f9f9;
+}
+
+.viewer-icon {
+  font-size: 1.5rem;
+  margin-right: 15px;
+  width: 30px;
+  text-align: center;
+}
+
+.viewer-details {
+  flex: 1;
+}
+
+.viewer-location {
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 2px;
+}
+
+.viewer-browser {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 2px;
+}
+
+.viewer-time {
+  font-size: 0.75rem;
+  color: #999;
+}
+
+.viewer-card-badge {
+  background-color: #ff6b6b;
+  color: white;
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 0.7rem;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+/* Pulso para indicar actividad en tiempo real */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(76, 132, 255, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(76, 132, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(76, 132, 255, 0);
+  }
+}
+
+.viewer-item:first-child .viewer-icon {
+  animation: pulse 2s infinite;
+  border-radius: 50%;
+}
+
+/* Estilos responsivos */
+@media (max-width: 768px) {
+  .live-viewers-container {
+    padding: 15px;
+  }
+  
+  .viewer-item {
+    padding: 10px;
+  }
+  
+  .viewer-icon {
+    font-size: 1.2rem;
+    margin-right: 10px;
+  }
+} 
