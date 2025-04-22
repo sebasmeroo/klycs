@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase/config';
 // Importación del CSS de Klycs Dashboard
 import '../styles/klycsdashboard';
@@ -86,12 +86,26 @@ const Dashboard = () => {
     const fetchUserData = async () => {
       if (auth.currentUser) {
         try {
+          console.log('Fetcheando datos del usuario en Dashboard:', auth.currentUser.uid);
           const userDocRef = doc(db, 'users', auth.currentUser.uid);
           const userDoc = await getDoc(userDocRef);
           
           if (userDoc.exists()) {
             // Si el documento existe, usar esos datos
-            setUserData(userDoc.data());
+            const userData = userDoc.data();
+            console.log('Datos del usuario obtenidos de Firestore:', userData);
+            
+            // Verificar si tiene productos
+            if (!userData.products) {
+              console.log('El usuario no tiene productos, inicializando array vacío');
+              userData.products = [];
+              // Guardar para actualizar el documento
+              await updateDoc(userDocRef, { products: [] });
+            } else {
+              console.log('Productos del usuario encontrados:', userData.products);
+            }
+            
+            setUserData(userData);
           } else {
             // Si el documento no existe, crear uno nuevo
             console.info('Creando nuevo documento de usuario');

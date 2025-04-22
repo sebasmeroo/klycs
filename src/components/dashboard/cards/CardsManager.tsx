@@ -7,6 +7,9 @@ import './Cards.css';
 import { useNavigate } from 'react-router-dom';
 import CardEditorContainer from '../../cardeditor/CardEditorContainer';
 import '../../cardeditor/CardEditor.css';
+import { compressImage, CompressionStatus } from '../../../utils/imageCompression';
+import CompressionInfo from '../../common/CompressionInfo';
+import { deleteImageFromStorage } from '../../../utils/storageUtils';
 
 // Interfaces para tipado
 interface CardLink {
@@ -38,6 +41,10 @@ interface Card {
   active: boolean;
   views: number;
   createdAt: number;
+  backgroundType?: 'image' | 'color' | 'gradient';
+  backgroundColor?: string;
+  backgroundGradient?: string;
+  backgroundImageURL?: string;
 }
 
 interface CardsManagerProps {
@@ -70,6 +77,15 @@ const CardsManager: React.FC<CardsManagerProps> = ({ userData }) => {
   // Estado para la gestión de productos
   const [showProductSelector, setShowProductSelector] = useState(false);
   const [currentCardForProduct, setCurrentCardForProduct] = useState<string | null>(null);
+  
+  // Estado para compresión de imagen
+  const [compressionStatus, setCompressionStatus] = useState<CompressionStatus>('idle');
+  const [compressionData, setCompressionData] = useState<{
+    originalSize?: number;
+    compressedSize?: number;
+    originalFormat?: string;
+    compressionRatio?: number;
+  }>({});
   
   // Cargar tarjetas existentes cuando se monta el componente
   useEffect(() => {
@@ -109,19 +125,54 @@ const CardsManager: React.FC<CardsManagerProps> = ({ userData }) => {
     }
   }, [openEditorCardId]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
-      setFile(selectedFile);
-      // Crear preview local
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
+      
+      try {
+        // Actualizar estado para mostrar que la compresión está en proceso
+        setCompressionStatus('compressing');
+        
+        // Comprimir imagen antes de usarla
+        const compressionResult = await compressImage(selectedFile);
+        
+        // Actualizar estado con resultado de compresión
+        setCompressionStatus(compressionResult.success ? 'success' : 'error');
+        setCompressionData({
+          originalSize: compressionResult.originalSize,
+          compressedSize: compressionResult.compressedSize,
+          originalFormat: compressionResult.originalFormat,
+          compressionRatio: compressionResult.compressionRatio
+        });
+        
+        // Usar el archivo comprimido
+        setFile(compressionResult.file);
+        
+        // Crear preview local
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreview(reader.result as string);
+        }
+        reader.readAsDataURL(compressionResult.file);
+        
+      } catch (error) {
+        console.error('Error al comprimir imagen:', error);
+        setCompressionStatus('error');
+        
+        // Usar el archivo original si falla la compresión
+        setFile(selectedFile);
+        
+        // Crear preview del archivo original
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreview(reader.result as string);
+        }
+        reader.readAsDataURL(selectedFile);
       }
-      reader.readAsDataURL(selectedFile);
     } else {
       setFile(null);
       setImagePreview(null);
+      setCompressionStatus('idle');
     }
   };
 
@@ -184,6 +235,17 @@ const CardsManager: React.FC<CardsManagerProps> = ({ userData }) => {
       
       // Si hay un archivo nuevo, subirlo a Storage
       if (file) {
+        // Si estamos editando una tarjeta existente, eliminar la imagen antigua
+        if (editingId) {
+          const currentCard = cards.find(c => c.id === editingId);
+          if (currentCard?.imageURL) {
+            // Eliminar la imagen antigua
+            await deleteImageFromStorage(currentCard.imageURL);
+            console.log('Imagen antigua de tarjeta eliminada');
+          }
+        }
+        
+        // La compresión ya se hizo en handleFileChange
         const storageRef = ref(storage, `cards/${userData.uid}/${uuidv4()}`);
         await uploadBytes(storageRef, file);
         imageURL = await getDownloadURL(storageRef);
@@ -239,6 +301,8 @@ const CardsManager: React.FC<CardsManagerProps> = ({ userData }) => {
       setError('Error al guardar la tarjeta. Inténtalo de nuevo.');
     } finally {
       setLoading(false);
+      // Resetear el estado de compresión después de guardar
+      setCompressionStatus('idle');
     }
   };
 
@@ -247,8 +311,27 @@ const CardsManager: React.FC<CardsManagerProps> = ({ userData }) => {
     setOpenEditorCardId(card.id);
   };
 
-  // Eliminar tarjeta
+  // Eliminar tarjeta - también eliminar las imágenes asociadas
   const handleDelete = (id: string) => {
+    // Encontrar la tarjeta para eliminar sus imágenes
+    const cardToDelete = cards.find(card => card.id === id);
+    
+    // Eliminar la imagen principal si existe
+    if (cardToDelete?.imageURL) {
+      deleteImageFromStorage(cardToDelete.imageURL)
+        .then(success => {
+          if (success) console.log('Imagen principal de tarjeta eliminada');
+        });
+    }
+    
+    // Eliminar la imagen de fondo si existe
+    if (cardToDelete?.backgroundImageURL) {
+      deleteImageFromStorage(cardToDelete.backgroundImageURL)
+        .then(success => {
+          if (success) console.log('Imagen de fondo de tarjeta eliminada');
+        });
+    }
+    
     const updatedCards = cards.filter(card => card.id !== id);
     setCards(updatedCards);
     saveCardsToFirestore(updatedCards);
@@ -549,6 +632,13 @@ const CardsManager: React.FC<CardsManagerProps> = ({ userData }) => {
                 <img src={imagePreview} alt="Vista previa" className="card-form-image-preview" />
               </div>
             )}
+            <CompressionInfo 
+              status={compressionStatus}
+              originalSize={compressionData.originalSize}
+              compressedSize={compressionData.compressedSize}
+              originalFormat={compressionData.originalFormat}
+              compressionRatio={compressionData.compressionRatio}
+            />
           </div>
           
           <button 

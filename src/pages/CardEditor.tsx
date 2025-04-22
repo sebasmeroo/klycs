@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import Header from '../components/header';
 import '../components/cardeditor/CardEditor.css';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { compressImage, getImagePreview } from '../utils/imageCompression';
 
 // Interfaces
 interface CardLink {
@@ -216,12 +217,11 @@ const CardEditor: React.FC = () => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
       setFile(selectedFile);
-      // Crear preview local
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      }
-      reader.readAsDataURL(selectedFile);
+      
+      // Crear preview usando la utilidad centralizada
+      getImagePreview(selectedFile).then(preview => {
+        setImagePreview(preview);
+      });
     } else {
       setFile(null);
       setImagePreview(card?.imageURL || null);
@@ -233,12 +233,11 @@ const CardEditor: React.FC = () => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
       setBackgroundFile(selectedFile);
-      // Create local preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setBackgroundImageURL(reader.result as string);
-      }
-      reader.readAsDataURL(selectedFile);
+      
+      // Crear preview usando la utilidad centralizada
+      getImagePreview(selectedFile).then(preview => {
+        setBackgroundImageURL(preview);
+      });
     } else {
       setBackgroundFile(null);
       setBackgroundImageURL(card?.backgroundImageURL || null);
@@ -777,14 +776,18 @@ const CardEditor: React.FC = () => {
   const uploadImageAndGetURL = async (file: File): Promise<string> => {
     try {
       const auth = getAuth();
-      if (!auth.currentUser) throw new Error('User not authenticated');
+      if (!auth.currentUser) throw new Error('Usuario no autenticado');
+      
+      // Comprimir imagen antes de subir
+      const compressionResult = await compressImage(file);
+      console.log(compressionResult.infoText);
       
       const storageRef = ref(storage, `cards/${auth.currentUser.uid}/${uuidv4()}`);
-      await uploadBytes(storageRef, file);
+      await uploadBytes(storageRef, compressionResult.file);
       return await getDownloadURL(storageRef);
     } catch (error) {
-      console.error('Error uploading image:', error);
-      throw new Error('Failed to upload image');
+      console.error('Error al subir imagen:', error);
+      throw new Error('Error al subir la imagen');
     }
   };
 

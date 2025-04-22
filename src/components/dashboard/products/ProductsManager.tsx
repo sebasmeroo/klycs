@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../../firebase/config';
 import { v4 as uuidv4 } from 'uuid';
+import { compressImage, getImagePreview, CompressionStatus } from '../../../utils/imageCompression';
+import { deleteImageFromStorage } from '../../../utils/storageUtils';
+import CompressionInfo from '../../common/CompressionInfo';
 import './css/ProductsManager.css';
 
 interface Product {
@@ -21,6 +24,16 @@ interface ProductsManagerProps {
 }
 
 const ProductsManager: React.FC<ProductsManagerProps> = ({ userData }) => {
+  // Estado de compresión
+  const [compressionStatus, setCompressionStatus] = useState<CompressionStatus>('idle');
+  const [compressionData, setCompressionData] = useState<{
+    originalSize?: number;
+    compressedSize?: number;
+    originalFormat?: string;
+    compressionRatio?: number;
+  }>({});
+  const [compressionInfo, setCompressionInfo] = useState<string>('');
+  
   const [products, setProducts] = useState<Product[]>([]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -32,7 +45,6 @@ const ProductsManager: React.FC<ProductsManagerProps> = ({ userData }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [autoGenerateLinks, setAutoGenerateLinks] = useState(true);
   const [formExpanded, setFormExpanded] = useState(false);
   // Control del modal de edición lateral
   const [showEditModal, setShowEditModal] = useState(false);
@@ -43,40 +55,100 @@ const ProductsManager: React.FC<ProductsManagerProps> = ({ userData }) => {
 
   // Cargar productos existentes cuando se monta el componente
   useEffect(() => {
-    if (userData && userData.products) {
-      // Verificar si hay productos sin URL automática y generarlas si la opción está activada
-      const updatedProducts = userData.products.map((product: Product) => {
-        if (!product.url && autoGenerateLinks && !product.autoUrl) {
-          return {
-            ...product,
-            autoUrl: generateAutoUrl(product.title, userData.username || userData.uid)
-          };
+    console.log('userData en ProductsManager:', userData);
+    if (userData && userData.uid) {
+      // Intentamos cargar los productos directamente desde Firestore
+      const fetchProducts = async () => {
+        try {
+          console.log('Obteniendo datos del usuario de Firestore...');
+          const userDocRef = doc(db, 'users', userData.uid);
+          const userDoc = await getDoc(userDocRef);
+          
+          if (userDoc.exists()) {
+            const userDataFromFirestore = userDoc.data();
+            console.log('Datos obtenidos de Firestore:', userDataFromFirestore);
+            
+            if (userDataFromFirestore.products && Array.isArray(userDataFromFirestore.products)) {
+              console.log('Productos encontrados:', userDataFromFirestore.products);
+              setProducts(userDataFromFirestore.products);
+            } else {
+              console.log('No se encontraron productos en Firestore');
+              setProducts([]);
+            }
+          } else {
+            console.log('No se encontró el documento del usuario');
+            setError('No se encontró el documento del usuario');
+          }
+        } catch (error) {
+          console.error('Error al obtener productos:', error);
+          setError('Error al cargar productos. Inténtalo de nuevo.');
         }
-        return product;
-      });
+      };
       
-      setProducts(updatedProducts);
-      
-      // Si hay cambios en los productos, guardarlos en Firestore
-      if (JSON.stringify(updatedProducts) !== JSON.stringify(userData.products)) {
-        saveProductsToFirestore(updatedProducts);
+      fetchProducts();
+    } else {
+      console.log('No hay userData o userData.uid');
+    }
+  }, [userData]);
+
+  // Si hay cambios en los productos, guardarlos en Firestore
+  useEffect(() => {
+    if (userData && userData.uid && products.length > 0) {
+      // Solo guardar si el array de productos no está vacío y es diferente al de userData
+      if (JSON.stringify(userData.products || []) !== JSON.stringify(products)) {
+        console.log('Guardando productos actualizados en Firestore:', products);
+        saveProductsToFirestore(products);
       }
     }
-  }, [userData, autoGenerateLinks]);
+  }, [products, userData?.uid]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const selectedFile = e.target.files[0];
-      setFile(selectedFile);
-      // Crear preview local
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
+      const originalFile = e.target.files[0];
+      
+      try {
+        // Actualizar estado para mostrar que la compresión está en proceso
+        setCompressionStatus('compressing');
+        setCompressionInfo('Comprimiendo... Por favor espera.');
+        
+        // Usar el servicio centralizado de compresión
+        const result = await compressImage(originalFile);
+        
+        // Actualizar estado de compresión con el resultado
+        setCompressionStatus(result.success ? 'success' : 'error');
+        setCompressionData({
+          originalSize: result.originalSize,
+          compressedSize: result.compressedSize,
+          originalFormat: result.originalFormat,
+          compressionRatio: result.compressionRatio
+        });
+        
+        // Guardar información para mostrar al usuario (para compatibilidad)
+        setCompressionInfo(result.infoText);
+        
+        // Usar archivo comprimido
+        setFile(result.file);
+        
+        // Generar preview
+        const previewUrl = await getImagePreview(result.file);
+        setImagePreview(previewUrl);
+        
+      } catch (error) {
+        console.error('Error al comprimir imagen:', error);
+        // Si falla la compresión, usar el archivo original
+        setCompressionStatus('error');
+        setCompressionInfo(`⚠️ No se pudo comprimir. Usando archivo original (${(originalFile.size / 1024).toFixed(2)} KB)`);
+        setFile(originalFile);
+        
+        // Preview del archivo original
+        const previewUrl = await getImagePreview(originalFile);
+        setImagePreview(previewUrl);
       }
-      reader.readAsDataURL(selectedFile);
     } else {
       setFile(null);
       setImagePreview(null);
+      setCompressionStatus('idle');
+      setCompressionInfo('');
     }
   };
 
@@ -147,28 +219,21 @@ const ProductsManager: React.FC<ProductsManagerProps> = ({ userData }) => {
     
     try {
       let formattedUrl = url.trim();
-      let autoUrl: string | undefined = undefined;
       let imageURL = '';
-      
-      // Si no hay URL pero autoGenerateLinks está activado, generar una URL automática
-      if (!formattedUrl && autoGenerateLinks) {
-        autoUrl = generateAutoUrl(title, userData.username || userData.uid);
-      } else if (formattedUrl) {
-        // Validar URL y añadir http:// si no lo tiene
-        if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
-          formattedUrl = 'https://' + formattedUrl;
-        }
-        
-        if (!isValidUrl(formattedUrl)) {
-          setError('Por favor, introduce una URL válida');
-          setLoading(false);
-          return;
-        }
-      }
       
       // Subir imagen a Firebase Storage si hay un archivo nuevo
       if (file) {
         try {
+          // Si estamos editando un producto existente, eliminar la imagen antigua
+          if (editingId) {
+            const currentProduct = products.find(p => p.id === editingId);
+            if (currentProduct?.imageURL) {
+              // Eliminar la imagen antigua
+              await deleteImageFromStorage(currentProduct.imageURL);
+              console.log('Imagen antigua del producto eliminada');
+            }
+          }
+          
           const storageRef = ref(storage, `products/${userData.uid}/${uuidv4()}`);
           await uploadBytes(storageRef, file);
           imageURL = await getDownloadURL(storageRef);
@@ -197,7 +262,6 @@ const ProductsManager: React.FC<ProductsManagerProps> = ({ userData }) => {
             description,
             price: parseFloat(price),
             url: formattedUrl || '',
-            autoUrl: !formattedUrl ? autoUrl : undefined,
             imageURL
           } : product
         );
@@ -212,7 +276,6 @@ const ProductsManager: React.FC<ProductsManagerProps> = ({ userData }) => {
           description,
           price: parseFloat(price),
           url: formattedUrl || '',
-          autoUrl: !formattedUrl ? autoUrl : undefined,
           imageURL,
           active: true
         };
@@ -267,6 +330,18 @@ const ProductsManager: React.FC<ProductsManagerProps> = ({ userData }) => {
 
   // Eliminar producto
   const handleDelete = (id: string) => {
+    // Encontrar el producto para obtener su URL de imagen
+    const productToDelete = products.find(product => product.id === id);
+    if (productToDelete?.imageURL) {
+      // Eliminar la imagen del producto que se va a borrar
+      deleteImageFromStorage(productToDelete.imageURL)
+        .then(success => {
+          if (success) {
+            console.log('Imagen del producto eliminada al borrar el producto');
+          }
+        });
+    }
+    
     const updatedProducts = products.filter(product => product.id !== id);
     setProducts(updatedProducts);
     saveProductsToFirestore(updatedProducts);
@@ -320,6 +395,7 @@ const ProductsManager: React.FC<ProductsManagerProps> = ({ userData }) => {
     setImagePreview(null);
     setEditingId(null);
     setFormExpanded(false);
+    setCompressionInfo('');
   };
 
   // Abrir modal para añadir producto
@@ -344,18 +420,7 @@ const ProductsManager: React.FC<ProductsManagerProps> = ({ userData }) => {
     <div className="products-container">
       <div className="products-header">
         <h2>Gestionar Productos</h2>
-        <div className="form-check">
-          <input
-            type="checkbox"
-            id="autoGenerateProductLinks"
-            className="form-check-input"
-            checked={autoGenerateLinks}
-            onChange={() => setAutoGenerateLinks(!autoGenerateLinks)}
-          />
-          <label htmlFor="autoGenerateProductLinks" className="form-check-label">
-            Generar enlaces automáticamente para productos sin URL
-          </label>
-        </div>
+        <p className="products-subtitle">Crea y administra productos que podrás compartir con tus clientes.</p>
       </div>
       
       {/* Mensaje de error */}
@@ -381,6 +446,34 @@ const ProductsManager: React.FC<ProductsManagerProps> = ({ userData }) => {
         >
           Añadir Nuevo Producto
         </button>
+        
+        {/* Botón para crear producto de prueba */}
+        <button
+          type="button"
+          className="add-product-toggle-btn"
+          style={{ marginLeft: '10px', backgroundColor: '#ff9800' }}
+          onClick={() => {
+            // Crear un producto de prueba
+            const testProduct = {
+              id: uuidv4(),
+              title: 'Producto de Prueba',
+              description: 'Este es un producto de prueba generado automáticamente',
+              price: 19.99,
+              imageURL: 'https://via.placeholder.com/400x300?text=Producto+de+Prueba',
+              url: 'https://ejemplo.com/producto',
+              active: true
+            };
+            
+            // Añadir a la lista de productos
+            const updatedProducts = [...products, testProduct];
+            setProducts(updatedProducts);
+            saveProductsToFirestore(updatedProducts);
+            
+            setSuccess('Producto de prueba creado');
+          }}
+        >
+          Crear Producto de Prueba
+        </button>
       </div>
       
       {/* Lista de productos */}
@@ -393,12 +486,14 @@ const ProductsManager: React.FC<ProductsManagerProps> = ({ userData }) => {
           <div className="products-list">
             {products.map(product => (
               <div key={product.id} className={`product-card ${!product.active ? 'opacity-50' : ''}`}>
-                {/* Imagen del producto */}
-                <img
-                  src={product.imageURL}
-                  alt={product.title}
-                  className="product-image"
-                />
+                {/* Imagen del producto con wrapper para reservar espacio */}
+                <div className="product-image-wrapper">
+                  <img
+                    src={product.imageURL}
+                    alt={product.title}
+                    className="product-image"
+                  />
+                </div>
                 {/* Botón de edición siempre visible sobre la imagen */}
                 <button
                   className="product-img-edit-btn"
@@ -428,6 +523,17 @@ const ProductsManager: React.FC<ProductsManagerProps> = ({ userData }) => {
                     <button className="product-btn delete" onClick={() => handleDelete(product.id)} title="Eliminar">🗑️</button>
                     <button className="product-btn share" onClick={() => copyLinkToClipboard(product.url || product.autoUrl || '')} title="Compartir">🔗</button>
                   </div>
+                </div>
+              </div>
+            ))}
+            {/* Placeholder cards para mantener layout de 4 columnas incluso con pocos productos */}
+            {Array.from({ length: Math.max(0, 4 - products.length) }).map((_, idx) => (
+              <div key={`placeholder-${idx}`} className="product-card placeholder">
+                <div className="placeholder-content">
+                  <svg className="placeholder-icon" width="48" height="48" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73L12 2 4 6.27A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73L12 22l8-4.27A2 2 0 0 0 21 16z" stroke="#555" strokeWidth="2" fill="none"/>
+                  </svg>
+                  <p className="placeholder-text">Aquí irá tu producto</p>
                 </div>
               </div>
             ))}
@@ -503,6 +609,14 @@ const ProductsManager: React.FC<ProductsManagerProps> = ({ userData }) => {
                     onChange={handleFileChange}
                     className="form-control modal-file-input"
                   />
+                  <CompressionInfo 
+                    status={compressionStatus}
+                    originalSize={compressionData.originalSize}
+                    compressedSize={compressionData.compressedSize}
+                    originalFormat={compressionData.originalFormat}
+                    compressionRatio={compressionData.compressionRatio}
+                    message={compressionInfo}
+                  />
                 </div>
               </div>
               {/* Botones de acción */}
@@ -531,8 +645,8 @@ const ProductsManager: React.FC<ProductsManagerProps> = ({ userData }) => {
               ) : (
                 <div className="modal-placeholder">
                   {/* Icono de placeholder */}
-                  <svg xmlns="http://www.w3.org/2000/svg" className="placeholder-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7M3 7l9 6 9-6" />
+                  <svg className="placeholder-icon" width="48" height="48" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73L12 2 4 6.27A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73L12 22l8-4.27A2 2 0 0 0 21 16z" stroke="#555" strokeWidth="2" fill="none"/>
                   </svg>
                   <p className="placeholder-text">Aquí irá tu imagen</p>
                 </div>
@@ -585,6 +699,18 @@ const ProductsManager: React.FC<ProductsManagerProps> = ({ userData }) => {
                   required
                 />
               </div>
+              <div className="product-input-group">
+                <label htmlFor="productUrl">URL</label>
+                <input
+                  type="url"
+                  id="productUrl"
+                  className="product-input form-control"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  placeholder="https://tudominio.com/producto"
+                  required
+                />
+              </div>
               <div className="product-input-group image-upload-group">
                 <label htmlFor="productImage">Imagen</label>
                 <div className="upload-controls">
@@ -597,6 +723,14 @@ const ProductsManager: React.FC<ProductsManagerProps> = ({ userData }) => {
                     accept="image/*"
                     onChange={handleFileChange}
                     className="form-control modal-file-input"
+                  />
+                  <CompressionInfo 
+                    status={compressionStatus}
+                    originalSize={compressionData.originalSize}
+                    compressedSize={compressionData.compressedSize}
+                    originalFormat={compressionData.originalFormat}
+                    compressionRatio={compressionData.compressionRatio}
+                    message={compressionInfo}
                   />
                 </div>
               </div>

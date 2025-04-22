@@ -1,0 +1,75 @@
+/* Estilos globales para la información de compresión */
+.compression-info {
+  font-size: 0.875rem;
+  padding: 8px 12px;
+  margin: 8px 0;
+  border-radius: 6px;
+  background-color: rgba(26, 26, 26, 0.8);
+  border-left: 3px solid #6366f1;
+  color: #e2e8f0;
+  display: flex;
+  align-items: center;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.4;
+  transition: all 0.2s ease;
+}
+
+/* Icono de estado */
+.compression-icon {
+  font-size: 1.1rem;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+/* Mensaje principal */
+.compression-message {
+  flex-grow: 1;
+}
+
+/* Variante para compresión exitosa */
+.compression-info-success {
+  border-left-color: #10b981;
+  background-color: rgba(16, 185, 129, 0.1);
+}
+
+/* Variante para error de compresión */
+.compression-info-error {
+  border-left-color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+/* Variante para compresión en proceso */
+.compression-info-loading {
+  border-left-color: #f59e0b;
+  background-color: rgba(245, 158, 11, 0.1);
+  animation: pulse 1.5s infinite;
+}
+
+/* Texto y contador */
+.compression-counter {
+  margin-left: auto;
+  font-weight: 600;
+  padding: 2px 6px;
+  background-color: rgba(163, 163, 255, 0.2);
+  border-radius: 4px;
+  color: #10b981;
+}
+
+/* Animación para el mensaje de compresión en proceso */
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .compression-info {
+    font-size: 0.75rem;
+    padding: 6px 10px;
+  }
+  
+  .compression-icon {
+    font-size: 1rem;
+  }
+} 

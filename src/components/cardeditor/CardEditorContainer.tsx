@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { db, storage, auth } from '../../firebase/config';
 import { v4 as uuidv4 } from 'uuid';
 import { FiShoppingBag, FiPlus, FiTrash2, FiArrowLeft, FiSave, FiInfo, FiLayers, FiLink, FiLoader } from 'react-icons/fi';
+import { deleteImageFromStorage } from '../../utils/storageUtils';
 
 // Importar componentes mejorados
 import CardForm from './CardForm';
@@ -12,6 +13,8 @@ import CardPreview from './CardPreview';
 import LinksManager from './LinksManager';
 import ProductSelector from './ProductSelector';
 import { Card, CardLink, Product, CardBackground, CardTheme } from './types';
+import { compressImage, CompressionStatus } from '../../utils/imageCompression';
+import CompressionInfo from '../common/CompressionInfo';
 
 // Importar estilos
 import './CardEditor.css';
@@ -42,6 +45,27 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  
+  // Estados para almacenar las imágenes comprimidas para subir
+  const [mainImageFile, setMainImageFile] = useState<File | null>(null);
+  const [backgroundImageFile, setBackgroundImageFile] = useState<File | null>(null);
+
+  // Estados para compresión de imágenes
+  const [mainImageCompressionStatus, setMainImageCompressionStatus] = useState<CompressionStatus>('idle');
+  const [mainImageCompressionData, setMainImageCompressionData] = useState<{
+    originalSize?: number;
+    compressedSize?: number;
+    originalFormat?: string;
+    compressionRatio?: number;
+  }>({});
+  
+  const [bgImageCompressionStatus, setBgImageCompressionStatus] = useState<CompressionStatus>('idle');
+  const [bgImageCompressionData, setBgImageCompressionData] = useState<{
+    originalSize?: number;
+    compressedSize?: number;
+    originalFormat?: string;
+    compressionRatio?: number;
+  }>({});
   
   // Estados para fondo y tema
   const [background, setBackground] = useState<CardBackground>({ 
@@ -197,16 +221,50 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
     setDescription(e.target.value);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
       
-      // Crear preview local
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
+      try {
+        // Actualizar estado para mostrar que la compresión está en proceso
+        setMainImageCompressionStatus('compressing');
+        
+        // Comprimir imagen antes de guardarla
+        const result = await compressImage(selectedFile);
+        
+        // Actualizar estado de compresión con el resultado
+        setMainImageCompressionStatus(result.success ? 'success' : 'error');
+        setMainImageCompressionData({
+          originalSize: result.originalSize,
+          compressedSize: result.compressedSize,
+          originalFormat: result.originalFormat,
+          compressionRatio: result.compressionRatio
+        });
+        
+        // Guardar el archivo comprimido para subirlo después
+        setMainImageFile(result.file);
+        
+        // Crear preview local
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreview(reader.result as string);
+        }
+        reader.readAsDataURL(result.file);
+        
+      } catch (error) {
+        console.error('Error al comprimir imagen principal:', error);
+        setMainImageCompressionStatus('error');
+        
+        // En caso de error, usar el archivo original
+        setMainImageFile(selectedFile);
+        
+        // Crear preview del archivo original
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreview(reader.result as string);
+        }
+        reader.readAsDataURL(selectedFile);
       }
-      reader.readAsDataURL(selectedFile);
     }
   };
 
@@ -222,16 +280,53 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
     setBackground(prev => ({ ...prev, gradient: e.target.value }));
   };
 
-  const handleBackgroundFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleBackgroundFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
       
-      // Crear preview local para la imagen de fondo
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setBackground(prev => ({ ...prev, imageURL: reader.result as string }));
+      try {
+        // Actualizar estado para mostrar que la compresión está en proceso
+        setBgImageCompressionStatus('compressing');
+        
+        // Comprimir imagen de fondo antes de guardarla
+        const result = await compressImage(selectedFile, {
+          maxSizeMB: 1.0,  // Permitir que las imágenes de fondo sean un poco más grandes
+          maxWidthOrHeight: 1920
+        });
+        
+        // Actualizar estado de compresión con el resultado
+        setBgImageCompressionStatus(result.success ? 'success' : 'error');
+        setBgImageCompressionData({
+          originalSize: result.originalSize,
+          compressedSize: result.compressedSize,
+          originalFormat: result.originalFormat,
+          compressionRatio: result.compressionRatio
+        });
+        
+        // Guardar el archivo comprimido para subirlo después
+        setBackgroundImageFile(result.file);
+        
+        // Crear preview local para la imagen de fondo
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setBackground(prev => ({ ...prev, imageURL: reader.result as string }));
+        }
+        reader.readAsDataURL(result.file);
+        
+      } catch (error) {
+        console.error('Error al comprimir imagen de fondo:', error);
+        setBgImageCompressionStatus('error');
+        
+        // En caso de error, usar el archivo original
+        setBackgroundImageFile(selectedFile);
+        
+        // Crear preview del archivo original
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setBackground(prev => ({ ...prev, imageURL: reader.result as string }));
+        }
+        reader.readAsDataURL(selectedFile);
       }
-      reader.readAsDataURL(selectedFile);
     }
   };
 
@@ -262,10 +357,84 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
         throw new Error('Tarjeta no encontrada');
       }
 
+      // Variables para las URLs de las imágenes
+      let imageURL = card.imageURL || '';
+      let backgroundImageURL = card.backgroundImageURL || '';
+
+      // 1. Subir la imagen principal si hay una nueva
+      if (mainImageFile) {
+        try {
+          // Eliminar la imagen antigua si existe antes de subir la nueva
+          if (card.imageURL) {
+            const deleted = await deleteImageFromStorage(card.imageURL);
+            if (deleted) {
+              console.log('Imagen principal antigua eliminada');
+            }
+          }
+          
+          // Generar un solo UUID para la ruta
+          const mainImageId = uuidv4();
+          const mainImagePath = `cards/${userData.uid}/${mainImageId}`;
+          
+          console.log('Subiendo imagen principal a:', mainImagePath);
+          const mainImageRef = ref(storage, mainImagePath);
+          
+          // Subir la imagen comprimida
+          await uploadBytes(mainImageRef, mainImageFile);
+          
+          // Obtener la URL de la imagen subida
+          imageURL = await getDownloadURL(mainImageRef);
+          console.log('Imagen principal subida con éxito:', imageURL);
+        } catch (uploadError: any) {
+          console.error('Error al subir imagen principal:', uploadError);
+          // Error más descriptivo
+          const errorMessage = uploadError.code === 'storage/unauthorized' 
+            ? 'No tienes permisos para subir esta imagen. Contacta con el administrador.'
+            : 'Error al subir la imagen principal. Inténtalo de nuevo.';
+          throw new Error(errorMessage);
+        }
+      }
+
+      // 2. Subir la imagen de fondo si hay una nueva y el tipo de fondo es 'image'
+      if (backgroundImageFile && background.type === 'image') {
+        try {
+          // Eliminar la imagen de fondo antigua si existe
+          if (card.backgroundImageURL) {
+            const deleted = await deleteImageFromStorage(card.backgroundImageURL);
+            if (deleted) {
+              console.log('Imagen de fondo antigua eliminada');
+            }
+          }
+          
+          // Generar un solo UUID para la ruta
+          const bgImageId = uuidv4();
+          const bgImagePath = `cards/${userData.uid}/${bgImageId}`;
+          
+          console.log('Subiendo imagen de fondo a:', bgImagePath);
+          const bgImageRef = ref(storage, bgImagePath);
+          
+          // Subir la imagen comprimida
+          await uploadBytes(bgImageRef, backgroundImageFile);
+          
+          // Obtener la URL de la imagen de fondo subida
+          backgroundImageURL = await getDownloadURL(bgImageRef);
+          console.log('Imagen de fondo subida con éxito:', backgroundImageURL);
+        } catch (uploadError: any) {
+          console.error('Error al subir imagen de fondo:', uploadError);
+          // Error más descriptivo
+          const errorMessage = uploadError.code === 'storage/unauthorized' 
+            ? 'No tienes permisos para subir esta imagen de fondo. Contacta con el administrador.'
+            : 'Error al subir la imagen de fondo. Inténtalo de nuevo.';
+          throw new Error(errorMessage);
+        }
+      }
+
       // Crear objeto con los datos actualizados
       const updatedCardData: Partial<ExtendedCard> = {
         title,
         description,
+        // Asignar URL de imagen principal si existe
+        imageURL,
         // Convertir el nuevo formato de fondo al formato esperado por la DB
         backgroundType: background.type,
         links: links || [],
@@ -281,8 +450,8 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
         updatedCardData.backgroundGradient = background.gradient;
       }
       
-      if (background.type === 'image' && background.imageURL) {
-        updatedCardData.backgroundImageURL = background.imageURL;
+      if (background.type === 'image') {
+        updatedCardData.backgroundImageURL = backgroundImageURL || background.imageURL;
       }
 
       // Priorizar la actualización en el documento del usuario
@@ -325,6 +494,14 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
           
           // Actualizar el estado local con la tarjeta actualizada
           setCard(updatedCard as ExtendedCard);
+          
+          // Si hemos subido imágenes exitosamente, limpiar los archivos temporales
+          setMainImageFile(null);
+          setBackgroundImageFile(null);
+          
+          // Resetear estados de compresión
+          setMainImageCompressionStatus('idle');
+          setBgImageCompressionStatus('idle');
         } catch (updateError: any) {
           console.error('Error al actualizar la tarjeta en Firestore:', updateError);
           setError(`Error al guardar: ${updateError.message}`);
@@ -525,6 +702,34 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
                   handleBackgroundGradientChange={handleBackgroundGradientChange}
                   handleBackgroundFileChange={handleBackgroundFileChange}
                 />
+                
+                {/* Información de compresión para imagen principal */}
+                {mainImageCompressionStatus !== 'idle' && (
+                  <div className="compression-info-container">
+                    <CompressionInfo 
+                      status={mainImageCompressionStatus}
+                      originalSize={mainImageCompressionData.originalSize}
+                      compressedSize={mainImageCompressionData.compressedSize}
+                      originalFormat={mainImageCompressionData.originalFormat}
+                      compressionRatio={mainImageCompressionData.compressionRatio}
+                      showDetails={true}
+                    />
+                  </div>
+                )}
+                
+                {/* Información de compresión para imagen de fondo */}
+                {bgImageCompressionStatus !== 'idle' && background.type === 'image' && (
+                  <div className="compression-info-container">
+                    <CompressionInfo 
+                      status={bgImageCompressionStatus}
+                      originalSize={bgImageCompressionData.originalSize}
+                      compressedSize={bgImageCompressionData.compressedSize}
+                      originalFormat={bgImageCompressionData.originalFormat}
+                      compressionRatio={bgImageCompressionData.compressionRatio}
+                      showDetails={true}
+                    />
+                  </div>
+                )}
               </div>
               <div className="card-preview-container">
                 <div 

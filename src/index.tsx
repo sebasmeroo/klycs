@@ -1,0 +1,1 @@
+import './css/globalCompression.css'; // Importar estilos globales de compresión 

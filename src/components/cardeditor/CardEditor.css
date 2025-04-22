@@ -1478,4 +1478,32 @@
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   z-index: 3000;
+}
+
+/* Contenedor para información de compresión en el editor de tarjetas */
+.compression-info-container {
+  margin: 10px 0;
+  max-width: 100%;
+}
+
+.editor-content .compression-info {
+  font-size: 0.8rem;
+  margin: 8px 0;
+}
+
+/* Asegurar que la sección de compresión no rompa el layout */
+.card-editor-form-container .compression-info-container {
+  width: 100%;
+}
+
+/* Estilos responsivos */
+@media (max-width: 768px) {
+  .compression-info-container {
+    margin: 5px 0;
+  }
+  
+  .editor-content .compression-info {
+    font-size: 0.75rem;
+    padding: 5px 8px;
+  }
 } 

@@ -88,7 +88,8 @@ const CardForm: React.FC<CardFormProps> = ({
             </div>
           </div>
           <small className="form-text">
-            Se recomienda una imagen de alta calidad (Recomendado: 1080×1920px)
+            Se recomienda una imagen de alta calidad (Recomendado: 1080×1920px). 
+            La imagen será comprimida automáticamente para un rendimiento óptimo.
           </small>
         </div>
       </div>
@@ -194,7 +195,8 @@ const CardForm: React.FC<CardFormProps> = ({
               </div>
             </div>
             <small className="form-text">
-              Se recomienda una imagen de alta calidad que no distraiga del contenido
+              Se recomienda una imagen de alta calidad que no distraiga del contenido.
+              La imagen será comprimida automáticamente para optimizar el rendimiento.
             </small>
           </div>
         )}

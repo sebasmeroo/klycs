@@ -25,6 +25,7 @@ function App() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    console.log('App inicializada - Versión de depuración para productos');
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser)
       

@@ -3,6 +3,9 @@ import { updateProfile } from 'firebase/auth';
 import { doc, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { auth, db, storage } from '../../../firebase/config';
+import { compressImage, getImagePreview, CompressionStatus } from '../../../utils/imageCompression';
+import { deleteImageFromStorage } from '../../../utils/storageUtils';
+import CompressionInfo from '../../common/CompressionInfo';
 import './dashboardperfil.css';
 
 interface ProfileSettingsProps {
@@ -20,6 +23,15 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ userData }) => {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
   const [userDataLoaded, setUserDataLoaded] = useState(false);
+  
+  // Estados para compresión
+  const [compressionStatus, setCompressionStatus] = useState<CompressionStatus>('idle');
+  const [compressionData, setCompressionData] = useState<{
+    originalSize?: number;
+    compressedSize?: number;
+    originalFormat?: string;
+    compressionRatio?: number;
+  }>({});
 
   // Efecto para actualizar los estados cuando userData cambia
   useEffect(() => {
@@ -49,6 +61,68 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ userData }) => {
     }
   };
 
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setLoading(true);
+    setCompressionStatus('compressing');
+    
+    try {
+      // Comprimir imagen antes de subir
+      const compressionResult = await compressImage(file);
+      const compressedFile = compressionResult.file;
+      
+      // Actualizar estado de compresión
+      setCompressionStatus(compressionResult.success ? 'success' : 'error');
+      setCompressionData({
+        originalSize: compressionResult.originalSize,
+        compressedSize: compressionResult.compressedSize,
+        originalFormat: compressionResult.originalFormat,
+        compressionRatio: compressionResult.compressionRatio
+      });
+      
+      // Mostrar información de compresión si es necesario
+      console.log(compressionResult.infoText);
+      
+      // Eliminar foto de perfil antigua si existe
+      if (photoURL) {
+        try {
+          const deleted = await deleteImageFromStorage(photoURL);
+          if (deleted) {
+            console.log('Foto de perfil antigua eliminada');
+          }
+        } catch (deleteError) {
+          console.error('Error al eliminar foto de perfil antigua:', deleteError);
+          // Continuamos con la subida aunque falle la eliminación
+        }
+      }
+      
+      const storageRef = ref(storage, `avatars/${auth.currentUser?.uid}`);
+      await uploadBytes(storageRef, compressedFile);
+      const newPhotoURL = await getDownloadURL(storageRef);
+      
+      // Actualizar Firestore
+      if (auth.currentUser) {
+        await updateDoc(doc(db, 'users', auth.currentUser.uid), {
+          photoURL: newPhotoURL
+        });
+        
+        // Actualizar estado local
+        setPhotoURL(newPhotoURL);
+        
+        // Mostrar mensaje de éxito (asumiendo que success es un booleano)
+        setSuccess(true);
+      }
+    } catch (error: any) {
+      console.error('Error al actualizar foto de perfil:', error);
+      setError('Error al actualizar foto de perfil. Inténtalo de nuevo.');
+      setCompressionStatus('error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -64,6 +138,12 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ userData }) => {
 
       // Si hay un archivo nuevo, subirlo a Storage
       if (file) {
+        // Eliminar foto de perfil antigua si existe y es diferente de la URL actual
+        if (userData?.photoURL && userData.photoURL !== photoURL) {
+          await deleteImageFromStorage(userData.photoURL);
+          console.log('Foto de perfil antigua eliminada durante actualización de perfil');
+        }
+        
         const storageRef = ref(storage, `avatars/${auth.currentUser.uid}`);
         await uploadBytes(storageRef, file);
         finalPhotoURL = await getDownloadURL(storageRef);
@@ -161,13 +241,22 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ userData }) => {
                 {displayName ? displayName.charAt(0).toUpperCase() : 'U'}
               </div>
             )}
-            <input
-              type="file"
-              id="avatar"
-              accept="image/*"
-              onChange={handleFileChange}
-              className="profile-file-input"
-            />
+            <div className="profile-avatar-controls">
+              <input
+                type="file"
+                id="avatar"
+                accept="image/*"
+                onChange={handleAvatarChange}
+                className="profile-file-input"
+              />
+              <CompressionInfo 
+                status={compressionStatus}
+                originalSize={compressionData.originalSize}
+                compressedSize={compressionData.compressedSize}
+                originalFormat={compressionData.originalFormat}
+                compressionRatio={compressionData.compressionRatio}
+              />
+            </div>
           </div>
         </div>
 
