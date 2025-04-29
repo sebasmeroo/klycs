@@ -1,0 +1,19 @@
+/* Estilos específicos para Plantilla Link */
+
+/* Ocultar descripción y productos */
+.template-link .rendered-description-linktree,
+.template-link .rendered-featured-products-linktree,
+.template-link h5 /* Ocultar título "Productos Destacados" */ {
+  display: none; 
+}
+
+/* Ajustar margen superior de enlaces */
+.template-link .rendered-links-container-linktree {
+  margin-top: 1rem; 
+}
+
+/* Opcional: Hacer botones de enlace diferentes */
+.template-link .rendered-link-button-linktree {
+  /* padding: 18px 20px; */
+  /* font-weight: 700; */
+} 

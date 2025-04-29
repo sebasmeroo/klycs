@@ -1,0 +1,647 @@
+/* UserProfile.css - Estilos para la página de perfil de usuario */
+
+.user-profile-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.links-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.profile-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  width: 100%;
+}
+
+.profile-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #ffffff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  margin: 0 auto 1.5rem;
+  display: block;
+}
+
+.profile-username {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.profile-bio {
+  font-size: 1.1rem;
+  color: #666;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* Estilos para la tarjeta individual */
+.single-card {
+  background-color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  margin-bottom: 2rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.single-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.single-card-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.single-card-title {
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.single-card-description {
+  color: #666;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.single-card-content {
+  padding: 1.5rem;
+}
+
+/* Estilos para productos en la tarjeta */
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.product-card {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+}
+
+.product-image-wrapper {
+  height: 200px;
+  overflow: hidden;
+}
+
+.product-info {
+  padding: 1rem;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-title {
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+
+.product-price {
+  color: #ff5722;
+  font-weight: 700;
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.product-description {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  flex-grow: 1;
+}
+
+.product-button {
+  background-color: #ff5722;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.6rem 1.2rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+  margin-top: auto;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.product-button:hover {
+  background-color: #e64a19;
+}
+
+/* Estilos para el loader */
+.loader {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #ff5722;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Estilos responsivos */
+@media (max-width: 768px) {
+  .profile-avatar {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .profile-username {
+    font-size: 1.8rem;
+  }
+  
+  .products-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-avatar {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .profile-username {
+    font-size: 1.5rem;
+  }
+  
+  .single-card-title {
+    font-size: 1.5rem;
+  }
+  
+  .products-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Mantengo solo el wrapper para user-card-preview */
+.user-card-preview-wrapper {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+/* ---------- Ajustes específicos para vista de usuario ---------- */
+/* Mantener un margen si es necesario para separar de otros elementos de UserProfile */
+/* 
+.user-card-preview-wrapper .card-preview-container {
+  overflow: hidden !important;
+}
+.user-card-preview-wrapper .card-preview {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+  overflow: hidden !important;
+}
+*/
+
+/* Eliminar el forzado a position: static y reseteo de padding/margin */
+/* 
+.user-card-preview-wrapper .card-preview-container,
+.user-card-preview-wrapper .card-preview,
+.user-card-preview-wrapper .preview-image-container {
+  position: static !important;
+  top: auto !important;
+  left: auto !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: visible !important; 
+}
+.user-card-preview-wrapper .preview-content,
+.user-card-preview-wrapper .preview-links,
+.user-card-preview-wrapper .preview-featured-products {
+  margin: 0 !important;
+  padding: 1rem !important; 
+}
+*/
+
+/* Eliminar ajustes de position: relative y el forzado de imagen al tope */
+/*
+.user-card-preview-wrapper .card-preview {
+  position: relative !important; 
+}
+.user-card-preview-wrapper .card-preview .preview-image-container {
+  position: absolute !important; 
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 1 !important; 
+}
+*/
+
+/* Eliminar estilos específicos para el título overlay en UserProfile */
+/*
+.user-card-preview-wrapper .preview-title-overlay {
+   // estilos que causaban conflicto 
+}
+*/
+
+/* Restaurar y posicionar el botón hamburguesa en la esquina */
+.hamburger-button {
+  display: block !important;
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  background: rgba(0,0,0,0.6);
+  border: none;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 1.75rem;
+  padding: 0.5rem;
+  cursor: pointer;
+  z-index: 1100;
+  transition: background 0.2s;
+}
+.hamburger-button:hover {
+  background: rgba(0,0,0,0.8);
+}
+
+/* Quitar margen superior del contenedor de la tarjeta */
+.user-card-container {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  overflow-x: hidden;
+}
+
+/* Forzar expansión vertical de la tarjeta en vista de usuario */
+.user-card-preview-wrapper .card-preview {
+  aspect-ratio: auto !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+/* ---------- Título grande sobre la imagen en UserProfile ---------- */
+.user-card-preview-wrapper .card-preview {
+  position: relative;
+}
+.user-card-preview-wrapper .card-preview .preview-content .preview-title,
+.user-card-preview-wrapper .card-preview .preview-title {
+  position: absolute !important;
+  bottom: 1rem !important;
+  left: 1rem !important;
+  margin: 0 !important;
+  font-size: clamp(1.75rem, 6vw, 2.5rem) !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.7) !important;
+  z-index: 10 !important;
+}
+
+/* Posicionar título grande sobre la imagen */
+.user-card-preview-wrapper .card-preview h3.preview-title {
+  visibility: visible !important;
+  position: absolute !important;
+  bottom: 1rem !important;
+  left: 1rem !important;
+  margin: 0 !important;
+  font-size: 2rem !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.7) !important;
+  z-index: 20 !important;
+}
+
+/* Evitar overflow y recortar contenido que sobresalga */
+.user-card-preview-wrapper,
+.user-card-preview-wrapper .card-preview-container,
+.user-card-preview-wrapper .card-preview {
+  overflow: hidden !important;
+  border-radius: 16px !important;
+  position: static !important;
+}
+
+/* Forzar padding-top:0 para que la portada llegue al tope */
+.user-card-preview-wrapper .card-preview-container,
+.user-card-preview-wrapper .card-preview {
+  padding-top: 0 !important;
+}
+
+/* Estilos dedicados a la imagen principal en la vista de usuario */
+.user-preview-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  margin-bottom: 0;  margin-top: -10px;
+  z-index: 1;
+  position: relative;
+  top: 0;
+  left: 0;
+  padding: 0 !important;
+  overflow: visible !important;
+  margin: 0 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+  transition: all 0.3s ease !important;
+  transform: translateY(0) !important;
+  z-index: 1 !important;
+  margin-top: -10px !important;
+  margin-bottom: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  margin: 0 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+  transition: all 0.3s ease !important;
+  transform: translateY(0) !important;
+  z-index: 1 !important;
+  margin-top: -10px !important;
+  margin-bottom: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+
+}
+
+/* Override total para la imagen principal en user profile */
+.user-card-preview-wrapper .card-preview .preview-image-container {
+  position: relative !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: auto !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  margin: 0 !important;
+}
+
+/* Ajustar título overlay a la izquierda con padding y tipografía más grande */
+.user-card-preview-wrapper .preview-title-overlay {
+  left: 10% !important;
+  bottom: 20px !important;
+  font-size: clamp(3rem, 7vw, 3rem) !important;
+  transform: none !important;
+  text-align: left !important;
+  width: 70% !important;
+  white-space: normal !important;
+  word-wrap: break-word !important;
+}
+
+/* -------- Animaciones y ancho del menú hamburguesa en UserProfile -------- */
+.menu-drawer-overlay {
+  animation: fadeInOverlay 0.3s ease-in-out;
+}
+@keyframes fadeInOverlay {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.menu-drawer {
+  animation: slideIn 0.3s ease-out both;
+  width: 70vw !important;
+}
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes slideOut {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+}
+.menu-drawer.hide {
+  animation: slideOut 0.3s ease-in both;
+}
+/* Asegurar ancho 70% en móviles */
+@media (max-width: 640px) {
+  .menu-drawer {
+    width: 70vw !important;
+  }
+}
+
+/* Animaciones overlay show/hide */
+.menu-drawer-overlay.show {
+  animation: fadeInOverlay 0.3s ease-in-out forwards;
+}
+.menu-drawer-overlay.hide {
+  animation: fadeOutOverlay 0.3s ease-in-out forwards;
+}
+@keyframes fadeOutOverlay {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Animaciones drawer show/hide */
+.menu-drawer.show {
+  animation: slideIn 0.3s ease-out forwards;
+}
+.menu-drawer.hide {
+  animation: slideOut 0.3s ease-in forwards;
+}
+
+/* --- Estilos Adicionales para Apariencia Linktree --- */
+
+/* Estas reglas se han movido a /templates/*.css */
+
+/* --- Fin Eliminación --- */
+
+/* Asegurar que no queden reglas huérfanas */
+/* Limpiar .user-card-preview-wrapper si aún existe */
+.user-card-preview-wrapper {
+  display: none; 
+}
+
+/* --- Ocultar scrollbar para la página cargada en iframe --- */
+
+/* Aplicar a html y body para asegurar ocultación */
+html, body {
+  /* Firefox */
+  scrollbar-width: none;
+  /* IE and Edge */
+  -ms-overflow-style: none;
+}
+
+/* Ocultar scrollbar en Webkit (Chrome, Safari, Edge) */
+html::-webkit-scrollbar, 
+body::-webkit-scrollbar {
+  display: none;
+}
+
+/* Mantener reglas anteriores por si acaso, aunque html/body suele ser suficiente */
+.user-profile-render-container {
+  /* Firefox */
+  scrollbar-width: none;
+  /* IE and Edge */
+  -ms-overflow-style: none;
+}
+
+.user-profile-render-container::-webkit-scrollbar {
+  display: none;
+}
+
+/* --- Estilos Específicos por Plantilla --- */
+
+/* Plantilla Basic (Default - similar al actual linktree-style) */
+.template-basic .rendered-card-content-linktree {
+  /* Estilos por defecto ya aplicados por linktree-style */
+}
+.template-basic .rendered-featured-products-linktree {
+  display: flex; /* Mostrar productos si existen */
+}
+
+/* Plantilla Link (Enfocada en enlaces) */
+.template-link .rendered-description-linktree,
+.template-link .rendered-featured-products-linktree,
+.template-link h5 /* Ocultar título Productos Destacados */ {
+  display: none; /* Ocultar descripción y productos */
+}
+.template-link .rendered-links-container-linktree {
+  margin-top: 1rem; /* Menos margen superior si no hay descripción */
+}
+/* Podríamos hacer los botones de enlace más grandes o diferentes aquí */
+.template-link .rendered-link-button-linktree {
+  /* ejemplo: padding: 18px 20px; */
+  /* ejemplo: font-weight: 700; */
+}
+
+/* Plantilla Shop (Enfocada en productos) */
+.template-shop .rendered-description-linktree {
+  /* Podríamos ocultar o reducir la descripción */
+  /* display: none; */ 
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+.template-shop .rendered-links-container-linktree {
+  gap: 0.5rem; /* Enlaces más juntos */
+}
+.template-shop .rendered-link-button-linktree {
+  padding: 10px 15px; /* Enlaces más pequeños */
+  font-size: 0.9rem;
+  font-weight: 500;
+  background-color: rgba(255, 255, 255, 0.7); /* Menos opaco */
+}
+.template-shop .user-profile-render-container.linktree-style:has([style*="color: rgb(255, 255, 255)"]) .rendered-link-button-linktree {
+  background-color: rgba(0, 0, 0, 0.3); /* Más transparente en oscuro */
+}
+.template-shop .rendered-featured-products-linktree {
+  /* Hacer productos más grandes o en cuadrícula? */
+  flex-wrap: wrap; /* Permitir que bajen */
+  gap: 1rem; 
+}
+.template-shop .rendered-product-item-linktree {
+  flex-basis: calc(50% - 0.5rem); /* Dos por fila aprox */
+  flex-grow: 1;
+  min-width: 130px;
+}
+/* Podríamos añadir el storeName en algún sitio */
+.template-shop .user-profile-header::after {
+  content: attr(data-store-name); /* Requiere pasar storeName como data-attribute en UserProfile.tsx */
+  display: block;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  opacity: 0.8;
+}
+
+/* --- Estilos para el Formulario de Reserva Integrado --- */
+
+.inline-booking-container {
+  /* Espacio alrededor del contenedor del formulario inline */
+  padding: 1rem;
+  background-color: rgba(0, 0, 0, 0.1); /* Un fondo sutil opcional */
+  border-radius: 8px; /* Bordes redondeados opcionales */
+  border: 1px solid rgba(255, 255, 255, 0.1); /* Borde sutil opcional */
+}
+
+/* Estilos para el contenido del formulario cuando está inline */
+.booking-form-inline {
+  /* Eliminar padding/sombra/borde del modal original si es necesario */
+  padding: 0;
+  box-shadow: none;
+  border: none;
+  background-color: transparent; /* Hacer fondo transparente */
+  max-width: 100%; /* Ocupar ancho del contenedor */
+  color: inherit; /* Heredar color de texto del contenedor principal */
+}
+
+/* Ajustar títulos y inputs si es necesario para modo inline */
+.booking-form-inline .step-title {
+  font-size: 1rem; /* Título un poco más pequeño */
+  color: inherit; /* Heredar color */
+  margin-bottom: 1rem;
+  text-align: left; /* Alinear a la izquierda? */
+}
+
+.booking-form-inline .booking-form-group label {
+  font-size: 0.85rem; /* Etiqueta más pequeña */
+  color: inherit;
+  opacity: 0.8;
+}
+
+.booking-form-inline .booking-form-input,
+.booking-form-inline .booking-form-select {
+  /* Quizás hacer inputs un poco diferentes? O mantenerlos? */
+  /* Ejemplo: fondo más claro si el fondo general es oscuro */
+   background-color: rgba(255, 255, 255, 0.1);
+   border-color: rgba(255, 255, 255, 0.2);
+   color: inherit;
+}
+
+.booking-form-inline .booking-form-input:focus,
+.booking-form-inline .booking-form-select:focus {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-color: var(--primary-color, #FF4500); /* Usar variable si existe, si no naranja */
+  box-shadow: 0 0 0 2px rgba(255, 69, 0, 0.2);
+}
+
+/* Ajustar acciones (botones) */
+.booking-form-inline .step-actions {
+  border-top: 1px solid rgba(255, 255, 255, 0.15); /* Borde superior más sutil */
+  padding-top: 1rem;
+}
+
+/* Heredar estilos de botones definidos en BookingForm.css */
+.booking-form-inline .next-button,
+.booking-form-inline .prev-button {
+   /* Ya deberían tener estilos base, podemos ajustarlos si es necesario */
+   /* Ejemplo: hacerlos ligeramente más pequeños */
+   /* padding: 0.5rem 1rem; */
+   /* font-size: 0.9rem; */
+}
+
+/* Botón final inline (Verificar y Continuar) */
+.booking-form-inline .next-button:last-child { /* Aplicar al último botón en las acciones */
+  /* Estilo específico si queremos diferenciarlo */
+   /* background-color: #FFA500; /* Ejemplo: Naranja más claro */
+   /* border-color: #FFA500; */
+} 

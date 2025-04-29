@@ -1,0 +1,317 @@
+/* Dashboard.css - Estilos específicos para el componente Dashboard */
+
+.dashboard-container {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.dashboard-header {
+  margin-bottom: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem 0;
+}
+
+.dashboard-header h1 {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: #22223b;
+  margin-bottom: 0.5rem;
+}
+
+/* Sidebar */
+.dashboard-sidebar {
+  position: sticky;
+  top: 2rem;
+  height: fit-content;
+}
+
+.dashboard-sidebar .card {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background-color: #ffffff;
+  overflow: hidden;
+  padding: 1rem 0;
+}
+
+.dashboard-menu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.dashboard-menu-item {
+  margin-bottom: 0.25rem;
+}
+
+.dashboard-menu-button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  padding: 0.85rem 1.5rem;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #4b5563;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.dashboard-menu-button:hover {
+  background-color: #f1f5f9;
+  color: #6366f1;
+}
+
+.dashboard-menu-button.active {
+  background-color: #6366f1;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.dashboard-menu-button .icon {
+  margin-right: 0.75rem;
+  font-size: 1.2rem;
+}
+
+/* Contenido principal */
+.dashboard-content {
+  width: 100%;
+  min-height: 500px;
+}
+
+.dashboard-content .card {
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.07);
+  background-color: #ffffff;
+  overflow: hidden;
+  padding: 1.5rem;
+}
+
+.dashboard-card-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dashboard-card-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #22223b;
+  margin: 0;
+}
+
+.dashboard-card-body {
+  padding: 2rem;
+}
+
+/* Botones */
+.dashboard-button {
+  display: inline-block;
+  background-color: #6366f1;
+  color: #ffffff;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1rem;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.dashboard-button:hover {
+  background-color: #4f46e5;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 10px rgba(99, 102, 241, 0.2);
+}
+
+.dashboard-button-secondary {
+  background-color: #f1f5f9;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+}
+
+.dashboard-button-secondary:hover {
+  background-color: #e2e8f0;
+}
+
+/* Estados de carga y error */
+.loader-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  width: 100%;
+  padding: 2rem;
+}
+
+.loader-container p {
+  margin-top: 1rem;
+  color: #4b5563;
+  text-align: center;
+}
+
+.loader {
+  width: 48px;
+  height: 48px;
+  border: 5px solid #e2e8f0;
+  border-bottom-color: #6366f1;
+  border-radius: 50%;
+  animation: rotation 1s linear infinite;
+}
+
+@keyframes rotation {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.dashboard-alert {
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.dashboard-alert-error {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.dashboard-alert-success {
+  background-color: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+/* Media queries para responsive */
+@media (max-width: 768px) {
+  .dashboard-container {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-sidebar {
+    position: static;
+    margin-bottom: 2rem;
+  }
+
+  .dashboard-menu {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .dashboard-menu-item {
+    flex: 1 1 calc(50% - 0.5rem);
+  }
+
+  .dashboard-menu-button {
+    padding: 0.75rem 1rem;
+  }
+
+  .dashboard-menu-button .icon {
+    margin-right: 0.5rem;
+  }
+
+  .dashboard-card-header {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-menu-button {
+    font-size: 0.9rem;
+    padding: 0.6rem 0.75rem;
+  }
+
+  .dashboard-menu-button .icon {
+    font-size: 1rem;
+  }
+
+  .dashboard-card-body {
+    padding: 1rem;
+  }
+}
+
+/* --- Layout para Pestaña Bookings --- */
+.dashboard-bookings-layout {
+  display: flex;
+  gap: 1.5rem; /* Espacio entre columna principal y sidebar */
+  width: 100%;
+}
+
+.calendar-main-area {
+  flex-grow: 1; 
+  /* Hacer que sea una columna flex para controlar hijos */
+  display: flex;
+  flex-direction: column;
+  /* Asegurar que pueda encogerse si es necesario */
+  min-width: 0; 
+}
+
+/* Hacer que el wrapper del calendario ocupe el espacio vertical disponible */
+.booking-calendar-wrapper {
+    flex-grow: 1;
+    /* Asegurar que el calendario interno pueda usar 100% de altura */
+    position: relative; /* Necesario para que height: 100% funcione en hijos absolutos/fijos */
+    min-height: 400px; /* Altura mínima razonable */
+}
+
+.calendar-sidebar {
+  width: 300px; /* Ancho fijo para la barra lateral (ajustar) */
+  flex-shrink: 0; /* Evita que se encoja */
+  background-color: #f8f9fa; /* Un fondo ligero para diferenciarla (ajustar) */
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid #dee2e6; /* Borde sutil (ajustar) */
+  /* Asegurar que no exceda la altura si el contenido es largo */
+  max-height: 85vh; 
+  overflow-y: auto;
+}
+
+/* Ajustes para el tema oscuro si tu dashboard lo usa */
+.klycs-dashboard .calendar-sidebar { /* Ser más específico */
+  background-color: #2F3437; /* Fondo oscuro similar al calendario */
+  border: 1px solid #3F4448;
+  color: #E0E0E0;
+}
+
+.klycs-dashboard .calendar-sidebar h4 {
+    color: #FFFFFF; /* Título más claro */
+    border-bottom: 1px solid #3F4448;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+/* Eliminar padding del contenedor principal cuando la pestaña bookings está activa */
+.klycs-main-content .dashboard-content > .dashboard-bookings-layout {
+    /* Si .dashboard-content tiene padding, lo quitamos */
+    /* padding: 0; */ /* Puede que no sea necesario si el layout ya es 100% */
+}
+
+/* Asegurar que el contenedor de bookings no tenga padding extra que cause el espacio */
+.dashboard-content {
+    /* Si este tiene padding, eliminarlo o ajustarlo según necesidad */
+    /* padding: 0; */ /* Revisar si este padding global afecta */
+}
+
+/* O ser más específico para el contenido de la pestaña bookings */
+.dashboard-bookings-layout {
+    /* Asegurarse que no tenga padding/margin superior */
+    padding-top: 0;
+    margin-top: 0;
+} 

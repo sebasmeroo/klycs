@@ -1,0 +1,711 @@
+/* FullCalendarComponent.css */
+
+:root {
+  --fc-bg-color: #2F3437; /* Fondo principal */
+  --fc-border-color: #3F4448; /* Borde sutil */
+  --fc-text-color: #E0E0E0; /* Texto principal */
+  --fc-text-secondary-color: #B0B0B0; /* Texto secundario (cabeceras, números día) */
+  --fc-today-bg-color: #3a3f43; /* Fondo día actual */
+  --fc-button-bg-color: #3F4448;
+  --fc-button-hover-bg-color: #4a5054;
+  --fc-button-active-bg-color: #5f6569;
+  --fc-popover-bg-color: #282C2E; /* Ligeramente más oscuro para popover */
+  --fc-popover-border-color: #4a5054;
+  --fc-now-indicator-color: #FF4500; /* Naranja Klycs */
+
+  /* Colores de estado (usados también en popover) */
+  --status-pending-bg: rgba(96, 165, 250, 0.15);
+  --status-pending-text: #93c5fd;
+  --status-confirmed-bg: rgba(77, 222, 128, 0.15);
+  --status-confirmed-text: #86efac;
+  --status-completed-bg: rgba(163, 163, 163, 0.15);
+  --status-completed-text: #d4d4d4;
+  --status-cancelled-bg: rgba(248, 113, 113, 0.15);
+  --status-cancelled-text: #fca5a5;
+}
+
+.fullcalendar-container {
+  height: 900px;
+  width: 100%;
+  background-color: var(--fc-bg-color);
+  color: var(--fc-text-color);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--fc-border-color);
+  display: flex;
+  flex-direction: column;
+}
+
+.fullcalendar-container.loading,
+.fullcalendar-container.error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%; /* Ocupar todo el espacio del contenedor */
+  color: #888;
+}
+
+.fullcalendar-container.error p {
+  color: var(--status-cancelled-text); /* Usar color de error */
+}
+
+/* --- Estilos generales para FullCalendar --- */
+.fc {
+  flex-grow: 1;
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  border: none;
+}
+
+/* --- Toolbar (Barra de herramientas) --- */
+.fc .fc-toolbar {
+  background-color: var(--fc-bg-color);
+  padding: 12px 18px; /* Más espaciado */
+  border-bottom: 1px solid var(--fc-border-color);
+  margin-bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #FFFFFF; /* Color título - mantener blanco o usar var(--fc-text-color) */
+}
+.fc .fc-toolbar.fc-header-toolbar {
+    margin-bottom: 0;
+}
+
+.fc .fc-toolbar-title {
+  font-size: 1.2rem; /* Ligeramente más grande */
+  font-weight: 600;
+}
+
+.fc .fc-button-group {
+  display: inline-flex;
+  gap: 6px; /* Un poco más de espacio */
+}
+
+.fc .fc-button {
+  background-color: var(--fc-button-bg-color);
+  color: var(--fc-text-color);
+  border: 1px solid transparent; /* Borde transparente para mantener tamaño */
+  padding: 7px 14px; /* Ajustar padding */
+  border-radius: 5px; /* Ligeramente más redondeado */
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+  font-size: 0.9rem;
+  box-shadow: none;
+  text-transform: capitalize;
+}
+
+.fc .fc-button:hover,
+.fc .fc-button:focus {
+  background-color: var(--fc-button-hover-bg-color);
+  border-color: var(--fc-popover-border-color); /* Borde sutil al hover */
+  outline: none;
+  box-shadow: none;
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
+  background-color: var(--fc-button-active-bg-color);
+  box-shadow: none;
+  border-color: var(--fc-button-active-bg-color);
+}
+.fc .fc-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* --- Cabeceras (Días/Horas) --- */
+.fc .fc-col-header-cell {
+  background-color: var(--fc-bg-color);
+  padding: 10px 5px; /* Más padding vertical */
+  text-align: center;
+  font-weight: 500;
+  font-size: 0.8rem; /* Ligeramente más pequeño */
+  color: var(--fc-text-secondary-color);
+  border-bottom: 1px solid var(--fc-border-color);
+  border-left: none;
+  border-right: none;
+  text-transform: capitalize; /* Capitalizar días */
+}
+.fc .fc-col-header-cell a {
+    color: var(--fc-text-secondary-color);
+    text-decoration: none;
+}
+.fc .fc-col-header-cell a:hover {
+    color: var(--fc-text-color);
+}
+
+/* --- Vista Mensual --- */
+.fc .fc-daygrid-day-frame {
+    display: flex;
+    flex-direction: column;
+    min-height: 110px; /* Aumentar altura mínima si se desea */
+    position: relative; /* Para posicionar elementos si fuera necesario */
+}
+
+.fc .fc-daygrid-day-top {
+    flex-shrink: 0;
+    padding: 5px;
+    text-align: right;
+}
+
+.fc .fc-daygrid-day-events {
+    flex-grow: 1;
+    min-height: 60px; /* Ajustar según necesidad */
+    overflow-y: auto;
+    padding: 0 2px 2px 2px; /* Pequeño padding interno */
+}
+
+.fc-daygrid-day {
+      border-color: var(--fc-border-color);
+      background-color: transparent; /* Asegurar fondo transparente */
+      transition: background-color 0.2s;
+}
+/* Hover sutil sobre la celda del día */
+.fc-daygrid-day:not(.fc-day-other):hover {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.fc-daygrid-day-number {
+    padding: 0; /* Quitar padding extra, ya está en day-top */
+    color: var(--fc-text-secondary-color);
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+.fc-day-today .fc-daygrid-day-number {
+    color: var(--fc-text-color); /* Número más visible hoy */
+    font-weight: bold;
+}
+.fc-day-today {
+    background-color: var(--fc-today-bg-color) !important;
+}
+.fc-day-other .fc-daygrid-day-top {
+    opacity: 0.4; /* Días otro mes más atenuados */
+}
+.fc-daygrid-event {
+    border-radius: 4px;
+    margin: 2px 4px; /* Más margen */
+    padding: 2px 5px; /* Ajustar padding */
+    font-size: 0.8rem;
+    font-weight: 500; /* Hacer texto un poco más bold */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border: 1px solid transparent; /* Borde base */
+}
+.fc-daygrid-event:hover {
+    /* Podría añadirse un efecto hover si se desea */
+    filter: brightness(1.1);
+}
+
+.fc-daygrid-more-link {
+    color: var(--fc-text-secondary-color);
+    font-size: 0.8rem;
+    padding: 2px 5px;
+    margin-top: 3px;
+    display: inline-block;
+}
+.fc-daygrid-more-link:hover {
+    color: var(--fc-text-color);
+    text-decoration: underline;
+}
+
+/* --- Vista Semanal/Diaria --- */
+.fc-timegrid-slot {
+    border-color: var(--fc-border-color);
+    height: 2.5em; /* Aumentar ligeramente altura de slots */
+}
+.fc-timegrid-slot-label {
+    color: var(--fc-text-secondary-color);
+    font-size: 0.7rem; /* Más pequeño */
+    border-color: var(--fc-border-color);
+    padding: 0 5px;
+    vertical-align: middle;
+}
+.fc-timegrid-col.fc-day-today {
+     background-color: var(--fc-today-bg-color);
+}
+.fc-timegrid-event {
+    border-radius: 4px;
+    margin: 1px 3px; /* Ajustar margen */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2); /* Sombra sutil */
+    padding: 3px 6px; /* Ajustar padding */
+}
+.fc-timegrid-event .fc-event-main {
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+/* Línea de hora actual */
+.fc .fc-timegrid-now-indicator-line {
+    border-color: var(--fc-now-indicator-color);
+    border-width: 2px;
+    opacity: 0.8;
+}
+.fc .fc-timegrid-now-indicator-arrow {
+     border-top-color: var(--fc-now-indicator-color);
+     opacity: 0.8;
+}
+
+/* --- Eventos (Estilo General) --- */
+.fc-event {
+    /* Colores y bordes definidos por estado en JS */
+    cursor: pointer;
+    /* font-size/weight dependen de la vista (daygrid/timegrid) */
+}
+
+/* Clase para eventos cancelados (ejemplo) */
+.fc-event.event-status-cancelled {
+  opacity: 0.7; /* Un poco más visible que antes */
+  /* Se podría añadir un estilo de borde punteado */
+   /* border-style: dashed; */
+}
+
+/* Ocultar borde por defecto si usamos nuestros propios colores/bordes */
+.fc-event, .fc-event-dot {
+    /* background-color: transparent; */
+}
+.fc-event .fc-event-main {
+    color: inherit;
+}
+
+/* --- Estilos para renderizado personalizado (si se usa eventContent) --- */
+/* Se mantienen comentados por si se usan en el futuro */
+/*
+.custom-event-render {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px;
+  overflow: hidden;
+  font-size: 0.8em;
+  color: inherit; /* Heredar color texto 
+}
+.event-img-fc {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.event-details-fc {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.event-service-fc,
+.event-prof-fc {
+  font-size: 0.9em;
+  color: #ddd; 
+}
+*/ 
+
+/* --- Estilos para el Popover --- */
+.event-popover {
+  position: absolute; /* Cambiado a fixed para evitar problemas con scroll */
+  background-color: var(--fc-popover-bg-color);
+  color: var(--fc-text-color);
+  border: 1px solid var(--fc-popover-border-color);
+  border-radius: 6px; /* Un poco menos redondeado que el contenedor */
+  padding: 10px 14px; /* Ajustar padding */
+  font-size: 0.875rem; /* Tamaño base 14px */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); /* Sombra más definida */
+  z-index: 1050; /* Asegurar que esté por encima de FullCalendar */
+  white-space: nowrap;
+  pointer-events: none; /* El popover en sí no captura eventos */
+  transition: opacity 0.15s ease-in-out; /* Transición suave */
+  opacity: 0; /* Empezar oculto para transición */
+  visibility: hidden; /* Ocultar hasta que se posicione */
+}
+
+/* Mostrar popover cuando tiene la clase 'show' (se añadirá en JS) */
+.event-popover.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Triángulo/Flecha del Popover (apuntando hacia arriba) */
+.event-popover::before {
+    content: '';
+    position: absolute;
+    bottom: -6px; /* Posicionar fuera del borde inferior */
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: var(--fc-popover-bg-color) transparent transparent transparent;
+    /* Sombra para el triángulo */
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.3));
+}
+/* Borde del triángulo */
+.event-popover::after {
+    content: '';
+    position: absolute;
+    bottom: -7px; /* 1px más abajo que el triángulo principal */
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 7px;
+    border-style: solid;
+    border-color: var(--fc-popover-border-color) transparent transparent transparent;
+    z-index: -1; /* Detrás del triángulo principal */
+}
+
+.event-popover-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px; /* Espacio entre líneas */
+}
+
+.event-popover-content strong {
+  color: #ffffff;
+  font-weight: 600;
+  margin-bottom: 2px;
+  font-size: 0.95rem; /* Ligeramente más grande */
+}
+
+.event-popover-content div {
+  margin-bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px; /* Aumentar gap */
+  color: var(--fc-text-secondary-color); /* Texto secundario por defecto */
+}
+.event-popover-content div > span:first-child { /* Etiqueta (ej: "Servicio:") */
+    /* font-weight: 500; */ /* Opcional: resaltar etiqueta */
+    /* color: var(--fc-text-color); */
+}
+
+/* Ajustar estilos de estado */
+.event-popover-content .status-label {
+    margin-right: 5px; /* Espacio antes del estado */
+    color: var(--fc-text-secondary-color);
+}
+.event-popover-content .status-indicator {
+    font-weight: 500; /* Un poco más de peso */
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.75rem; /* Más pequeño */
+    display: inline-block;
+    line-height: 1.2; /* Mejor alineación vertical */
+    text-transform: capitalize;
+}
+
+.event-popover-content .status-pending {
+  background-color: var(--status-pending-bg);
+  color: var(--status-pending-text);
+}
+.event-popover-content .status-confirmed {
+  background-color: var(--status-confirmed-bg);
+  color: var(--status-confirmed-text);
+}
+.event-popover-content .status-completed {
+  background-color: var(--status-completed-bg);
+  color: var(--status-completed-text);
+}
+.event-popover-content .status-cancelled {
+  background-color: var(--status-cancelled-bg);
+  color: var(--status-cancelled-text);
+  text-decoration: none; /* Quitar tachado si no se desea */
+}
+
+/* Contenedor para imagen y texto en popover */
+.popover-prof-info {
+    display: flex;
+    align-items: center;
+    gap: 7px; /* Un poco más de gap */
+    margin-top: 4px; /* Espacio superior */
+}
+.popover-prof-info span { /* Nombre del profesional */
+    color: var(--fc-text-color); /* Resaltar nombre */
+    font-weight: 500;
+}
+
+.popover-prof-img {
+    width: 22px; /* Ligeramente más grande */
+    height: 22px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--fc-border-color); /* Borde sutil a la imagen */
+}
+
+/* --- Estilos para el Modal/Panel Lateral de Detalles --- */
+
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6); /* Fondo oscuro semi-transparente */
+    z-index: 1040; /* Debajo del modal pero encima del resto */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.modal-backdrop.open { /* Asumiendo que se añade/quita la clase open */
+    opacity: 1;
+    visibility: visible;
+}
+
+.booking-details-modal {
+    position: fixed;
+    top: 0;
+    right: -450px; /* Empezar fuera de la pantalla (nuevo ancho) */
+    width: 450px; /* Hacerlo un poco más ancho */
+    height: 100%;
+    background-color: var(--fc-bg-color); /* Usar el fondo principal más oscuro */
+    color: var(--fc-text-color);
+    border-left: 1px solid var(--fc-border-color); /* Usar borde estándar */
+    box-shadow: -6px 0 20px rgba(0, 0, 0, 0.35); /* Sombra un poco más suave y difusa */
+    z-index: 1050;
+    display: flex;
+    flex-direction: column;
+    transition: right 0.35s cubic-bezier(0.25, 0.8, 0.25, 1); /* Transición más suave */
+}
+
+.booking-details-modal.open {
+    right: 0; /* Deslizar hacia adentro */
+    background-color: var(--fc-bg-color);
+    flex-shrink: 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Sombra sutil bajo la cabecera */
+    z-index: 10; /* Para la sombra */
+}
+
+.booking-details-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 25px; /* Aumentar padding */
+    border-bottom: 1px solid var(--fc-border-color);
+    background-color: var(--fc-bg-color); /* Mantener fondo principal */
+    flex-shrink: 0; /* Evitar que la cabecera se encoja */
+}
+
+.booking-details-header h3 {
+    margin: 0;
+    font-size: 1.2rem; /* Título un poco más grande */
+    font-weight: 600;
+    color: var(--fc-text-color);
+    border-color: var(--fc-popover-border-color);
+}
+
+.booking-details-header .close-button {
+    background: rgba(255, 255, 255, 0.05); /* Fondo sutil para el botón */
+    border: 1px solid var(--fc-border-color);
+    border-radius: 50%; /* Botón redondo */
+    color: var(--fc-text-secondary-color);
+    font-size: 1.2rem; /* Ajustar tamaño icono/X */
+    line-height: 1;
+    cursor: pointer;
+    width: 32px; /* Tamaño fijo */
+    height: 32px; /* Tamaño fijo */
+    display: flex; /* Centrar la X */
+    align-items: center; /* Centrar la X */
+    justify-content: center; /* Centrar la X */
+    padding: 0;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.booking-details-header .close-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--fc-text-color);
+    border-color: var(--fc-popover-border-color); /* Borde más claro al hover */
+}
+
+.booking-details-content {
+    padding: 20px 25px; /* Ajustar padding */
+    overflow-y: auto;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Reducir gap general, se controlará en bloques */
+}
+
+/* Estilo base para cada bloque de información */
+.detail-block {
+    background-color: rgba(255, 255, 255, 0.03); /* Fondo muy sutil para cada bloque */
+    border: 1px solid var(--fc-border-color);
+    border-radius: 6px; /* Bordes redondeados */
+    padding: 15px 18px; /* Padding interno del bloque */
+    /* Quitar border-bottom, ahora los bloques están separados por fondo/borde */
+}
+
+.detail-block p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--fc-text-secondary-color);
+    display: flex; /* Alinear etiqueta y valor */
+    align-items: center;
+    gap: 8px; /* Espacio entre etiqueta y valor */
+}
+
+.detail-block strong {
+    color: var(--fc-text-secondary-color); /* Etiqueta más sutil */
+    font-weight: 400; /* Peso normal */
+    margin-right: 0; /* Quitar margen, usar gap en <p> */
+    display: inline-block;
+    min-width: 90px; /* Mantener ancho mínimo para alinear */
+    flex-shrink: 0; /* Evitar que se encoja */
+    /* Añadir dos puntos y espacio si no se usan iconos */
+    /* &::after { content: ': '; } */
+}
+
+/* Valor del detalle */
+.detail-block p span:not(.status-indicator):not(.prof-name-span) {
+    color: var(--fc-text-color); /* Valor más prominente */
+    font-weight: 500;
+    word-break: break-word; /* Evitar desbordamiento */
+}
+
+/* Ajustes específicos para algunos bloques */
+.modal-prof-info {
+    /* Hereda estilos de .detail-block */
+    padding: 15px 18px;
+}
+.modal-prof-info p {
+    /* La etiqueta 'Profesional:' se maneja como los demás */
+}
+.modal-prof-info strong {
+    /* Hereda estilos */
+}
+
+.modal-prof-info .prof-details {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px; /* Espacio después de la etiqueta 'Profesional:' */
+    padding-left: 10px; /* Indentación */
+    border-left: 2px solid var(--fc-button-active-bg-color); /* Línea decorativa */
+}
+
+.modal-prof-img {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: none; /* Quitar borde extra */
+}
+
+.modal-prof-info .prof-details span.prof-name-span { /* Añadir clase en TSX si es necesario */
+    color: var(--fc-text-color);
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+/* Ajuste para el bloque de estado */
+.status-info p {
+   /* Hereda estilos */
+}
+
+/* Reutilizar y refinar estilos de indicador de estado (Pill/Badge) */
+.booking-details-content .status-indicator {
+    font-weight: 500;
+    padding: 4px 10px; /* Más padding para forma de píldora */
+    border-radius: 12px; /* Más redondeado */
+    font-size: 0.75rem; /* Letra un poco más pequeña */
+    display: inline-flex; /* Alinear mejor el texto */
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    text-transform: capitalize;
+    /* Usar fondos más sólidos para contraste */
+}
+
+.booking-details-content .status-pending {
+  background-color: var(--status-pending-text); /* Usar color de texto como fondo */
+  color: #0a1d36; /* Texto oscuro */
+}
+.booking-details-content .status-confirmed {
+  background-color: var(--status-confirmed-text);
+  color: #042f16;
+}
+.booking-details-content .status-completed {
+  background-color: var(--status-completed-text);
+  color: #1f2937; /* Gris oscuro */
+}
+.booking-details-content .status-cancelled {
+  background-color: var(--status-cancelled-text);
+  color: #450a0a;
+}
+
+/* Placeholder para acciones futuras */
+.booking-details-actions {
+    padding: 15px 25px;
+    border-top: 1px solid var(--fc-border-color);
+    background-color: var(--fc-bg-color);
+    flex-shrink: 0;
+    display: flex;
+    justify-content: flex-end; /* Botones a la derecha */
+    gap: 10px;
+}
+
+.booking-details-actions button {
+    /* Estilo base para botones de acción */
+    padding: 8px 15px;
+    border-radius: 5px;
+    border: 1px solid var(--fc-button-bg-color);
+    background-color: var(--fc-button-bg-color);
+    color: var(--fc-text-color);
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+.booking-details-actions button:hover {
+    background-color: var(--fc-button-hover-bg-color);
+    border-color: var(--fc-popover-border-color);
+}
+/* Estilo para botón primario (ej. Guardar, Confirmar) */
+.booking-details-actions button.primary {
+    background-color: var(--fc-button-active-bg-color); /* Color más destacado */
+    border-color: var(--fc-button-active-bg-color);
+}
+.booking-details-actions button.primary:hover {
+    background-color: hsl(from var(--fc-button-active-bg-color) h s l / 0.8);
+    border-color: hsl(from var(--fc-button-active-bg-color) h s l / 0.8);
+}
+/* Estilo para botón secundario/peligroso (ej. Cancelar) */
+.booking-details-actions button.danger {
+    background-color: transparent;
+    border-color: var(--status-cancelled-text);
+    color: var(--status-cancelled-text);
+}
+.booking-details-actions button.danger:hover {
+    background-color: var(--status-cancelled-bg);
+    border-color: var(--status-cancelled-text);
+    color: var(--status-cancelled-text);
+}
+
+/* --- Estilos para el botón de filtro personalizado --- */
+.fc-professionalFilterButton-button .fc-icon {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='%23e0e0e0' d='M3.853 54.87C10.47 40.9 24.54 32 40 32H472c15.46 0 29.53 8.9 36.15 22.87C515.6 68.09 515.9 84.23 508.1 96.71L322 420.8V464c0 8.84-7.16 16-16 16h-64c-8.84 0-16-7.16-16-16v-43.2L4.042 96.71C-3.748 84.23-3.424 68.09 3.853 54.87z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-size: contain;
+  vertical-align: middle;
+}
+
+/* Cambiar apariencia si el filtro está activo (opcional) */
+.fc-professionalFilterButton-button.fc-button-active .fc-icon {
+   filter: brightness(1.2); /* Hacer el icono un poco más brillante */
+   /* O podrías cambiar el color de fondo del botón 
+   background-color: var(--fc-button-active-bg-color) !important; 
+   */
+}
+
+/* Estilo para el texto que aparece junto al icono (nombre del profesional filtrado) */
+.fc-professionalFilterButton-button .fc-button-text {
+  margin-left: 0.5em; /* Espacio entre icono y texto */
+  font-size: 0.8em; /* Texto más pequeño */
+  font-style: italic;
+  color: #aaaaaa; /* Color grisáceo */
+  vertical-align: middle;
+}
+
+.fc-professionalFilterButton-button.fc-button-active .fc-button-text {
+    color: #ffffff; /* Texto blanco si está activo */
+    font-style: normal;
+} 

@@ -1,0 +1,244 @@
+/* ProductSelector.css - estilos específicos para el selector de productos */
+
+.product-selector-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.product-selector-modal {
+  background: #ffffff;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+  color: #0f172a;
+}
+
+/* Filtros */
+.product-selector-filters {
+  display: flex;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  gap: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.search-container {
+  position: relative;
+  flex: 1;
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.5rem 2.5rem 0.5rem 2.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  background: #ffffff;
+  color: #334155;
+}
+
+.search-input::placeholder {
+  color: #64748b;
+}
+
+.clear-search {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #64748b;
+}
+
+/* Dropdown de filtros */
+.filters-dropdown {
+  position: relative;
+}
+
+.filter-button {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 1rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #334155;
+}
+
+.filter-options {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  padding: 1rem;
+  display: none;
+  z-index: 1001;
+}
+
+.filters-dropdown.open .filter-options {
+  display: block;
+}
+
+.filter-option {
+  margin-bottom: 1rem;
+}
+
+.filter-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.filter-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.filter-state-btn {
+  padding: 0.25rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  cursor: pointer;
+  background: #ffffff;
+  font-size: 0.85rem;
+}
+
+.filter-state-btn.active {
+  background: #6366f1;
+  color: #ffffff;
+  border-color: #6366f1;
+}
+
+.sort-select {
+  width: 100%;
+  padding: 0.5rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+/* Contenido de productos */
+.product-selector-content {
+  padding: 1rem 1.5rem;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.products-count {
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+  color: #334155;
+}
+
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px,1fr));
+  gap: 1rem;
+}
+
+/* Botones de producto */
+.product-buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: auto;
+  color: inherit;
+}
+
+.add-product-button,
+.remove-product-button {
+  flex: 1;
+}
+
+/* Pie de modal */
+.product-selector-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+}
+
+/* Hacer clicable toda la tarjeta */
+.product-card {
+  cursor: pointer;
+  position: relative;
+}
+
+/* Estilos para tarjeta inactiva */
+.product-card.product-inactive {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Bloquear interacciones en tarjeta inactiva */
+.product-card.product-inactive * {
+  cursor: not-allowed;
+}
+
+/* Asegurar que botones y enlaces internos sigan siendo clicables */
+.product-card .add-product-button,
+.product-card .remove-product-button,
+.product-card .view-product-button {
+  cursor: pointer;
+}
+
+/* Ajuste de hover para mayor feedback */
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+}
+
+/* Indicador de selección */
+.product-card.product-selected {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99,102,241,0.4);
+}
+
+.product-card.product-selected::after {
+  content: "✓";
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #6366f1;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: bold;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+} 

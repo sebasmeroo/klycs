@@ -1,0 +1,8 @@
+/* Estilos específicos para Plantilla Basic */
+
+/* Hereda la mayoría de CommonTemplate.css */
+
+/* Asegurar que se muestren los productos si existen */
+.template-basic .rendered-featured-products-linktree {
+  display: flex; 
+} 

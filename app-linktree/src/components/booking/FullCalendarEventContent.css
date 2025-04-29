@@ -1,0 +1,139 @@
+/* FullCalendarEventContent.css */
+
+/* --- Estilos para el CONTENEDOR del evento --- */
+/* Aplicamos estilos directamente al contenedor del evento generado por FullCalendar */
+/* NOTA: Esto afectará a TODO el evento, incluido el fondo y borde que ya definimos por estado */
+.fc-daygrid-event,
+.fc-timegrid-event {
+  border-radius: 6px !important; /* Bordes redondeados como en la imagen */
+  border: none !important; /* Quitamos el borde por estado si usamos barra */
+  padding: 0 !important; /* Quitamos padding por defecto */
+  /* overflow: hidden; */ /* Quitado de nuevo */
+  /* El background-color lo seguimos definiendo en JS basado en el estado (color tenue) */
+}
+
+/* --- Estilos para el CONTENIDO INTERNO personalizado --- */
+/* Quitamos '.fc-event .fc-event-main-frame' para aplicar directamente al contenido */
+.custom-styled-event-content {
+  display: flex;
+  align-items: stretch; 
+  /* height: 100%; */ /* Quitado de nuevo */
+  gap: 7px; /* Espacio entre barra y detalles */
+  font-size: 0.78rem; /* Ajustar tamaño base si es necesario */
+  line-height: 1.35;
+  color: inherit; 
+  /* Añadir padding general interno */
+  padding: 5px 6px;
+}
+
+/* Barra vertical coloreada */
+.custom-styled-event-content .event-status-bar {
+  width: 3px; /* Más delgada */
+  flex-shrink: 0; 
+  border-radius: 3px; 
+}
+
+/* Contenedor para el texto y avatares */
+.custom-styled-event-content .event-details-container {
+  display: flex;
+  flex-direction: column;
+  /* No usar space-between, controlar márgenes */
+  flex-grow: 1;
+  overflow: hidden; 
+  gap: 3px; /* Espacio vertical entre texto y avatares */
+}
+
+/* Contenedor para Título y Subtítulo */
+.event-details-container .event-text-info {
+   /* Quitar margen inferior, usar gap en contenedor padre */
+}
+
+/* Título del evento */
+.event-details-container .event-title {
+  font-weight: 500; /* Un poco menos bold */
+  display: block; 
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #e0e0e0; /* Ligeramente menos blanco que #fff */
+  font-size: 0.95em; /* Relativo al base */
+  margin-bottom: 0; /* Quitar margen */
+}
+
+/* Subtítulo */
+.event-details-container .event-subtitle {
+  font-size: 0.85em; 
+  color: #888a8f; /* Tono gris de la imagen */
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Contenedor para los avatares y "+X" */
+/* Asegúrate que la clase aquí es la que usas en el JSX */
+.event-details-container .event-participants { 
+  display: flex;
+  align-items: center;
+  /* margin-top: auto; */ /* Quitado temporalmente */
+}
+
+/* Estilo para cada avatar individual */
+.event-participants .event-avatar {
+  width: 16px; /* Más pequeño */
+  height: 16px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1px solid #3F4448; /* Borde oscuro sutil */
+  margin-left: -5px; /* Superponer un poco más */
+  background-color: #5f6569; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem; 
+  color: #fff;
+  box-shadow: 0 0 0 1px #282C2E; /* Simular separación con el fondo */
+}
+.event-participants .event-avatar:first-child {
+  margin-left: 0; 
+}
+
+.event-participants .event-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Estilo para el indicador "+X" */
+.event-participants .event-more-indicator {
+  width: 17px; /* Ligeramente diferente tamaño/padding */
+  height: 17px;
+  padding-bottom: 1px; /* Ajuste vertical texto */
+  border-radius: 4px; /* Ligeramente cuadrado */
+  background-color: #3f4448; /* Gris más oscuro */
+  color: #b0b0b0; /* Texto gris */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 500;
+  margin-left: 3px; /* Espacio antes del +X */
+  /* Quitar borde y superposición para este */
+}
+
+/* Quitar hover/focus por defecto si interfiere */
+.fc-daygrid-event:hover,
+.fc-timegrid-event:hover {
+  /* Podrías añadir un brillo sutil o nada */
+  filter: brightness(1.1);
+}
+
+/* Ajustes específicos para vista de mes (dayGrid) */
+.fc-daygrid-event .custom-styled-event-content {
+    /* Asegurar que flex funcione bien */
+}
+
+/* Ajustes específicos para vista de tiempo (timeGrid) */
+.fc-timegrid-event .custom-styled-event-content {
+    /* Podrían necesitarse ajustes si el diseño se rompe en esta vista */
+} 

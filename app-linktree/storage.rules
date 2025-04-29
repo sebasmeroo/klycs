@@ -1,0 +1,48 @@
+rules_version = '2';
+
+// Craft rules based on data in your Firestore database
+// allow write: if firestore.get(
+//    /databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin;
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Permitir acceso a imágenes de avatar a cualquiera
+    match /avatars/{userId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Permitir acceso a imágenes de productos a cualquiera
+    match /products/{userId}/{productId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Permitir acceso a imágenes de productos a cualquiera (antigua ruta)
+    match /products/{userId}/{productId}/image {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Permitir acceso a imágenes de tarjetas a cualquiera
+    match /cards/{userId}/{imageId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Permitir acceso a archivos digitales solo a compradores
+    match /products/{userId}/{productId}/file {
+      allow read: if request.auth != null && resource.metadata.buyerId == request.auth.uid;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // --- NUEVA REGLA PARA IMÁGENES DE PROFESIONALES ---
+    match /users/{userId}/professionals/{fileName} {
+      // Permitir leer a cualquiera (si quieres mostrar las imágenes públicamente)
+      allow read: if true; 
+      // Permitir escribir (subir, borrar) solo si el usuario está autenticado
+      // y su ID coincide con el {userId} de la ruta.
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    // --- FIN NUEVA REGLA ---
+  }
+}

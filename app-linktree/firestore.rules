@@ -1,0 +1,161 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Permitir a cualquiera leer documentos de usuarios (para la visualización pública de perfiles)
+    // Pero solo el propietario puede crear o actualizar sus datos
+    match /users/{userId} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null && request.auth.uid == userId;
+      
+      // Añadir reglas específicas para los productos dentro del documento del usuario
+      match /products/{productId} {
+        allow read: if true;
+        allow create, update, delete: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // --- REGLA PROFESIONALES CORREGIDA PARA LECTURA PÚBLICA ---
+      match /professionals/{professionalId} {
+        // CUALQUIERA puede LEER (get) y LISTAR (list) la colección de profesionales
+        allow get, list: if true;
+        // Solo el dueño puede escribir (crear, actualizar, borrar)
+        allow create, update, delete: if request.auth != null && request.auth.uid == userId;
+      }
+      // --- FIN REGLA PROFESIONALES ---
+
+      // --- REGLA BOOKINGS MOVIDA Y CORREGIDA DENTRO DE USER ---
+      match /bookings/{bookingId} {
+         // El dueño del negocio (userId) puede leer/actualizar/borrar las reservas hechas para él.
+         allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+         // Cualquiera autenticado puede crear una reserva para este usuario.
+         // IMPORTANTE: Quien crea la reserva (request.auth.uid) debe estar autenticado,
+         // y la reserva se guarda bajo el dueño del negocio (userId).
+         // Podrías añadir validación extra: request.auth.uid != userId (el dueño no se auto-reserva)
+         // O validar que los campos necesarios (customerEmail, etc.) existen en request.resource.data
+         allow create: if request.auth != null;
+      }
+      // --- FIN REGLA BOOKINGS --- 
+
+      // --- REGLA AÑADIDA PARA CHECKOUT SESSIONS ---
+      // Permitir al usuario autenticado crear documentos en su propia subcolección checkout_sessions
+      // La extensión de Stripe necesitará permisos adicionales (leer/escribir) que ella misma gestiona con sus propias credenciales.
+      match /checkout_sessions/{sessionId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+        // allow create: if request.auth != null && request.auth.uid == userId;
+        // allow read, update: if request.auth != null && request.auth.uid == userId; // Permitir lectura/update para onSnapshot
+      }
+      // --- FIN REGLA CHECKOUT SESSIONS ---
+    }
+    
+    // Permitir a cualquiera leer perfiles públicos a través de username
+    match /usernames/{username} {
+      allow read: if true;
+      allow create, update: if request.auth != null && 
+                            request.resource.data.uid == request.auth.uid;
+    }
+    
+    // Reglas para tarjetas
+    match /cards/{cardId} {
+      // Permitir lectura pública para visualización
+      allow read: if true;
+      
+      // Solo el propietario puede crear. Asegura que el userId en el doc nuevo es el del creador.
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      
+      // Arreglamos la regla para permitir actualizaciones incluso si el documento no existe en la colección cards
+      // o si el usuario es dueño de la tarjeta en sus datos personales
+      allow update, delete: if request.auth != null && 
+                           (
+                            // Si no existe el documento, permitir la actualización (esto cubre el caso de actualización inicial)
+                            resource == null || 
+                            // Si existe, verificar si el usuario es el dueño
+                            resource.data.userId == request.auth.uid ||
+                            // O está en la lista de propietarios
+                            (resource.data.owners != null && request.auth.uid in resource.data.owners) || 
+                            // O verificar si la tarjeta está en el array de tarjetas del usuario
+                            exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+                            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.cards != null &&
+                            cardId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.cards
+                           );
+
+      // --- REGLA AÑADIDA PARA bookingSettings DENTRO DE LA TARJETA ---
+      match /bookingSettings/{settingsDocId} { // settingsDocId será normalmente 'settings'
+        // CUALQUIERA puede LEER la configuración de reservas (necesario para el formulario)
+        allow read: if true;
+        // Solo el dueño de la tarjeta puede ESCRIBIR la configuración
+        // Usamos get() para acceder a los datos de la tarjeta padre (cardId) para verificar el dueño
+        allow create, update, delete: if request.auth != null &&
+                                    get(/databases/$(database)/documents/cards/$(cardId)).data.userId == request.auth.uid;
+                                    // Podrías añadir la lógica de 'owners' aquí también si aplica
+      }
+      // --- FIN REGLA bookingSettings ---
+    }
+    
+    // Permitir lectura de datos de ventas solo al vendedor y comprador
+    match /sales/{saleId} {
+      allow read: if request.auth != null && 
+                  (request.auth.uid == resource.data.sellerId || 
+                   request.auth.uid == resource.data.buyerId);
+    }
+    
+    // Reglas para descargas
+    match /downloads/{downloadId} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.buyerId;
+    }
+    
+    // Reglas para vistas de perfil, clics de enlaces y vistas de productos (analíticas)
+    match /profileViews/{viewId} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.profileId;
+      allow create: if true;
+    }
+    
+    match /linkClicks/{clickId} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.profileId;
+      allow create: if true;
+    }
+    
+    match /productViews/{viewId} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.profileId;
+      allow create: if true;
+    }
+
+    match /users/{userId}/bookings/{bookingId} {
+      // El dueño del negocio (userId) puede leer/actualizar/borrar...
+      allow read: if request.auth != null && request.auth.uid == userId;
+      // ...
+    }
+
+    // --- REGLAS PARA LA ESTRUCTURA ESPERADA POR LA EXTENSIÓN STRIPE ---
+    match /customers/{uid} {
+      // Permitir al usuario leer sus propios datos de cliente Stripe
+      allow read: if request.auth != null && request.auth.uid == uid;
+
+      // Permitir al usuario crear/leer/escribir en su subcolección checkout_sessions
+      match /checkout_sessions/{id} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+      // Permitir al usuario leer sus suscripciones (escritas por la extensión)
+      match /subscriptions/{id} {
+        allow read: if request.auth != null && request.auth.uid == uid;
+      }
+      // Permitir al usuario leer sus pagos (escritos por la extensión)
+      match /payments/{id} {
+        allow read: if request.auth != null && request.auth.uid == uid;
+      }
+    }
+
+    // Permitir lectura pública de productos y precios sincronizados desde Stripe
+    match /products/{id} { // Productos sincronizados por la extensión
+      allow read: if true;
+
+      match /prices/{id} {
+        allow read: if true;
+      }
+
+      match /tax_rates/{id} { // Si usas Stripe Tax
+        allow read: if true;
+      }
+    }
+    // --- FIN REGLAS EXTENSIÓN STRIPE ---
+  }
+}

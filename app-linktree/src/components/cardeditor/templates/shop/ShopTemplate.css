@@ -1,0 +1,44 @@
+/* Estilos específicos para Plantilla Shop */
+
+/* Estilo descripción */
+.template-shop .rendered-description-linktree {
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+/* Estilo contenedor enlaces */
+.template-shop .rendered-links-container-linktree {
+  gap: 0.5rem; 
+}
+
+/* Estilo botones enlace */
+.template-shop .rendered-link-button-linktree {
+  padding: 10px 15px; 
+  font-size: 0.9rem;
+  font-weight: 500;
+  background-color: rgba(255, 255, 255, 0.7); 
+}
+.template-shop .user-profile-render-container.linktree-style:has([style*="color: rgb(255, 255, 255)"]) .rendered-link-button-linktree {
+  background-color: rgba(0, 0, 0, 0.3); 
+}
+
+/* Estilo productos */
+.template-shop .rendered-featured-products-linktree {
+  flex-wrap: wrap; 
+  gap: 1rem; 
+}
+
+.template-shop .rendered-product-item-linktree {
+  flex-basis: calc(50% - 0.5rem); 
+  flex-grow: 1;
+  min-width: 130px;
+}
+
+/* Mostrar Store Name (requiere data-attribute en UserProfile.tsx) */
+.template-shop .user-profile-header::after {
+  content: attr(data-store-name);
+  display: block;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  opacity: 0.8;
+} 

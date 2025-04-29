@@ -1,0 +1,161 @@
+/* CommonTemplate.css - Estilos comunes base para plantillas Linktree-like */
+
+/* Contenedor principal con fondo */
+.user-profile-render-container.linktree-style {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+/* Cabecera del perfil (avatar, nombre, bio) */
+.user-profile-header {
+  margin-bottom: 2rem !important;
+}
+
+.profile-avatar {
+  width: 96px;
+  height: 96px;
+  margin-bottom: 1rem !important;
+  border-radius: 50%; /* Asegurar redondeo */
+  object-fit: cover; /* Asegurar buen ajuste */
+  border-width: 2px;
+  border-style: solid; /* Añadir por si falta */
+  border-color: rgba(255, 255, 255, 0.5); /* Borde claro por defecto */
+  box-shadow: none;
+}
+
+/* Modo oscuro para borde avatar */
+.user-profile-render-container.linktree-style:not(:has([style*="color: rgb(255, 255, 255)"])) .profile-avatar {
+  border-color: rgba(0, 0, 0, 0.2); /* Borde oscuro en fondo claro */
+}
+
+
+.profile-avatar-placeholder {
+  width: 96px;
+  height: 96px;
+  font-size: 2.5rem;
+  border-radius: 50%;
+  background-color: rgba(128, 128, 128, 0.2);
+  color: inherit; 
+  display: flex; /* Necesario para centrar */
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-display-name {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.profile-bio-text {
+  font-size: 0.95rem;
+  opacity: 0.9;
+  line-height: 1.5;
+}
+
+/* Contenedor del contenido de la tarjeta */
+.rendered-card-content-linktree {
+  width: 100%;
+}
+
+/* Descripción de la tarjeta */
+.rendered-description-linktree {
+  font-size: 0.9rem;
+  opacity: 0.85;
+  text-align: center; /* Centrar descripción */
+  margin-bottom: 1.5rem; /* Espacio debajo */
+}
+
+/* Contenedor de enlaces */
+.rendered-links-container-linktree {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; 
+}
+
+/* Botones de enlace */
+.rendered-link-button-linktree {
+  display: block; 
+  width: 100%;
+  padding: 14px 20px; 
+  background-color: rgba(255, 255, 255, 0.9); 
+  color: #333333; 
+  border: 1px solid transparent; 
+  border-radius: 8px; 
+  text-align: center;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  word-wrap: break-word;
+}
+
+.rendered-link-button-linktree:hover {
+  background-color: rgba(255, 255, 255, 1); 
+  transform: scale(1.02); 
+  color: #111;
+}
+
+/* Estilos modo oscuro para botones de enlace */
+.user-profile-render-container.linktree-style[style*="color: rgb(255, 255, 255)"] .rendered-link-button-linktree {
+  background-color: rgba(0, 0, 0, 0.4); 
+  color: #ffffff; 
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.user-profile-render-container.linktree-style[style*="color: rgb(255, 255, 255)"] .rendered-link-button-linktree:hover {
+  background-color: rgba(0, 0, 0, 0.6); 
+  color: #ffffff;
+}
+
+/* Productos destacados */
+.rendered-featured-products-linktree {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto; 
+  padding-bottom: 1rem; 
+  /* Quitar justify-content para que empiecen a la izquierda por defecto */
+  /* justify-content: center; */ 
+  margin-left: -5px; /* Compensar padding del item */
+  margin-right: -5px;
+}
+
+.rendered-product-item-linktree {
+  flex: 0 0 120px; 
+  background: rgba(255, 255, 255, 0.1); 
+  border-radius: 8px;
+  overflow: hidden;
+  text-align: center;
+  color: inherit; 
+  padding: 5px; /* Añadir padding interno */
+}
+/* Modo oscuro para fondo producto */
+.user-profile-render-container.linktree-style:not(:has([style*="color: rgb(255, 255, 255)"])) .rendered-product-item-linktree {
+   background: rgba(0, 0, 0, 0.05);
+}
+
+.rendered-product-item-linktree img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 4px; /* Redondear imagen */
+}
+
+.rendered-product-info { 
+  padding: 0.5rem 0 0 0; /* Solo padding superior */
+}
+
+.rendered-product-title {
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-bottom: 0.2rem;
+  line-height: 1.2;
+  height: 2.4em; /* Limitar a 2 líneas aprox */
+  overflow: hidden;
+}
+
+.rendered-product-price {
+  font-size: 0.85rem;
+  font-weight: 600;
+} 

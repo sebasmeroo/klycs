@@ -1,0 +1,104 @@
+.pricing-section {
+  padding: 40px 20px;
+  text-align: center;
+  background-color: #f9f9f9; /* Fondo ligeramente gris */
+}
+
+.pricing-title {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.pricing-subtitle {
+  font-size: 1.1rem;
+  margin-bottom: 40px;
+  color: #666;
+}
+
+.pricing-container {
+  display: flex;
+  flex-wrap: wrap; /* Para que se ajusten en pantallas pequeñas */
+  justify-content: center;
+  gap: 30px; /* Espacio entre tarjetas */
+}
+
+.pricing-card {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 30px;
+  width: 300px; /* Ancho fijo o usar flex-basis */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.pricing-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.pricing-card h3 {
+  font-size: 1.8rem;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.pricing-card .price {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #007bff; /* Color primario */
+  margin-bottom: 25px;
+}
+
+.pricing-card ul {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 30px;
+  text-align: left;
+  flex-grow: 1; /* Empuja el botón hacia abajo */
+}
+
+.pricing-card ul li {
+  margin-bottom: 10px;
+  color: #555;
+  position: relative;
+  padding-left: 25px;
+}
+
+/* Opcional: Añadir icono de check */
+.pricing-card ul li::before {
+  content: '\2713'; /* Código de check mark */
+  color: #28a745; /* Verde */
+  font-weight: bold;
+  position: absolute;
+  left: 0;
+}
+
+.pricing-card button {
+  margin-top: auto; /* Empuja el botón al final si el contenido varía */
+  padding: 12px 20px;
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+/* Estilo específico para resaltar el plan actual */
+.pricing-card.current {
+  border-color: #007bff; /* Borde de color primario */
+  box-shadow: 0 8px 20px rgba(0, 123, 255, 0.2); /* Sombra más pronunciada */
+}
+
+.pricing-card.current h3 {
+    color: #007bff;
+}
+
+/* Estilos para botón deshabilitado */
+.pricing-card button:disabled {
+  background-color: #ccc;
+  border-color: #ccc;
+  cursor: not-allowed;
+} 
