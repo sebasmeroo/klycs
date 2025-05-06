@@ -1,0 +1,90 @@
+/* src/components/home/Footer.css */
+
+.footer-section {
+  background-color: #000; /* Fondo negro */
+  color: #a0aec0; /* Texto gris claro */
+  padding: 40px 20px;
+  border-top: 1px solid #333; /* Línea superior */
+}
+
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.footer-content {
+  display: flex;
+  flex-wrap: wrap; /* Para responsividad */
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+.footer-brand .brand-link {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #C6FF00; /* Verde Klycs */
+  text-decoration: none;
+  margin-bottom: 8px; /* Espacio bajo el logo */
+  display: inline-block;
+}
+
+.footer-brand .copyright {
+  font-size: 0.9rem;
+  color: #718096; /* Gris más oscuro */
+  margin: 0;
+}
+
+.footer-links {
+  display: flex;
+  gap: 25px;
+}
+
+.footer-link {
+  color: #a0aec0;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.2s ease;
+}
+
+.footer-link:hover {
+  color: #fff; /* Blanco al hover */
+}
+
+.footer-social {
+  display: flex;
+  gap: 15px;
+}
+
+.social-link {
+  color: #a0aec0;
+  font-size: 1.3rem; /* Tamaño iconos sociales */
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.social-link:hover {
+  color: #C6FF00; /* Verde Klycs al hover */
+  transform: scale(1.1);
+}
+
+/* Media query para pantallas pequeñas */
+@media (max-width: 768px) {
+  .footer-content {
+    flex-direction: column; /* Apilar elementos */
+    align-items: center; /* Centrar todo */
+    text-align: center;
+    gap: 30px; /* Más espacio vertical */
+  }
+
+  .footer-links {
+    order: 3; /* Mover enlaces al final */
+  }
+
+  .footer-social {
+    order: 2; /* Mover redes sociales antes de enlaces */
+  }
+
+  .footer-brand {
+    order: 1; /* Marca y copyright primero */
+  }
+} 

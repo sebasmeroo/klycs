@@ -1,0 +1,227 @@
+:root {
+  /* Tema */
+  --card-bg: #ffffff;
+  --card-border: #e2e8f0;
+  --card-shadow: rgba(0, 0, 0, 0.05);
+  --primary-color: #334155;
+  --accent-color: #FF4500;
+  --neutral-color: #64748b;
+  --input-border: #d1d5db;
+  --input-focus-shadow: rgba(255, 69, 0, 0.2);
+  --radius-lg: 16px;
+  --radius-md: 8px;
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 1rem;
+  --spacing-md: 1.5rem;
+  --spacing-lg: 2rem;
+  --transition-base: 0.3s ease;
+}
+
+/* Tarjeta de previsualización */
+.share-preview-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 24px var(--card-shadow);
+  max-width: 360px;
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+/* Ajuste para móvil */
+@media (max-width: 480px) {
+  .share-preview-card {
+    max-width: 100%;
+    margin: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    border: none;
+    box-shadow: none;
+  }
+}
+
+/* Imagen */
+.share-preview-image,
+.share-preview-image-placeholder {
+  width: 100%;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  aspect-ratio: 1;
+}
+.share-preview-image {
+  object-fit: cover;
+}
+.share-preview-image-placeholder {
+  background: var(--card-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--neutral-color);
+  font-size: 0.9em;
+}
+
+/* Título */
+.share-preview-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  text-align: center;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+/* QR visible */
+.share-preview-qr-visible {
+  padding: var(--spacing-xs);
+  background: #fff;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-md);
+}
+
+/* Contenedor de controles */
+.share-preview-params,
+.qr-customization-controls,
+.qr-download-controls {
+  width: 100%;
+  background: #fafafa;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  display: grid;
+  gap: var(--spacing-sm);
+}
+
+.share-preview-params {
+  grid-template-columns: 1fr;
+}
+@media (min-width: 600px) {
+  .share-preview-params {
+    grid-template-columns: 1fr 1fr;
+  }
+  .qr-customization-controls,
+  .qr-download-controls {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.share-preview-params label,
+.qr-color-picker-wrapper label,
+.qr-size-selector label {
+  font-size: 0.875rem;
+  color: var(--neutral-color);
+  margin-bottom: var(--spacing-xs);
+}
+
+.share-preview-params input,
+.share-preview-params select,
+.share-preview-params input[type="color"],
+.qr-color-input,
+.qr-size-selector select {
+  width: 100%;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  transition: border-color var(--transition-base);
+}
+.share-preview-params input:focus,
+.share-preview-params select:focus,
+.qr-size-selector select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px var(--input-focus-shadow);
+}
+
+/* Color picker */
+.qr-color-picker-container {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+.qr-color-picker-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Checkbox */
+.qr-transparent-bg-container {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+.qr-transparent-bg-container input {
+  accent-color: var(--accent-color);
+  transform: scale(1.2);
+}
+
+/* Botones */
+.qr-download-button {
+  grid-column: span 2;
+  padding: var(--spacing-sm) 0;
+  background-color: var(--accent-color);
+  color: #fff;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background-color var(--transition-base), transform 0.1s ease;
+}
+.qr-download-button:hover:not(:disabled) {
+  background-color: #e63e00;
+  transform: translateY(-2px);
+}
+.qr-download-button.svg-button {
+  background-color: #64748b;
+}
+.qr-download-button.svg-button:hover:not(:disabled) {
+  background-color: #525f70;
+  transform: translateY(-1px);
+}
+.qr-download-button:disabled {
+  background-color: var(--input-border);
+  color: #aaa;
+  cursor: not-allowed;
+}
+
+/* Botón para Copiar Imagen QR */
+.qr-download-button.copy-qr-button {
+  background-color: #17a2b8; /* Color turquesa/info */
+}
+
+.qr-download-button.copy-qr-button:hover:not(:disabled) {
+  background-color: #138496; /* Turquesa más oscuro */
+  transform: translateY(-1px);
+}
+
+/* Estados para el botón de copiar imagen QR */
+.qr-download-button.copy-qr-button.copied {
+  background-color: #28a745; /* Verde éxito, igual que el de copiar texto */
+}
+
+.qr-download-button.copy-qr-button.error-copy {
+  background-color: #dc3545; /* Rojo error, igual que el de copiar texto */
+}
+
+/* Placeholder */
+.no-preview-text-placeholder {
+  padding: var(--spacing-lg) 0;
+  color: var(--neutral-color);
+  font-style: italic;
+  text-align: center;
+}
+
+/* Ocultos */
+.hidden-canvases {
+  position: absolute;
+  left: -9999px;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}

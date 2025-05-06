@@ -1,0 +1,289 @@
+/* src/components/dashboard/ShareProfile.css */
+
+/* Contenedor Principal */
+.share-profile-container {
+  padding: 25px; /* Un poco más de padding */
+  background-color: #0C0C0C; /* Fondo principal de CardEditor */
+  color: #e0e0e0;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 20px auto;
+  /* box-shadow: 0 4px 15px rgba(0,0,0,0.3); */ /* Sombra menos necesaria con fondo tan oscuro */
+  font-family: 'Inter', system-ui, sans-serif; /* Coincidir fuente */
+}
+
+.share-profile-title {
+  font-size: 1.75rem; /* Coincidir tamaño */
+  font-weight: 700; /* Coincidir peso */
+  color: #FF4500; /* Naranja para el título principal */
+  margin-bottom: 2rem; /* Coincidir margen */
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #333; /* Borde más oscuro */
+  text-align: center;
+}
+
+/* Alertas */
+.username-alert {
+  padding: 15px;
+  margin-bottom: 20px;
+  border-radius: 8px; /* Bordes más redondeados */
+  font-size: 0.95em;
+  text-align: center;
+}
+
+.info-alert {
+  background-color: #1c2b3a; /* Azul oscuro */
+  border-left: 4px solid #FF4500; /* Borde naranja */
+  color: #ecf0f1;
+}
+
+.error-alert {
+  background-color: #4a2c2c;
+  border-left: 4px solid #e74c3c;
+  color: #f2dede;
+}
+
+.create-card-link {
+  color: #FF4500; /* Naranja */
+  text-decoration: none;
+  font-weight: bold;
+}
+.create-card-link:hover {
+  text-decoration: underline;
+  color: #ff7043; /* Naranja más claro */
+}
+
+/* Layout de Grid */
+.share-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) 2fr; /* Ajustar minmax si es necesario */
+  gap: 2rem; /* Coincidir gap */
+}
+
+.share-column-left,
+.share-column-right {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem; /* Coincidir gap de form-container */
+}
+
+.share-section {
+  background-color: #111111; /* Fondo de sección de CardEditor.form */
+  padding: 1.5rem; /* Coincidir padding */
+  border-radius: 12px; /* Coincidir border-radius */
+  /* box-shadow: 0 2px 8px rgba(0,0,0,0.2); */ /* Sombra menos necesaria */
+}
+
+.share-section h3 {
+  font-size: 1.1rem; /* Coincidir section-title */
+  font-weight: 600;
+  color: #FF4500; /* Naranja para títulos de sección */
+  margin-top: 0;
+  margin-bottom: 1.5rem; /* Coincidir section-title */
+  padding-bottom: 0; /* Quitar padding inferior si no hay borde */
+  border-bottom: none; /* Quitar borde si el diseño no lo lleva consistentemente */
+  display: flex; /* Para alinear con ícono si se añade */
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Estilos para CardSelector (en CardSelector.tsx) */
+.card-selector-container select {
+  width: 100%;
+  padding: 0.75rem 1rem; /* Coincidir form-control */
+  font-size: 0.95rem;
+  border: 1px solid #333; /* Borde más oscuro */
+  border-radius: 8px;
+  background: #1f1f1f; /* Fondo de input oscuro */
+  color: #e0e0e0; /* Texto claro */
+  appearance: none;
+  background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2364748b%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.4-12.8z%22/%3E%3C/svg%3E'); /* Icono gris */
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 10px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+.card-selector-container select:focus {
+  border-color: #FF4500; /* Borde naranja al focus */
+  background-color: #2a2a2a;
+  outline: none;
+}
+.card-selector-container select:disabled {
+  background-color: #2a2a2a;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Nuevos estilos para el botón que reemplaza al select */
+.card-selector-display-button-container {
+  /* Contenedor si se necesita más que solo el botón */
+}
+
+.card-selector-display-button {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  border: 1px solid #333;
+  border-radius: 8px;
+  background: #1f1f1f;
+  color: #e0e0e0;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+  display: flex;
+  justify-content: space-between; /* Para alinear título e ícono */
+  align-items: center;
+  text-align: left;
+}
+
+.card-selector-display-button:hover:not(:disabled) {
+  border-color: #FF4500;
+  background-color: #2a2a2a;
+}
+
+.card-selector-display-button:disabled {
+  background-color: #2a2a2a;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.card-selector-display-button span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.no-cards-available-text {
+  font-size: 0.9em;
+  color: #888;
+  margin-top: 8px;
+  text-align: center;
+}
+
+/* Estilos para DirectLink (en DirectLink.tsx) */
+.url-copy-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.share-url-input {
+  flex-grow: 1;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background-color: #1f1f1f;
+  color: #e0e0e0;
+  border: 1px solid #333;
+  font-size: 0.95rem;
+}
+.share-url-input:focus {
+  border-color: #FF4500;
+  background-color: #2a2a2a;
+  outline: none;
+}
+
+.copy-button {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: none;
+  background-color: #28a745; /* Verde para copiar */
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  min-width: 130px; /* Ancho mínimo con icono */
+}
+.copy-button:hover:not(:disabled) {
+  background-color: #218838;
+  transform: translateY(-1px);
+}
+.copy-button.copied {
+  background-color: #007bff; /* Azul cuando copiado */
+}
+.copy-button.error-copy {
+  background-color: #dc3545; /* Rojo error */
+}
+.copy-button:disabled {
+  background-color: #333;
+  color: #666;
+  cursor: not-allowed;
+  opacity: 0.8;
+  transform: none;
+}
+
+/* Estilos para SocialShare (en SocialShare.tsx) */
+.social-share-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap; 
+  justify-content: center; /* Centrar botones sociales */
+}
+.social-share-buttons button {
+  border-radius: 50% !important; 
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background-color: #333 !important; /* Fondo base para los íconos */
+}
+.social-share-buttons button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 10px rgba(255,69,0,0.3); /* Sombra naranja al hover */
+  background-color: #444 !important;
+}
+.social-share-buttons svg {
+  fill: #FF4500 !important; /* Iconos en naranja */
+}
+
+
+/* Estilos para ShareTips (en ShareTips.tsx) */
+.tips-list {
+  list-style: none;
+  padding-left: 0;
+}
+.tips-list li {
+  margin-bottom: 10px;
+  padding-left: 28px;
+  position: relative;
+  font-size: 0.95em;
+  color: #b0b0b0;
+}
+.tips-list li::before {
+  content: '✨'; /* Cambiado el ícono */
+  position: absolute;
+  left: 0;
+  top: 0px; /* Ajustar posición vertical del ícono */
+  font-size: 1.1em;
+  color: #FF4500; /* Naranja para el ícono */
+}
+
+/* Media Query para pantallas más pequeñas */
+@media (max-width: 768px) {
+  .share-grid {
+    grid-template-columns: 1fr; 
+  }
+  .share-profile-title {
+    font-size: 1.6rem;
+  }
+  .share-section h3 {
+    font-size: 1.05rem;
+  }
+  /* Asegurar que la columna de preview no sea demasiado ancha en móvil */
+  .share-column-left {
+    min-width: unset; /* Resetear min-width si se aplicó alguno */
+  }
+}
+
+/* Loader / Placeholders */
+.analytics-loading {
+  text-align: center;
+  padding: 40px;
+  font-size: 1.2em;
+  color: #ccc;
+}
+
+/* Ajustes al layout de ShareProfile para que la columna izquierda no se encoja demasiado */
+@media (min-width: 769px) { 
+  .share-grid {
+    grid-template-columns: minmax(320px, 1fr) 2fr; 
+  }
+}

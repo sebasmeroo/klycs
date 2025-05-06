@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { collection, query, where, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, updateDoc, increment, addDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../firebase/config';
 // import UserCard from '../components/cardeditor/cardpreviewanduser/user/UserCard'; // Eliminado
 import { CardLink as LinkType, Product as ProductType, TemplateType, BookingSettings } from '../components/cardeditor/types'; // Corregido: CardLink as LinkType, Añadido BookingSettings
@@ -116,12 +116,10 @@ const UserProfile: React.FC = () => {
               userId = username; // El username de la URL era el UID
             } else {
               setError('Usuario no encontrado');
-              setLoading(false);
               return;
             }
           } catch (uidError) {
             setError('Error al buscar usuario');
-            setLoading(false);
             return;
           }
         }
@@ -141,14 +139,33 @@ const UserProfile: React.FC = () => {
             if (cardData.userId === userId) {
               console.log('Tarjeta específica encontrada y pertenece al usuario:', cardData);
               setSingleCard({ ...cardData, id: cardId });
-              // Aquí podríamos incrementar vistas si quisiéramos
+              
+              // **** INICIO: CÓDIGO DE SEGUIMIENTO DE VISTAS ****
+              try {
+                await updateDoc(cardDocRef, {
+                  views: increment(1)
+                });
+                const analyticsRef = collection(db, 'cards', cardId, 'analyticsEvents');
+                await addDoc(analyticsRef, {
+                  type: 'view',
+                  timestamp: serverTimestamp(),
+                  userAgent: navigator.userAgent || null,
+                });
+                console.log(`Vista registrada para la tarjeta: ${cardId}`);
+              } catch (analyticsError) {
+                console.error("Error al registrar la vista:", analyticsError);
+              }
+              // **** FIN: CÓDIGO DE SEGUIMIENTO DE VISTAS ****
+
             } else {
               console.warn(`La tarjeta ${cardId} no pertenece al usuario ${userId}`);
               setError('Tarjeta no encontrada o no pertenece a este usuario.');
+              return;
             }
           } else {
             console.warn(`No se encontró la tarjeta con ID ${cardId} en la colección /cards`);
             setError('Tarjeta no encontrada.');
+            return;
           }
         } else if (!productId) {
            // 2b. Si no hay cardId ni productId, buscar tarjeta principal del usuario
@@ -203,9 +220,9 @@ const UserProfile: React.FC = () => {
           // else setError('Producto no encontrado');
         }
 
-      } catch (err) {
-        console.error('Error general al cargar perfil/tarjeta:', err);
-        setError('Error al cargar el perfil o la tarjeta.');
+      } catch (err: any) {
+        console.error("Error completo en fetchUserProfileAndCard:", err);
+        setError('Ocurrió un error al cargar el perfil.');
       } finally {
         setLoading(false);
       }

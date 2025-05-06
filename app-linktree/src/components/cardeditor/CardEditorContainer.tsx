@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, MouseEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { db, storage, auth } from '../../firebase/config';
 import { v4 as uuidv4 } from 'uuid';
@@ -195,17 +195,36 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
     if (userData && cardId && auth.currentUser) {
       fetchCardAndSettingsData();
     }
+
+    // Llamar a fetchUserProducts aquí también
+    if (auth.currentUser) {
+        fetchUserProducts(auth.currentUser.uid); 
+    } else {
+        console.warn("No hay usuario autenticado, no se pueden cargar productos.")
+    }
+
   }, [cardId, userData, navigate]); // Dependencias
 
-  const fetchUserProducts = async () => {
+  // Modificar fetchUserProducts para cargar desde Firestore
+  const fetchUserProducts = async (userId: string) => {
     try {
-      if (!userData) return;
+      console.log(`Cargando productos para el usuario: ${userId}`);
+      const productsRef = collection(db, 'users', userId, 'products');
+      const q = query(productsRef); // Podrías añadir filtros si es necesario (ej. where('active', '==', true))
+      const querySnapshot = await getDocs(q);
       
-      // Obtener productos del usuario
-      const products = userData.products || [];
-      setUserProducts(products);
+      const fetchedProducts = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Product[];
+      
+      console.log("Productos del usuario cargados:", fetchedProducts.length);
+      setUserProducts(fetchedProducts);
+      
     } catch (error) {
-      console.error('Error al cargar productos:', error);
+      console.error('Error al cargar productos desde Firestore:', error);
+      setError("Error al cargar los productos disponibles."); // Informar al usuario
+      setUserProducts([]); // Asegurar estado vacío en caso de error
     }
   };
 
@@ -501,18 +520,15 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
 
   const handleAddProductToCard = (product: Product) => {
     // Verificar si el producto ya está en la tarjeta
-    if (!cardProducts || !Array.isArray(cardProducts)) {
-      // Si cardProducts no es un array, inicializarlo
-      setCardProducts([product]);
-      console.log('Producto añadido a productos inicializados:', product);
-    } else if (!cardProducts.some(p => p.id === product.id)) {
-      // Si el producto no está en la lista, añadirlo
-      const updatedProducts = [...cardProducts, product];
-      setCardProducts(updatedProducts);
-      console.log('Producto añadido a la tarjeta:', product, 'Lista actualizada:', updatedProducts);
-    } else {
-      console.log('El producto ya está en la tarjeta:', product);
+    if (cardProducts.some(p => p.id === product.id)) {
+      console.log("El producto ya está en la tarjeta.");
+      // Opcional: Mostrar un mensaje al usuario
+      return; 
     }
+    // Añadir el producto al estado local
+    setCardProducts(prevProducts => [...prevProducts, product]);
+    // Opcional: Cerrar el selector después de añadir
+    // setShowProductSelector(false);
   };
 
   const handleRemoveProductFromCard = (productId: string) => {
@@ -643,7 +659,7 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
     
     // Cargar productos del usuario
     if (auth.currentUser) {
-      fetchUserProducts();
+      fetchUserProducts(auth.currentUser.uid);
     }
     
     setLoading(false);

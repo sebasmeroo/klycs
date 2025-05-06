@@ -91,23 +91,28 @@ const CardsManager: React.FC<CardsManagerProps> = ({ userData }) => {
           console.log("Tarjetas recibidas:", fetchedCards.length);
           setCards(fetchedCards);
 
-          // *** VALIDACIÓN DEL ID GUARDADO ***
+          // *** SIMPLIFICAR VALIDACIÓN: Solo intentar restaurar si había ID guardado Y existe ***
           const savedId = initialSavedCardIdRef.current;
           if (savedId) {
             const cardExists = fetchedCards.some(card => card.id === savedId);
             if (cardExists) {
-              console.log('[CardsManager] ID guardado encontrado en tarjetas fetcheadas, estableciendo openEditorCardId:', savedId);
+              console.log('[CardsManager] ID guardado encontrado, asegurando que el editor está abierto para:', savedId);
+              // Si ya estaba abierto con este ID, setOpenEditorCardId(savedId) no hará nada malo.
+              // Si estaba cerrado y debería estar abierto (ej. recarga de página), esto lo abrirá.
               setOpenEditorCardId(savedId);
             } else {
-              console.log('[CardsManager] ID guardado NO encontrado en tarjetas fetcheadas, limpiando localStorage y manteniendo editor cerrado.');
+              // Si el ID guardado ya no existe, simplemente limpiamos localStorage.
+              // NO cerramos el editor aquí, podría estar abierto con OTRO ID válido.
+              console.log('[CardsManager] ID guardado NO encontrado, limpiando localStorage.');
               localStorage.removeItem('openEditorCardId');
-              setOpenEditorCardId(null); // Asegurarse de que esté cerrado
+              // Quitar: setOpenEditorCardId(null);
             }
-          } else {
-            // Si no había ID guardado, asegurarse de que el editor esté cerrado
-            setOpenEditorCardId(null);
-          }
-          // *** FIN VALIDACIÓN ***
+          } 
+          // Quitar el else que hacía setOpenEditorCardId(null) si no había savedId
+          // else {
+          //   setOpenEditorCardId(null);
+          // }
+          // *** FIN SIMPLIFICACIÓN ***
 
           setLoading(false);
         },

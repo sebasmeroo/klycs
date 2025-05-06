@@ -1,0 +1,252 @@
+/* src/components/home/HeroSection.css */
+
+.hero-section {
+  background-color: #000;
+  color: #fff;
+  min-height: 800px; /* Altura fija solicitada */
+  height: 100vh; /* Intentar ocupar la altura de la ventana */
+  max-height: 800px; /* Limitar a la altura solicitada */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 4rem 1rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  font-family: sans-serif; /* Usar fuente sans-serif por defecto */
+}
+
+/* Pseudo-elemento para el fondo animado */
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 200%; /* Más ancho para animación */
+  height: 100%;
+  /* Gradiente con colores oscuros y el verde Klycs */
+  background: linear-gradient(
+    110deg,
+    rgba(10, 10, 10, 1) 20%,
+    rgba(50, 100, 0, 0.3) 40%,
+    rgba(0, 50, 50, 0.2) 60%,
+    rgba(10, 10, 10, 1) 80%
+  );
+  background-size: 50% 100%; /* Tamaño para que se repita y anime */
+  z-index: -1; /* Detrás del contenido */
+  animation: gradient-flow 20s linear infinite;
+}
+
+@keyframes gradient-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
+/* Asegurar que el contenido del hero esté por encima del fondo */
+.hero-title,
+.hero-subtitle,
+.hero-auth-buttons {
+  position: relative;
+  z-index: 1;
+}
+
+.hero-title {
+    font-size: 500px; /* Cambiado a 500px */
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    line-height: 0.99;
+    letter-spacing: -1.44px;
+    margin-bottom: 1.75rem;
+    max-width: none; /* Quitamos la restricción para permitir tamaño completo */
+  }
+  
+
+.hero-title .highlight {
+  display: inline-flex; /* inline-flex */
+  align-items: center; /* items-center */
+  justify-content: center; /* justify-center */
+  width: 2.5rem; /* size-10 */
+  height: 2.5rem; /* size-10 */
+  background-color: rgb(198, 255, 0); /* #C6FF00 */
+  border-radius: 0.375rem; /* rounded-md */
+  transform: translateY(0.125rem); /* translate-y-0.5 */
+  vertical-align: middle; /* Ajuste adicional */
+  margin: 0 0.25rem; /* Espacio alrededor */
+}
+
+.hero-title .highlight svg {
+  width: 2rem; /* w-8 */
+  height: auto;
+}
+
+.hero-subtitle {
+  color: #a0aec0; /* text-gray-400 */
+  font-size: 1.125rem; /* text-lg */
+  max-width: 42rem; /* max-w-2xl (aproximado) */
+  margin-bottom: 2.5rem; /* mb-10 */
+}
+
+.hero-button {
+  background-color: #FFCA28; /* Naranja de la imagen original */
+  color: #000;
+  font-weight: 600;
+  padding: 0.75rem 2rem; /* py-3 px-8 */
+  border: none;
+  border-radius: 0.5rem; /* rounded-lg */
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out; /* transition-colors */
+  z-index: 1;
+}
+
+.hero-button:hover {
+  background-color: #FFB300; /* Naranja más oscuro */
+}
+
+/* Media Queries para Responsividad basada en el snippet */
+@media (min-width: 640px) { /* sm: */
+  .hero-title {
+    font-size: 4.5rem; /* sm:text-7xl */
+    max-width: 32rem; /* sm:max-w-lg */
+  }
+  .hero-title .highlight {
+    width: 3.5rem; /* sm:size-14 */
+    height: 3.5rem; /* sm:size-14 */
+    border-radius: 0.625rem; /* sm:rounded-[10px] */
+  }
+  .hero-title .highlight svg {
+    width: 3rem; /* sm:w-12 */
+  }
+  .hero-subtitle {
+     font-size: 1.25rem; /* sm:text-xl */
+  }
+}
+
+@media (min-width: 1024px) { /* lg: */
+  .hero-title {
+    font-size: 6rem; /* lg:text-9xl */
+    letter-spacing: -3.72px; /* lg:tracking-[-3.72px] */
+    max-width: 64rem; /* lg:max-w-4xl */
+  }
+  .hero-title .highlight {
+    width: 6.25rem; /* lg:size-[100px] */
+    height: 6.25rem; /* lg:size-[100px] */
+    border-radius: 1rem; /* lg:rounded-2xl */
+    transform: translateY(0.25rem); /* lg:translate-y-1 */
+  }
+   .hero-title .highlight svg {
+    width: 4.9375rem; /* lg:w-full (asumiendo que el padre es 100px, svg es 79px) */
+  }
+}
+
+/* Ajustes adicionales para pantallas muy pequeñas si es necesario */
+@media (max-width: 480px) {
+  .hero-title {
+    font-size: 2.8rem; 
+  }
+  .hero-subtitle {
+    font-size: 1rem;
+  }
+  .hero-section {
+    padding: 2rem 1rem;
+    min-height: auto;
+    height: auto;
+    max-height: none;
+  }
+}
+
+/* Contenedor para la palabra rotativa: anchura fija y fondo */
+.rotating-word-container {
+  display: inline-block;
+  width: 8ch; /* Acomodar hasta la palabra más larga */
+  border-radius: 50px;
+  padding: 0px 0px 10px 0px;
+  text-align: center;
+}
+
+/* Colores de fondo por palabra */
+.rotating-word-container.word-0 {
+  background-color: #C6FF00;
+}
+.rotating-word-container.word-1 {
+  background-color: #22D3EE;
+}
+.rotating-word-container.word-2 {
+  background-color: #FFCA28;
+}
+.rotating-word-container.word-3 {
+    background-color: #ff00b3;
+  }
+
+/* Texto rotativo con transición de opacidad y desenfoque */
+.rotating-word {
+  display: inline-block;
+  width: 100%;
+  color: #000; /* Texto negro para contraste */
+  transition: opacity 1s ease-in-out, filter 1s ease-in-out;
+}
+
+.fade-in {
+  opacity: 1;
+  filter: blur(0);
+}
+
+.fade-out {
+  opacity: 0;
+  filter: blur(4px);
+}
+
+/* Estilos para botones de autenticación/dashboard */
+.hero-auth-buttons {
+  display: flex;
+  gap: 1rem; /* Espacio entre botones */
+  margin-top: 2.5rem; /* Espacio sobre los botones */
+  z-index: 1; /* Asegurar que estén sobre el degradado */
+}
+
+/* Estilo base para los botones en esta sección (hereda de .hero-button si ya existe) */
+.hero-auth-buttons .hero-button {
+  background-color: #FFCA28; 
+  color: #000;
+  font-weight: 600;
+  padding: 0.75rem 2rem;
+  border: none;
+  border-radius: 8px; /* Redondeo similar a header */
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out, transform 0.15s ease-in-out, box-shadow 0.2s ease-in-out;
+  text-decoration: none; /* Para los Links */
+  display: inline-block;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+}
+
+.hero-auth-buttons .hero-button:hover {
+  background-color: #FFB300; /* Ajustar color hover */
+  transform: translateY(-3px);
+  box-shadow: 0 5px 12px rgba(0,0,0,0.4);
+}
+
+.hero-auth-buttons .hero-button:active {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+/* Estilo específico si se quiere diferenciar el botón de registro */
+.hero-auth-buttons .hero-register-btn {
+  background-color: #C6FF00;
+  box-shadow: 0 3px 8px rgba(198, 255, 0, 0.2);
+}
+
+.hero-auth-buttons .hero-register-btn:hover {
+  background-color: #A0FF4D;
+  transform: translateY(-3px);
+  box-shadow: 0 5px 12px rgba(198, 255, 0, 0.3);
+}
+
+.hero-auth-buttons .hero-register-btn:active {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(198, 255, 0, 0.2);
+} 

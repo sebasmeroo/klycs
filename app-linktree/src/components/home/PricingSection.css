@@ -1,0 +1,177 @@
+/* src/components/home/PricingSection.css */
+
+.pricing-section {
+  padding: 60px 20px;
+  text-align: center;
+  background-color: #000; /* Fondo negro principal */
+  color: #fff; /* Texto blanco por defecto */
+}
+
+.pricing-title {
+  font-size: 2.8rem;
+  margin-bottom: 15px;
+  font-weight: 700;
+  color: #fff; /* Título blanco */
+}
+
+.pricing-subtitle {
+  font-size: 1.1rem;
+  margin-bottom: 50px;
+  color: #a0aec0; /* Gris claro */
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.pricing-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 30px;
+}
+
+.pricing-card {
+  background-color: #111; /* Fondo de tarjeta oscuro */
+  border: 1px solid #333; /* Borde sutil */
+  border-radius: 12px; /* Bordes más redondeados */
+  padding: 35px;
+  width: 320px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.pricing-card:hover {
+    transform: translateY(-10px) scale(1.01); /* Ajuste hover */
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* Resaltar tarjeta PRO */
+.pricing-card.highlighted {
+  border-color: #C6FF00; /* Borde verde Klycs */
+  box-shadow: 0 8px 30px rgba(198, 255, 0, 0.25); /* Sombra verde */
+}
+
+.pricing-card.highlighted:hover {
+  box-shadow: 0 12px 35px rgba(198, 255, 0, 0.3); /* Sombra verde más intensa al hover */
+}
+
+.pricing-card h3 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 15px;
+  color: #fff; /* Nombre del plan blanco */
+}
+
+.pricing-card .price {
+  font-size: 2.2rem;
+  font-weight: bold;
+  color: #C6FF00; /* Precio en verde Klycs */
+  margin-bottom: 30px;
+}
+
+/* Ajustar color del precio en tarjeta PRO */
+.pricing-card.highlighted .price {
+  color: #22D3EE; /* O usar otro color destacado como cian */
+}
+
+.pricing-card ul {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 35px;
+  text-align: left;
+  flex-grow: 1;
+}
+
+.pricing-card ul li {
+  margin-bottom: 12px;
+  color: #a0aec0; /* Características en gris claro */
+  position: relative;
+  padding-left: 28px;
+  font-size: 0.95rem;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.pricing-card:hover ul li {
+  color: #c0c0c0; /* Aclarar ligeramente texto */
+}
+
+/* Icono de check con color verde */
+.pricing-card ul li::before {
+  content: '✓'; /* Usar checkmark simple */
+  color: #C6FF00; /* Verde Klycs */
+  font-weight: bold;
+  position: absolute;
+  left: 0;
+  top: 1px;
+}
+
+/* Estilo base del botón (se sobrescribe abajo) */
+.pricing-card .btn {
+  margin-top: auto;
+  padding: 12px 25px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  border-radius: 8px;
+  transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  width: 100%;
+  text-decoration: none;
+  display: inline-block;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.pricing-card .btn:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.pricing-card .btn:active:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* Botón plan FREE (secundario/deshabilitado) */
+.pricing-card .btn-secondary {
+  background-color: #333; /* Gris oscuro */
+  color: #888;
+  cursor: default;
+}
+
+/* Botón plan BÁSICO (primario básico) */
+.pricing-card .btn-primary-basic {
+  background-color: #444; /* Gris medio */
+  color: #eee;
+}
+.pricing-card .btn-primary-basic:hover:not(:disabled) {
+  background-color: #555;
+  transform: translateY(-2px);
+}
+
+/* Botón plan PRO (primario destacado) */
+.pricing-card .btn-primary-pro {
+  background-color: #C6FF00; /* Verde Klycs */
+  color: #000;
+}
+.pricing-card .btn-primary-pro:hover:not(:disabled) {
+  background-color: #A0FF4D;
+  box-shadow: 0 4px 10px rgba(198, 255, 0, 0.3);
+}
+.pricing-card .btn-primary-pro:active:not(:disabled) {
+  box-shadow: 0 2px 5px rgba(198, 255, 0, 0.2);
+}
+
+/* Estilo para botones deshabilitados */
+.pricing-card button:disabled {
+  background-color: #2a2a2a !important; /* Fondo más oscuro */
+  color: #666 !important; /* Texto apagado */
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Ajuste para texto "Plan Actual" o "Plan Incluido" */
+.pricing-card button:disabled:not(:empty)::before {
+  /* Se podría añadir contenido aquí si se quiere, pero la etiqueta del botón ya lo dice */
+} 

@@ -1,0 +1,66 @@
+/* src/components/home/FeaturesSection.css */
+
+.features-section {
+  background-color: #0a0a0a; /* Ligeramente diferente al hero para separación */
+  padding: 80px 20px;
+}
+
+.features-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Columnas responsivas */
+  gap: 40px;
+}
+
+.feature-card {
+  background-color: #111; /* Mismo fondo que pricing cards */
+  padding: 40px 30px;
+  border-radius: 12px;
+  text-align: center;
+  border: 1px solid #333;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.3);
+  border-color: #444;
+}
+
+.feature-icon-wrapper {
+  display: inline-flex; /* Centrar icono */
+  background-color: rgba(198, 255, 0, 0.1); /* Fondo sutil con color Klycs */
+  padding: 18px;
+  border-radius: 50%; /* Círculo */
+  margin-bottom: 25px;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.feature-card:hover .feature-icon-wrapper {
+  background-color: rgba(198, 255, 0, 0.15);
+  transform: scale(1.1);
+}
+
+.feature-icon {
+  color: #C6FF00; /* Icono en verde Klycs */
+  font-size: 2.5rem; /* Tamaño del icono */
+  transition: color 0.3s ease;
+}
+
+.feature-card:hover .feature-icon {
+  /* Mantener color o ajustarlo si se desea */
+}
+
+.feature-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 15px;
+}
+
+.feature-description {
+  color: #a0aec0; /* Gris claro */
+  font-size: 1rem;
+  line-height: 1.6;
+} 

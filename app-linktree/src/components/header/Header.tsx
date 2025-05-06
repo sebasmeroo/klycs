@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../firebase/config';
@@ -10,8 +10,21 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ user }) => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -31,13 +44,12 @@ const Header: React.FC<HeaderProps> = ({ user }) => {
   };
 
   return (
-    <header className="header-container">
+    <header className={`header-container ${isScrolled ? 'scrolled' : ''}`}>
       <div className="header-content">
         <div className="header-brand">
           <Link to="/" className="brand" onClick={closeMenu}>Klycs</Link>
         </div>
         
-        {/* Menú de navegación en desktop */}
         <nav className="header-nav">
           <Link to="/" className={`nav-link ${isActive('/')}`}>Inicio</Link>
           
@@ -69,55 +81,51 @@ const Header: React.FC<HeaderProps> = ({ user }) => {
           )}
         </nav>
         
-        {/* Botón de menú en móvil */}
         <button 
           className="mobile-menu-button"
           onClick={() => setMenuOpen(!menuOpen)}
           aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
         >
           <span className="menu-icon">
-            {menuOpen ? 'Cerrar' : 'Menú'}
+            {menuOpen ? '✕' : '☰'}
           </span>
         </button>
       </div>
       
-      {/* Menú móvil desplegable */}
-      {menuOpen && (
-        <nav className="mobile-nav">
-          <Link to="/" className={`mobile-nav-link ${isActive('/')}`} onClick={closeMenu}>Inicio</Link>
+      <nav className={`mobile-nav ${menuOpen ? 'open' : ''}`}>
+        <Link to="/" className={`mobile-nav-link ${isActive('/')}`} onClick={closeMenu}>Inicio</Link>
           
-          {user ? (
-            <>
-              <Link to="/dashboard" className={`mobile-nav-link ${isActive('/dashboard')}`} onClick={closeMenu}>Dashboard</Link>
-              {user.username && (
-                <Link 
-                  to={`/${user.username}`} 
-                  className="mobile-nav-link" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  onClick={closeMenu}
-                >
-                  Mi Perfil
-                </Link>
-              )}
-              <button 
-                className="mobile-nav-button" 
-                onClick={() => {
-                  closeMenu();
-                  handleLogout();
-                }}
+        {user ? (
+          <>
+            <Link to="/dashboard" className={`mobile-nav-link ${isActive('/dashboard')}`} onClick={closeMenu}>Dashboard</Link>
+            {user.username && (
+              <Link 
+                to={`/${user.username}`} 
+                className="mobile-nav-link" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                onClick={closeMenu}
               >
-                Cerrar sesión
-              </button>
-            </>
-          ) : (
-            <>
-              <Link to="/login" className={`mobile-nav-link ${isActive('/login')}`} onClick={closeMenu}>Iniciar Sesión</Link>
-              <Link to="/register" className="btn-header-mobile" onClick={closeMenu}>Registrarse</Link>
-            </>
-          )}
-        </nav>
-      )}
+                Mi Perfil
+              </Link>
+            )}
+            <button 
+              className="mobile-nav-button" 
+              onClick={() => {
+                closeMenu();
+                handleLogout();
+              }}
+            >
+              Cerrar sesión
+            </button>
+          </>
+        ) : (
+          <>
+            <Link to="/login" className={`mobile-nav-link ${isActive('/login')}`} onClick={closeMenu}>Iniciar Sesión</Link>
+            <Link to="/register" className="btn-header-mobile" onClick={closeMenu}>Registrarse</Link>
+          </>
+        )}
+      </nav>
     </header>
   );
 };

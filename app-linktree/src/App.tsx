@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 // Quitar imports y estado local que manejará AuthProvider
 // import { useEffect, useState } from 'react'
 // import { onAuthStateChanged } from 'firebase/auth'
@@ -34,18 +34,19 @@ const AppLoader = () => (
 // Componente principal de la aplicación con rutas
 function AppContent() {
   const { loadingAuth, loadingProfile, user, profile } = useAuth(); // Obtener profile también si Header lo necesita
+  const location = useLocation(); // Obtener la ubicación actual
 
   if (loadingAuth || loadingProfile) {
     return <AppLoader />;
   }
   
+  // Determinar si mostrar el header
+  const showHeader = location.pathname === '/';
+
   return (
     <>
-      {/* Pasar user (o profile) a Header */}
-      {/* Si Header solo necesita el objeto User de Auth, pasar user */}
-      {/* Si Header necesita displayName u otros datos del perfil, pasar profile */}
-      {/* Asumiremos que necesita profile por ahora */}
-      <Header user={profile} /> 
+      {/* Renderizar Header condicionalmente */}
+      {showHeader && <Header user={profile} />}
       <Routes>
         {/* Pasar user a ProtectedRoute */}
         <Route path="/" element={<Home />} />

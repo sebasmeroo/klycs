@@ -62,20 +62,33 @@ service cloud.firestore {
       // Solo el propietario puede crear. Asegura que el userId en el doc nuevo es el del creador.
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       
-      // Arreglamos la regla para permitir actualizaciones incluso si el documento no existe en la colección cards
-      // o si el usuario es dueño de la tarjeta en sus datos personales
-      allow update, delete: if request.auth != null && 
+      // -- Modificación aquí: Separar update y añadir condición para 'views' -- 
+      allow update: if 
+         // Condición 1: El usuario autenticado es el dueño (basado en tu lógica compleja original para update/delete)
+         ( request.auth != null && 
+           (
+            resource.data.userId == request.auth.uid ||
+            (resource.data.owners != null && request.auth.uid in resource.data.owners) || 
+            (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.cards != null &&
+             cardId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.cards)
+           )
+         ) || 
+         // Condición 2: Visitante incrementando SOLO 'views' de 1 en 1
+         (
+           (request.auth == null || (request.auth != null && request.auth.uid != resource.data.userId)) // Es un visitante o no es el dueño
+           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views']) // Solo afecta al campo 'views'
+           && request.resource.data.views == resource.data.views + 1 // Es un incremento de 1
+         );
+
+      // Mantener regla de delete original (sin cambios)
+      allow delete: if request.auth != null && 
                            (
-                            // Si no existe el documento, permitir la actualización (esto cubre el caso de actualización inicial)
-                            resource == null || 
-                            // Si existe, verificar si el usuario es el dueño
                             resource.data.userId == request.auth.uid ||
-                            // O está en la lista de propietarios
                             (resource.data.owners != null && request.auth.uid in resource.data.owners) || 
-                            // O verificar si la tarjeta está en el array de tarjetas del usuario
-                            exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+                            (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
                             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.cards != null &&
-                            cardId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.cards
+                            cardId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.cards)
                            );
 
       // --- REGLA AÑADIDA PARA bookingSettings DENTRO DE LA TARJETA ---
@@ -89,6 +102,19 @@ service cloud.firestore {
                                     // Podrías añadir la lógica de 'owners' aquí también si aplica
       }
       // --- FIN REGLA bookingSettings ---
+
+      // --- NUEVO BLOQUE: REGLAS PARA SUBCOLECCIÓN 'analyticsEvents' --- 
+      match /analyticsEvents/{eventId} {
+        // Solo el dueño de la tarjeta puede leer los eventos detallados
+        allow read: if request.auth != null && request.auth.uid == get(/databases/$(database)/documents/cards/$(cardId)).data.userId; 
+        
+        // CUALQUIERA puede crear un evento (vista o clic)
+        allow create: if true; 
+        
+        // NADIE puede modificar o borrar eventos una vez creados
+        allow update, delete: if false; 
+      }
+      // --- FIN NUEVO BLOQUE 'analyticsEvents' ---
     }
     
     // Permitir lectura de datos de ventas solo al vendedor y comprador

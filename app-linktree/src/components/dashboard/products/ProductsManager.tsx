@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { doc, updateDoc, getDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import React, { useState, useEffect, useCallback } from 'react';
+import { doc, updateDoc, getDoc, collection, query, onSnapshot, addDoc, deleteDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { db, storage } from '../../../firebase/config';
 import { v4 as uuidv4 } from 'uuid';
 import { 
@@ -13,6 +13,7 @@ import { deleteImageFromStorage, uploadCardImage } from '../../../utils/storageU
 import CompressionInfo from '../../common/CompressionInfo';
 import './css/ProductsManager.css';
 import { useAuth } from '../../../context/AuthContext';
+import { FiEdit, FiEye, FiEyeOff, FiTrash2, FiRefreshCw } from 'react-icons/fi';
 
 interface Product {
   id: string;
@@ -69,33 +70,48 @@ const ProductsManager: React.FC<ProductsManagerProps> = ({ userData }) => {
   // Modal de creación
   const [showAddModal, setShowAddModal] = useState(false);
   const [isClosingAdd, setIsClosingAdd] = useState(false);
+  const [internalLoading, setInternalLoading] = useState(true);
 
   // Cargar productos existentes desde userData al montar o cuando userData cambie
   useEffect(() => {
-    console.log('userData en ProductsManager:', userData);
-    if (userData && userData.products && Array.isArray(userData.products)) {
-      console.log('Inicializando productos desde userData:', userData.products);
-      setProducts(userData.products);
-    } else {
-      console.log('No hay productos en userData, inicializando vacío');
-      setProducts([]);
-    }
-  }, [userData]); // Depender solo de userData
+    setInternalLoading(true);
+    setError(null);
+    let unsubscribe: (() => void) | null = null;
 
-  // Si hay cambios en los productos, guardarlos en Firestore
-  useEffect(() => {
-    if (userData && userData.uid) { // Quitar dependencia de products.length > 0
-      // Solo guardar si el array de productos es diferente al de userData
-      // Esto evita guardados innecesarios al inicio si userData.products era undefined o null
-      const currentProductsString = JSON.stringify(products);
-      const initialProductsString = JSON.stringify(userData.products || []);
-      
-      if (currentProductsString !== initialProductsString) {
-        console.log('Guardando productos actualizados en Firestore:', products);
-        saveProductsToFirestore(products);
-      }
+    if (userData && userData.uid) {
+      console.log(`[ProductsManager] Estableciendo listener para productos del usuario: ${userData.uid}`);
+      const productsCollectionRef = collection(db, 'users', userData.uid, 'products');
+      const q = query(productsCollectionRef);
+
+      unsubscribe = onSnapshot(q, 
+        (querySnapshot) => {
+          const fetchedProducts = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          })) as Product[];
+          console.log("[ProductsManager] Productos recibidos del listener:", fetchedProducts.length);
+          setProducts(fetchedProducts);
+          setInternalLoading(false);
+        },
+        (error) => {
+          console.error("[ProductsManager] Error al escuchar productos:", error);
+          setError("Error al cargar los productos en tiempo real. Inténtalo de nuevo.");
+          setInternalLoading(false);
+        }
+      );
+    } else {
+      console.log("[ProductsManager] No hay userData.uid, no se puede cargar productos.");
+      setProducts([]);
+      setInternalLoading(false);
     }
-  }, [products, userData]); // Depender de products y userData
+
+    return () => {
+      if (unsubscribe) {
+        console.log("[ProductsManager] Cancelando listener de productos.");
+        unsubscribe();
+      }
+    };
+  }, [userData]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -174,50 +190,22 @@ const ProductsManager: React.FC<ProductsManagerProps> = ({ userData }) => {
     return `${firebaseHostingDomain}/${safeUsername}/product/${slug}-${Date.now().toString(36)}`;
   };
 
-  // Guardar productos en Firestore
-  const saveProductsToFirestore = async (updatedProducts: Product[]) => {
-    if (!userData || !userData.uid) return;
-    
-    setLoading(true);
-    setError(null);
-    setSuccess(null);
-    
-    try {
-      const userDocRef = doc(db, 'users', userData.uid);
-      await updateDoc(userDocRef, { products: updatedProducts });
-      setSuccess('Productos guardados correctamente');
-      setTimeout(() => setSuccess(null), 3000);
-    } catch (error: any) {
-      console.error('Error al guardar productos:', error);
-      setError('Error al guardar cambios. Inténtalo de nuevo.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Calcular si el usuario puede crear más productos
   const currentProductCount = products.length;
   const productLimit = PRODUCT_LIMITS[effectivePlan] || 0;
   const canCreateMoreProducts = currentProductCount < productLimit;
 
   // Añadir o actualizar producto
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // --- Validación de Límite al CREAR --- 
     if (!editingId && !canCreateMoreProducts) {
         setError(`Has alcanzado el límite de ${productLimit} productos para tu plan ${effectivePlan}.`);
         return;
     }
-    // --- Fin Validación --- 
-
-    if (!title.trim()) {
-      setError('Debes proporcionar un título para el producto');
-      return;
-    }
     
-    if (!price.trim() || isNaN(parseFloat(price))) {
-      setError('Debes proporcionar un precio válido');
+    if (!title.trim() || !price.trim() || isNaN(parseFloat(price)) ) {
+      setError('El título y un precio válido son obligatorios.');
       return;
     }
     
@@ -225,92 +213,78 @@ const ProductsManager: React.FC<ProductsManagerProps> = ({ userData }) => {
     setError(null);
     setSuccess(null);
     
+    if (!userData || !userData.uid) {
+        setError("No se pudo obtener la información del usuario.");
+        setLoading(false);
+        return;
+    }
+
+    const productsCollectionRef = collection(db, 'users', userData.uid, 'products');
+    
     try {
-      let formattedUrl = url.trim();
-      let imageURL = '';
+      let imageURL = editingId ? products.find(p => p.id === editingId)?.imageURL : '';
       
-      // Subir imagen a Firebase Storage si hay un archivo nuevo
       if (file) {
         try {
-          // Obtener la URL de la imagen actual si estamos editando
-          const oldImageUrl = editingId 
-            ? products.find(p => p.id === editingId)?.imageURL 
-            : undefined;
-          
-          // Usar la función centralizada para subir la imagen del producto
-          imageURL = await uploadCardImage(
-            file,
-            userData.uid,
-            'product',
-            oldImageUrl
-          );
+          const oldImageUrl = editingId ? imageURL : undefined;
+          imageURL = await uploadCardImage(file, userData.uid, 'product', oldImageUrl);
         } catch (uploadError: any) {
           console.error('Error al subir imagen del producto:', uploadError);
-          // Si hay un error al subir a Storage, usar una imagen de placeholder
-          imageURL = 'https://via.placeholder.com/400x300?text=Sin+Imagen';
+          setError('Error al subir la imagen. Se usará una imagen por defecto.');
+          imageURL = imageURL || 'https://via.placeholder.com/400x300?text=Error+Imagen';
         }
-      } else if (editingId) {
-        // Mantener la imagen actual si es una edición
-        const currentProduct = products.find(p => p.id === editingId);
-        imageURL = currentProduct?.imageURL || '';
-      } else {
-        // Si no hay imagen, usa una imagen de marcador de posición
-        imageURL = 'https://via.placeholder.com/400x300?text=Sin+Imagen';
+      } else if (!editingId && !imageURL) {
+          imageURL = 'https://via.placeholder.com/400x300?text=Sin+Imagen';
       }
       
-      let updatedProducts = [...products];
-      
+      let finalUrl = url.trim();
+      if (finalUrl && !isValidUrl(finalUrl)) {
+          if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+              finalUrl = 'http://' + finalUrl;
+              if (!isValidUrl(finalUrl)) {
+                  setError('La URL externa proporcionada no es válida.');
+                  setLoading(false);
+                  return;
+              }
+          } else {
+             setError('La URL externa proporcionada no es válida.');
+             setLoading(false);
+             return;
+          }
+      }
+
+      const productData: Omit<Product, 'id'> = {
+        title: title.trim(),
+        description: description.trim(),
+        price: parseFloat(price),
+        imageURL: imageURL as string,
+        url: finalUrl || undefined,
+        autoUrl: generateAutoUrl(title.trim(), userData.username || userData.uid),
+        active: editingId ? products.find(p => p.id === editingId)?.active ?? true : true,
+      };
+
       if (editingId) {
-        // Actualizar producto existente
-        updatedProducts = updatedProducts.map(product => 
-          product.id === editingId ? { 
-            ...product, 
-            title, 
-            description,
-            price: parseFloat(price),
-            url: formattedUrl || '',
-            imageURL
-          } : product
-        );
-        // Cerrar edición y modal
-        setEditingId(null);
-        setShowEditModal(false);
+        const productRef = doc(db, 'users', userData.uid, 'products', editingId);
+        await updateDoc(productRef, productData);
+        setSuccess('Producto actualizado correctamente');
       } else {
-        // Añadir nuevo producto
-        const newProduct: Product = {
-          id: uuidv4(),
-          title,
-          description,
-          price: parseFloat(price),
-          url: formattedUrl || '',
-          imageURL,
-          active: true
-        };
-        updatedProducts = [...updatedProducts, newProduct];
-        // Cerrar modal de creación
-        closeAddModal();
+        await addDoc(productsCollectionRef, productData);
+        setSuccess('Producto añadido correctamente');
       }
+
+      resetForm();
+      closeAddModal();
+      closeModal();
       
-      setProducts(updatedProducts);
-      await saveProductsToFirestore(updatedProducts);
-      
-      // Limpiar formulario
-      setTitle('');
-      setDescription('');
-      setPrice('');
-      setUrl('');
-      setFile(null);
-      setImagePreview(null);
-      setFormExpanded(false);
-      
-      setSuccess(editingId ? 'Producto actualizado' : 'Producto guardado correctamente');
+      setTimeout(() => setSuccess(null), 3000);
+
     } catch (error: any) {
-      console.error('Error al guardar producto:', error);
-      setError('Error al guardar el producto. Inténtalo de nuevo.');
+      console.error('Error al guardar el producto:', error);
+      setError(`Error al guardar el producto: ${error.message}`);
     } finally {
       setLoading(false);
     }
-  };
+  }, [editingId, canCreateMoreProducts, productLimit, effectivePlan, title, price, file, userData, url, description, products]);
 
   // Editar producto (abrir modal lateral)
   const handleEdit = (product: Product) => {
@@ -336,48 +310,89 @@ const ProductsManager: React.FC<ProductsManagerProps> = ({ userData }) => {
   };
 
   // Eliminar producto
-  const handleDelete = (id: string) => {
-    // Encontrar el producto para obtener su URL de imagen
-    const productToDelete = products.find(product => product.id === id);
-    if (productToDelete?.imageURL) {
-      // Eliminar la imagen del producto que se va a borrar
-      deleteImageFromStorage(productToDelete.imageURL)
-        .then(success => {
-          if (success) {
-            console.log('Imagen del producto eliminada al borrar el producto');
-          }
-        });
+  const handleDelete = useCallback(async (id: string) => {
+    if (!userData || !userData.uid) {
+      setError("No se pudo obtener la información del usuario.");
+      return;
     }
+
+    const productToDelete = products.find(p => p.id === id);
+    if (!productToDelete) return;
+
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
     
-    const updatedProducts = products.filter(product => product.id !== id);
-    setProducts(updatedProducts);
-    saveProductsToFirestore(updatedProducts);
-  };
+    const productRef = doc(db, 'users', userData.uid, 'products', id);
+    
+    try {
+      if (productToDelete.imageURL && !productToDelete.imageURL.includes('via.placeholder.com')) {
+          try {
+              const imageRef = ref(storage, productToDelete.imageURL);
+              await deleteObject(imageRef);
+              console.log("Imagen del producto eliminada de Storage:", productToDelete.imageURL);
+          } catch (storageError: any) {
+              if (storageError.code !== 'storage/object-not-found') {
+                  console.warn("Error al eliminar imagen de Storage (se continúa con la eliminación del documento):", storageError);
+              }
+          }
+      }
+      
+      await deleteDoc(productRef);
+      console.log("Producto eliminado de Firestore:", id);
+      setSuccess("Producto eliminado correctamente.");
+      setTimeout(() => setSuccess(null), 3000);
+
+    } catch (error: any) {
+      console.error('Error al eliminar producto:', error);
+      setError('Error al eliminar el producto. Inténtalo de nuevo.');
+    } finally {
+      setLoading(false);
+    }
+  }, [userData, products]);
 
   // Alternar estado activo
-  const toggleActive = (id: string) => {
-    const updatedProducts = products.map(product => 
-      product.id === id ? { ...product, active: !product.active } : product
-    );
-    setProducts(updatedProducts);
-    saveProductsToFirestore(updatedProducts);
-  };
+  const toggleActive = useCallback(async (id: string) => {
+      if (!userData || !userData.uid) return;
+      
+      const productToToggle = products.find(p => p.id === id);
+      if (!productToToggle) return;
+      
+      const newActiveState = !productToToggle.active;
+      const productRef = doc(db, 'users', userData.uid, 'products', id);
+      
+      try {
+          await updateDoc(productRef, { active: newActiveState });
+          setSuccess(`Producto ${newActiveState ? 'activado' : 'desactivado'}.`);
+          setTimeout(() => setSuccess(null), 3000);
+      } catch (error) {
+          console.error("Error al cambiar estado active del producto:", error);
+          setError("Error al cambiar el estado del producto.");
+      }
+  }, [userData, products]);
 
   // Regenerar URL automática para un producto
-  const regenerateAutoUrl = (id: string) => {
-    const updatedProducts = products.map(product => {
-      if (product.id === id) {
-        return {
-          ...product,
-          autoUrl: generateAutoUrl(product.title, userData.username || userData.uid)
-        };
+  const regenerateAutoUrl = useCallback(async (id: string) => {
+      if (!userData || !userData.uid) return;
+      
+      const productToUpdate = products.find(p => p.id === id);
+      if (!productToUpdate) return;
+      
+      const newAutoUrl = generateAutoUrl(productToUpdate.title, userData.username || userData.uid);
+      const productRef = doc(db, 'users', userData.uid, 'products', id);
+      
+      setLoading(true);
+      try {
+          await updateDoc(productRef, { autoUrl: newAutoUrl });
+          setSuccess('URL automática regenerada.');
+          setTimeout(() => setSuccess(null), 3000);
+      } catch (error) {
+          console.error("Error al regenerar autoUrl:", error);
+          setError("Error al regenerar la URL automática.");
+      } finally {
+         setLoading(false);
       }
-      return product;
-    });
-    
-    setProducts(updatedProducts);
-    saveProductsToFirestore(updatedProducts);
-  };
+  }, [userData, products]);
 
   // Copiar enlace al portapapeles
   const copyLinkToClipboard = (linkUrl: string) => {
@@ -424,8 +439,8 @@ const ProductsManager: React.FC<ProductsManagerProps> = ({ userData }) => {
   };
 
   // Si el contexto de Auth/Profile aún está cargando, mostrar mensaje
-  if (loadingAuth || loadingProfile) {
-     return <div className="products-loading">Cargando información del plan...</div>;
+  if (loadingAuth || loadingProfile || internalLoading) {
+     return <div className="products-loading">Cargando productos...</div>;
   }
 
   return (
@@ -480,9 +495,6 @@ const ProductsManager: React.FC<ProductsManagerProps> = ({ userData }) => {
             // Añadir a la lista de productos
             const updatedProducts = [...products, testProduct];
             setProducts(updatedProducts);
-            saveProductsToFirestore(updatedProducts);
-            
-            setSuccess('Producto de prueba creado');
           }}
         >
           Crear Producto de Prueba
