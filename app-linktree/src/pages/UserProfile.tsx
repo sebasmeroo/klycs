@@ -43,6 +43,9 @@ interface CardData {
   userId?: string; // Añadido por si acaso
   template?: TemplateType; // Añadir propiedad template
   bookingSettings?: BookingSettings; // Añadir bookingSettings
+  theme?: {
+    primaryColor?: string;
+  };
 }
 
 // Importar CSS de plantillas
@@ -469,6 +472,7 @@ const UserProfile: React.FC = () => {
                         onClose={() => {}} // onClose no es relevante para inline
                         inlineMode={true} 
                         onInlineComplete={handleInlineBookingComplete} // Pasar la función callback
+                        accentColor={cardToRender.theme?.primaryColor}
                       />
                     </div>
                 )
@@ -556,6 +560,7 @@ const UserProfile: React.FC = () => {
           inlineMode={false} // Forzar modo modal
           initialStep={4} // Empezar en el paso 4 (detalles)
           initialData={inlineBookingData} // Pasar los datos pre-seleccionados
+          accentColor={cardToRender.theme?.primaryColor}
         />
       )}
     </> 

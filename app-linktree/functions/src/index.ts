@@ -3,7 +3,11 @@ import * as logger from "firebase-functions/logger";
 import admin from "firebase-admin";
 import Stripe from "stripe";
 
-admin.initializeApp();
+// Inicializar Firebase Admin SDK solo si no hay apps existentes
+if (admin.apps.length === 0) {
+  admin.initializeApp();
+}
+
 const db = admin.firestore();
 const storage = admin.storage();
 

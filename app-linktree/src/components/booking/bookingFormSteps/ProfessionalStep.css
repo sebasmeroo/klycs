@@ -1,0 +1,303 @@
+/* ProfessionalStep.css */
+
+.professional-step-container {
+  background-color: var(--color-background-neutral, #F2F2F7); /* Fallback por si las variables no cargan */
+  border-radius: 18px 18px 0 0;
+  box-shadow: var(--shadow-container, 0px 4px 12px rgba(0, 0, 0, 0.08)), 
+              var(--glow-purple, 0 0 20px rgba(142, 68, 173, 0.3));
+  position: relative;
+  overflow: visible; /* Cambiado a visible para que la lista desplegable pueda salir */
+  padding: 1rem;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  min-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* Espacio entre el trigger y los botones de acción */
+}
+
+.professional-step-container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 0;
+  border-radius: 18px;
+}
+
+.professional-step-container > *:not(.step-actions) {
+  position: relative; 
+  z-index: 1;
+}
+.professional-step-container .step-actions { 
+    position: relative;
+    z-index: 1;
+}
+
+/* Título del paso (asumiendo estilos globales, pero se pueden sobreescribir/definir aquí) */
+.professional-step-container .step-title {
+  font-family: var(--sf-pro-font, -apple-system, sans-serif);
+  font-size: 18pt; /* Ajustar según diseño general */
+  font-weight: 600;
+  color: var(--color-text-primary, #1C1C1E);
+  text-align: left; /* O center, según el diseño general de títulos */
+  margin-bottom: 0.5rem; /* Reducir un poco el margen inferior */
+}
+
+/* --- Título Añadido --- */
+.professional-step-container .step-internal-title {
+  font-family: var(--sf-pro-font, -apple-system, sans-serif);
+  font-size: 14pt; /* Mismo tamaño que label "Hora:" */
+  font-weight: 500;
+  color: var(--color-text-secondary, #8A8A8E); /* Mismo color */
+  margin: 0 0 0.75rem 0; /* Margen inferior similar */
+  padding: 0 0.25rem; /* Padding horizontal ligero si es necesario */
+  text-align: left; /* Alineado a la izquierda */
+  position: relative; /* Para asegurar z-index */
+  z-index: 1;
+}
+
+/* Grupo de formulario (ahora contiene el trigger y la lista) */
+.professional-step-container .booking-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0; /* Eliminamos gap aquí, gestionado por márgenes */
+  position: relative; /* Para posicionar la lista desplegable */
+  z-index: 2; /* Añadido z-index mayor que el de .step-actions */
+}
+
+/* --- Trigger del Desplegable --- */
+.professional-picker-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6em 1em; /* Ajustar padding */
+  border-radius: 12px;
+  border: 1px solid rgba(120, 120, 128, 0.3);
+  background-color: rgba(240, 240, 245, 0.9);
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  user-select: none;
+  min-height: 50px; /* Altura mínima consistente */
+}
+
+.professional-picker-trigger.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.professional-picker-trigger:not(.disabled):hover {
+  border-color: var(--booking-accent-color);
+}
+
+.professional-picker-trigger:focus-visible {
+  outline: none;
+  border-color: var(--booking-accent-color);
+  box-shadow: 0 0 0 3px rgba(var(--booking-accent-rgb, 0, 122, 255), 0.25); /* Foco con acento */
+}
+
+.trigger-content-wrapper {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  gap: 0.75em;
+  font-family: var(--sf-pro-font, -apple-system, sans-serif);
+  font-size: 16pt;
+  color: var(--color-text-primary, #1C1C1E);
+  flex-grow: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.professional-picker-trigger .trigger-professional-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 1;
+}
+
+.professional-picker-trigger.selected .trigger-professional-name,
+.professional-picker-trigger:hover .trigger-professional-name {
+  color: var(--booking-accent-color);
+}
+
+.professional-picker-trigger .trigger-professional-photo,
+.professional-picker-trigger .trigger-professional-placeholder-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  background-color: #eee;
+  flex-shrink: 0;
+}
+
+.professional-picker-trigger .error-text {
+  color: #ff3b30;
+  font-size: 0.9em;
+}
+
+.picker-arrow {
+  transition: transform 0.3s ease;
+  color: var(--color-text-secondary, #8A8A8E);
+  font-size: 1.4em;
+  flex-shrink: 0; /* Evitar que se encoja */
+}
+
+.picker-arrow.expanded {
+  transform: rotate(180deg);
+}
+
+/* --- Lista Desplegable --- */
+.professional-list {
+  position: absolute;
+  top: calc(100% + 6px); /* Justo debajo del trigger con un pequeño espacio */
+  left: 0;
+  right: 0;
+  background-color: #FFFFFF; /* Fondo blanco opaco */
+  /* backdrop-filter: blur(8px); */ /* Eliminado o comentado si el fondo es opaco */
+  /* -webkit-backdrop-filter: blur(8px); */
+  border-radius: 12px;
+  border: 1px solid rgba(120, 120, 128, 0.2);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1); /* Sombra específica */
+  z-index: 10; /* Asegurar que esté por encima de otros elementos */
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out, opacity 0.2s ease-out;
+}
+
+.professional-step-container .booking-form-group.expanded .professional-list {
+  max-height: 250px; /* Ajustar altura máxima deseada */
+  opacity: 1;
+  overflow-y: auto; /* Scroll si hay muchos profesionales */
+}
+
+.professional-list-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75em;
+  padding: 0.75em 1em;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.professional-list-item:hover {
+  background-color: rgba(var(--booking-accent-rgb, 0, 122, 255), 0.08); /* Hover con acento */
+}
+
+.professional-list-item .list-professional-photo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  background-color: #eee;
+}
+
+.professional-list-item .list-professional-placeholder-icon {
+  width: 38px;
+  height: 38px;
+  color: var(--color-text-secondary, #8A8A8E);
+  stroke-width: 1.5;
+  padding: 1px; /* Ajuste visual */
+}
+
+.professional-list-item .list-professional-name {
+  font-family: var(--sf-pro-font, -apple-system, sans-serif);
+  font-size: 14pt;
+  font-weight: 500;
+  color: var(--color-text-primary, #1C1C1E);
+}
+
+.professional-list-item.selected {
+  background-color: var(--booking-accent-color);
+  color: white;
+  font-weight: 600;
+}
+
+.professional-list-item.selected .list-professional-name {
+  color: white;
+}
+
+.no-professionals-message {
+  padding: 1em;
+  text-align: center;
+  color: var(--color-text-secondary, #8A8A8E);
+  font-style: italic;
+}
+
+/* Error de formulario específico del paso */
+.professional-step-container .booking-form-error {
+  text-align: left;
+  font-size: 0.85em;
+  color: #ff3b30;
+  margin-top: 0.5rem; /* Espacio respecto al grupo del desplegable */
+  padding: 0 0.25rem; /* Pequeño padding horizontal */
+  font-family: var(--sf-pro-font, -apple-system, sans-serif);
+  position: relative; /* Para z-index si es necesario */
+  z-index: 1;
+}
+
+/* Estilos para step-actions (asegurar que los selectores sean específicos o iguales) */
+.professional-step-container .step-actions {
+  display: flex;
+  align-items: center;
+  margin-top: auto; 
+  padding-top: 1rem; 
+  border-top: var(--border-glass, 1px solid rgba(255, 255, 255, 0.3)); 
+  width: 100%; 
+  box-sizing: border-box;
+}
+
+.professional-step-container .step-actions.space-between { justify-content: space-between; }
+
+.professional-step-container .prev-button,
+.professional-step-container .next-button {
+  font-family: var(--sf-pro-font, -apple-system, sans-serif);
+  font-size: 17pt; 
+  font-weight: 500; 
+  padding: 0.6em 1.2em;
+  border-radius: 12px; 
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s, filter 0.2s, opacity 0.2s;
+}
+
+.professional-step-container .prev-button {
+  background-color: rgba(120, 120, 128, 0.12); 
+  color: var(--color-text-primary, #1C1C1E);
+  display: flex; 
+  align-items: center;
+  gap: 0.5em; 
+}
+.professional-step-container .prev-button:hover { background-color: rgba(120, 120, 128, 0.20); }
+
+.professional-step-container .next-button {
+  background-color: var(--booking-accent-color);
+  color: white;
+}
+.professional-step-container .next-button:hover:not(:disabled) {
+  filter: brightness(90%);
+}
+
+.professional-step-container .next-button:disabled {
+  background-color: rgba(var(--booking-accent-rgb, 0, 122, 255), 0.5); /* Deshabilitado con acento */
+  color: rgba(255, 255, 255, 0.8);
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+.professional-step-container .prev-button svg {
+  stroke: var(--color-text-primary, #1C1C1E);
+  width: 1.1em; 
+  height: 1.1em;
+} 

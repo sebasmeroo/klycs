@@ -381,6 +381,7 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
         backgroundType: background.type,
         active: card.active, // Mantener estado active y views del estado 'card'
         views: card.views || 0,
+        theme: theme,
         // NO incluimos bookingSettings aquí
       };
 
@@ -656,6 +657,14 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
       acceptOnlinePayments: false,
       allowProfessionalSelection: false
     });
+
+    // *** Inicializar el estado del tema ***
+    setTheme(cardData.theme || {
+      primaryColor: '#6366f1',
+      secondaryColor: '#4f46e5',
+      textColor: '#333333',
+      linkColor: '#6366f1'
+    });
     
     // Cargar productos del usuario
     if (auth.currentUser) {
@@ -792,6 +801,8 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
                     handleBackgroundColorChange={handleBackgroundColorChange}
                     handleBackgroundGradientChange={handleBackgroundGradientChange}
                     handleBackgroundFileChange={handleBackgroundFileChange}
+                    theme={theme}
+                    handleThemeChange={handleThemeChange}
                  />
                  {/* Información de compresión para imagen principal */}
                  {mainImageCompressionStatus !== 'idle' && (

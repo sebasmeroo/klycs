@@ -28,6 +28,13 @@ export interface Professional {
 }
 // --- FIN INTERFAZ PROFESSIONAL --- 
 
+export interface CardTheme {
+  primaryColor: string;
+  secondaryColor: string;
+  textColor: string;
+  linkColor: string;
+}
+
 export interface Card {
   id: string;
   title: string;
@@ -47,6 +54,7 @@ export interface Card {
   template?: TemplateType;
   storeName?: string;
   bookingSettings?: BookingSettings;
+  theme?: CardTheme;
 }
 
 export interface CardBackground {
@@ -55,13 +63,6 @@ export interface CardBackground {
   gradient?: string;
   imageURL?: string;
   pattern?: string;
-}
-
-export interface CardTheme {
-  primaryColor: string;
-  secondaryColor: string;
-  textColor: string;
-  linkColor: string;
 }
 
 // --- Nuevas Interfaces para Gestión de Reservas ---

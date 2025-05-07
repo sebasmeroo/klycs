@@ -1,0 +1,797 @@
+/* DateStep.css - Estilos para react-calendar con tira de semana y calendario expandido */
+:root {
+  --sf-pro-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --color-background-neutral: #F2F2F7;
+  --color-accent-blue: #007AFF;
+  --color-accent-purple: #8E44AD;
+  --color-text-primary: #1C1C1E;
+  --color-text-secondary: #8A8A8E;
+  --color-text-disabled: rgba(60, 60, 67, 0.2);
+  --cell-size: 40px;
+  --border-glass: 1px solid rgba(255, 255, 255, 0.3);
+  --shadow-subtle: 0 2px 6px rgba(0, 0, 0, 0.08);
+  --shadow-container: 0px 4px 12px rgba(0, 0, 0, 0.08);
+  --glow-purple: 0 0 20px rgba(142, 68, 173, 0.3);
+}
+
+body {
+  font-family: var(--sf-pro-font);
+}
+
+/* Contenedor general */
+.calendar-container {
+  background-color: var(--color-background-neutral);
+  border-radius: 18px 18px 0 0; /* Más redondeado para iOS feel */
+  box-shadow: var(--shadow-container), var(--glow-purple);
+  position: relative;
+  overflow: hidden; /* Para el glassmorphism y animaciones */
+  padding: 0;
+  width: 100%; /* Ocupa el 100% del ancho de su padre */
+  /* max-width: 390px; /* Eliminado o ajustado para permitir que tome el ancho del padre */
+  max-width: 100%; /* Opcionalmente, para asegurar que no exceda el padre si el padre tiene max-width */
+  margin: 0; /* Eliminado margin: auto; ya que width: 100% lo alinea con el padre */
+  min-width: 320px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Efecto Glassmorphism de fondo (aplicado al contenedor principal o a un pseudo-elemento) */
+.calendar-container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.1); /* Ajustar opacidad del fondo para glass */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 0;
+  border-radius: 18px;
+}
+
+/* Asegurar que el contenido esté sobre el fondo de glassmorphism */
+.week-strip-view, .full-calendar-view-wrapper, .internal-actions {
+  position: relative;
+  z-index: 1;
+}
+
+/* Vista compacta (tira de semana) */
+.calendar-container.compact-view .week-strip-view {
+  display: flex;
+}
+
+/* Mantener siempre visible la tira de semana */
+.calendar-container.expanded-view .week-strip-view {
+  display: flex !important;
+}
+
+/* React Calendar (base) */
+.react-calendar {
+  width: 100%;
+  flex-grow: 1;
+  min-height: 0;
+  background: #fff;
+  border: none;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #111;
+  display: flex;
+  flex-direction: column;
+  padding: 0.8rem 1rem;
+  box-sizing: border-box;
+}
+
+/* Navegación del calendario */
+.react-calendar__navigation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5em;
+  padding: 0;
+  flex-shrink: 0;
+}
+.react-calendar__navigation button {
+  background: none;
+  border: none;
+  color: #333;
+  font-size: 1.5em;
+  cursor: pointer;
+  padding: 0.3em 0.5em;
+  border-radius: 8px;
+  transition: background-color 0.2s, color 0.2s;
+}
+.react-calendar__navigation button:disabled {
+  color: #ccc;
+  cursor: not-allowed;
+}
+.react-calendar__navigation button:enabled:hover,
+.react-calendar__navigation button:enabled:focus {
+  background-color: #f0f0f0;
+  color: #000;
+}
+/* Ocultar botones de salto de año/década */
+.react-calendar__navigation__prev2-button,
+.react-calendar__navigation__next2-button {
+  display: none !important;
+}
+.react-calendar__navigation__label {
+  font-weight: 600;
+  font-size: 1.2em;
+  color: #111;
+  text-align: center;
+  flex-grow: 1;
+  padding: 0.25em 0;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+.react-calendar__navigation__label:hover,
+.react-calendar__navigation__label:focus {
+  background-color: #f0f0f0;
+}
+
+/* Cabecera de weekdays */
+.react-calendar__month-view__weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-weight: 500;
+  font-size: 0.8em;
+  color: #777;
+  margin-bottom: 1em;
+  flex-shrink: 0;
+}
+.react-calendar__month-view__weekdays__weekday {
+  padding: 0.5em 0.2em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.react-calendar__month-view__weekdays__weekday abbr {
+  text-decoration: none;
+  font-size: 1em;
+}
+
+/* Días del mes */
+.react-calendar__month-view {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.react-calendar__month-view__days {
+  display: grid !important;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.5rem;
+  flex-grow: 1;
+}
+
+/* Tiles (días) */
+.react-calendar__tile {
+  background: transparent;
+  border: none;
+  color: #333;
+  padding: 0;
+  font-size: 0.9em;
+  text-align: center;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s, color 0.2s, transform 0.1s, box-shadow 0.2s;
+  border-radius: 50%;
+  aspect-ratio: 1 / 1;
+  width: auto;
+  position: relative;
+}
+.react-calendar__tile:disabled {
+  background-color: transparent;
+  color: #ccc;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+.react-calendar__tile:enabled:hover {
+  background-color: rgba(var(--booking-accent-rgb, 0, 122, 255), 0.1);
+  color: var(--booking-accent-color);
+  transform: scale(1.05);
+}
+
+/* Hoy */
+.react-calendar__tile--now {
+  color: var(--booking-accent-color);
+  background-color: transparent;
+}
+.react-calendar__tile--now::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(100% - 4px);
+  height: calc(100% - 4px);
+  border: 1.5px solid var(--booking-accent-color);
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+.react-calendar__tile--now:hover::before {
+  border-color: var(--booking-accent-color);
+  filter: brightness(85%);
+}
+
+/* Seleccionado */
+.react-calendar__tile--active {
+  background: #007aff;
+  color: #fff !important;
+  font-weight: 600;
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.4);
+}
+.react-calendar__tile--active:enabled:hover {
+  background: var(--booking-accent-color);
+  filter: brightness(85%);
+}
+.react-calendar__tile--active::before {
+  display: none;
+}
+
+/* Vecinos de mes */
+.react-calendar__month-view__days__day--neighboringMonth {
+  color: #aaa;
+  background: transparent;
+  opacity: 0.6;
+}
+.react-calendar__month-view__days__day--neighboringMonth:hover {
+  background: transparent;
+  transform: none;
+}
+
+/* Vistas Año/Década/Siglo */
+.react-calendar__year-view .react-calendar__tile,
+.react-calendar__decade-view .react-calendar__tile,
+.react-calendar__century-view .react-calendar__tile {
+  padding: 1em 0.5em;
+  border-radius: 8px;
+  aspect-ratio: auto;
+  margin: 2px;
+}
+.react-calendar__year-view__months__month,
+.react-calendar__decade-view__years__year,
+.react-calendar__century-view__decades__decade {
+  background: #fff;
+  border-radius: 6px;
+  padding: 1em 0.5em;
+  color: #333;
+  transition: background-color 0.2s;
+  border: 1px solid #eee;
+}
+.react-calendar__year-view__months__month:hover,
+.react-calendar__decade-view__years__year:hover,
+.react-calendar__century-view__decades__decade:hover,
+.react-calendar__year-view__months__month:focus,
+.react-calendar__decade-view__years__year:focus,
+.react-calendar__century-view__decades__decade:focus {
+  background-color: #e9f5ff;
+  color: #007aff;
+  border-color: #a8d8ff;
+}
+
+/* Internal error y acciones */
+.calendar-container .internal-error {
+  text-align: center;
+  font-size: 0.8em;
+  color: #ff3b30;
+  margin: 0.75em 0.5em;
+  flex-shrink: 0;
+}
+.calendar-container .internal-actions {
+  margin-top: auto;
+  padding: 0.5rem 1rem 1rem 1rem;
+  border-top: 1px solid #eee;
+  width: 100%;
+  flex-shrink: 0;
+  background-color: #fff;
+}
+.calendar-container .internal-actions .prev-button,
+.calendar-container .internal-actions .next-button {
+  padding: 0.75em 1em;
+  font-size: 0.9em;
+  font-weight: 500;
+  border-radius: 8px;
+}
+.calendar-container .internal-actions .prev-button {
+  background-color: #f0f0f0;
+  color: #333;
+  border: none;
+}
+.calendar-container .internal-actions .prev-button:hover {
+  background-color: rgba(120, 120, 128, 0.20);
+}
+.calendar-container .internal-actions .next-button {
+  background-color: var(--booking-accent-color);
+  color: #fff;
+}
+.calendar-container .internal-actions .next-button:hover:not(:disabled) {
+  filter: brightness(90%);
+}
+.calendar-container .internal-actions .next-button:disabled {
+  background-color: rgba(var(--booking-accent-rgb, 0, 122, 255), 0.5);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* --- Tira de Semana --- */
+.week-strip-view {
+  display: flex;
+  flex-direction: column;
+  padding: 0.8rem 1rem;
+  padding-bottom: 0.25rem;
+  background-color: transparent; /* Transparente para glassmorphism */
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 12px;
+  overflow: hidden; /* Evitar desbordamiento */
+}
+.week-strip-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding: 0 0.1rem; /* Ajustar padding */
+}
+.week-strip-month-year {
+  font-family: var(--sf-pro-font);
+  font-weight: 600;
+  font-size: 17pt; /* Ligeramente más grande */
+  color: var(--color-text-primary);
+}
+.week-strip-nav-button,
+.week-strip-expand-button {
+  background: none;
+  border: none;
+  color: var(--booking-accent-color); /* Iconos con acento */
+  font-size: 1.8em; /* Iconos más grandes */
+  cursor: pointer;
+  padding: 0.4em;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s, color 0.2s;
+}
+.week-strip-nav-button:disabled {
+  color: #ccc;
+  cursor: not-allowed;
+}
+.week-strip-nav-button:enabled:hover,
+.week-strip-expand-button:enabled:hover {
+  background-color: rgba(var(--booking-accent-rgb, 0, 122, 255), 0.1); /* Fondo con acento translúcido */
+}
+.week-strip-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.5rem; /* Espacio entre celdas */
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease-in-out;
+}
+.week-strip-day-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5em 0.2em;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+  background-color: rgba(230, 230, 230, 0.5); /* Fondo ligero para celdas */
+  border: none;
+  min-height: 50px;
+  text-align: center;
+  width: var(--cell-size);
+  height: var(--cell-size);
+  font-family: var(--sf-pro-font);
+}
+.week-strip-day-item .week-strip-day-name {
+  font-size: 10pt; /* SF Pro Regular 10pt para el nombre del día */
+  font-weight: 400;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.week-strip-day-item .week-strip-day-number {
+  font-size: 16pt; /* SF Pro Regular 16pt para el número */
+  font-weight: 400;
+  color: var(--color-text-primary);
+}
+.week-strip-day-item.weekend .week-strip-day-name {
+  color: #e63946;
+}
+.week-strip-day-item:hover {
+  background-color: rgba(var(--booking-accent-rgb, 0, 122, 255), 0.1); /* Hover con acento translúcido */
+  /* border-color: rgba(var(--booking-accent-rgb, 0, 122, 255), 0.3); */ /* Borde opcional */
+}
+.week-strip-day-item.selected {
+  background: var(--booking-accent-color);
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(var(--booking-accent-rgb, 0, 122, 255), 0.4);
+}
+.week-strip-day-item.selected .week-strip-day-name,
+.week-strip-day-item.selected .week-strip-day-number {
+  color: #fff;
+}
+.week-strip-day-item.disabled {
+  opacity: 0.2 !important; /* Días fuera de rango con 20% opacidad */
+  background-color: transparent;
+  cursor: not-allowed;
+}
+.week-strip-day-item.disabled .week-strip-day-name,
+.week-strip-day-item.disabled .week-strip-day-number {
+  color: var(--color-text-disabled);
+}
+.week-strip-day-item:not(.disabled):active {
+  transform: scale(0.95);
+}
+.week-strip-days.animate-next {
+  transform: translateX(-100%);
+}
+.week-strip-days.animate-prev {
+  transform: translateX(100%);
+}
+
+/* --- Calendario Expandido (posicionado) --- */
+.full-calendar-view-wrapper {
+  position: relative;
+  width: 100%;
+  padding: 0 1rem;
+  box-shadow: none; /* Sombra ya está en el contenedor principal */
+  border-radius: 0 0 18px 18px; /* Redondeo inferior */
+  background: transparent; /* Para efecto glassmorphism */
+  overflow: hidden; /* MUY IMPORTANTE: para que max-height funcione como clip */
+  max-height: 0; /* COLAPSADO POR DEFECTO */
+  opacity: 0; /* Opcional: para fade साथ में con la altura */
+  margin-top: 0.5rem;
+  transition: max-height 0.5s ease-in-out, opacity 0.3s ease-in-out; /* Ajustar timing y easing según especificaciones de animación */
+  /* transform-origin: top center; Para futuras animaciones 3D */
+}
+
+.full-calendar-view-wrapper.visible {
+  max-height: 1000px; /* Suficiente para mostrar cualquier mes. Ajustar si es necesario. */
+  opacity: 1;
+  padding-bottom: 0.25rem;
+}
+
+/* Animaciones de la tira de semana */
+@keyframes slideOutLeft {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(-100%); }
+}
+@keyframes slideOutRight {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(100%); }
+}
+@keyframes slideInFromRight {
+  from { opacity: 0; transform: translateX(100%); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideInFromLeft {
+  from { opacity: 0; transform: translateX(-100%); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.week-strip-days.slide-out-prev   { animation: slideOutRight 0.2s ease-out forwards; }
+.week-strip-days.slide-out-next   { animation: slideOutLeft  0.2s ease-out forwards; }
+.week-strip-days.slide-in-prev    { animation: slideInFromLeft  0.2s ease-out forwards; }
+.week-strip-days.slide-in-next    { animation: slideInFromRight 0.2s ease-out forwards; }
+
+/* --- ESTILOS PARA EL CALENDARIO DENTRO DE LA VISTA EXPANDIDA --- */
+/* Aplicar estos estilos solo cuando .react-calendar está dentro de .full-calendar-view */
+
+.full-calendar-view .react-calendar__navigation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1em; /* Reducir margen */
+  padding: 0;
+  flex-shrink: 0;
+  background-color: #f0f0f0;
+}
+
+/* Cabecera de weekdays en vista expandida */
+.full-calendar-view .react-calendar__month-view__weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-weight: 500;
+  font-size: 0.8em; 
+  color: #777;
+  margin-bottom: 1em;
+  flex-shrink: 0;
+}
+.full-calendar-view .react-calendar__month-view__weekdays__weekday {
+  padding: 0.5em 0.2em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.full-calendar-view .react-calendar__month-view__weekdays__weekday abbr {
+  text-decoration: none;
+  font-size: 10pt; /* SF Pro Regular 10pt */
+  font-weight: 500; /* Ligeramente más bold para los días de la semana */
+  color: var(--color-text-secondary);
+}
+
+/* Días del mes en vista expandida */
+.full-calendar-view .react-calendar__month-view {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex-grow: 1;
+}
+
+/* Tiles (días) en vista expandida */
+.full-calendar-view .react-calendar__tile {
+  background: transparent;
+  border: none;
+  color: #333;
+  padding: 0;
+  font-size: 0.9em;
+  text-align: center;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s, color 0.2s, transform 0.1s, box-shadow 0.2s;
+  border-radius: 50%;
+  aspect-ratio: 1 / 1;
+  width: auto;
+  position: relative;
+  transform: scale(1.05);
+}
+.full-calendar-view .react-calendar__tile:disabled {
+  background-color: transparent;
+  color: #ccc;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+.full-calendar-view .react-calendar__tile:enabled:hover {
+  background-color: rgba(var(--booking-accent-rgb, 0, 122, 255), 0.1);
+  color: var(--booking-accent-color);
+}
+  
+/* Hoy en vista expandida */
+.full-calendar-view .react-calendar__tile--now {
+  color: var(--booking-accent-color);
+  background-color: transparent;
+}
+.full-calendar-view .react-calendar__tile--now::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(100% - 4px);
+  height: calc(100% - 4px);
+  border: 1.5px solid var(--booking-accent-color);
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+.full-calendar-view .react-calendar__tile--now:hover::before {
+  border-color: var(--booking-accent-color);
+  filter: brightness(85%);
+}
+  
+/* Seleccionado en vista expandida */
+.full-calendar-view .react-calendar__tile--active {
+  background: var(--booking-accent-color);
+  color: #fff !important;
+  font-weight: 600;
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(var(--booking-accent-rgb, 0, 122, 255), 0.4);
+  display: none;
+}
+.full-calendar-view .react-calendar__tile--active:enabled:hover {
+  background: var(--booking-accent-color);
+  filter: brightness(85%);
+}
+.full-calendar-view .react-calendar__tile--active::before {
+  display: none;
+}
+  
+/* Vecinos de mes en vista expandida */
+.full-calendar-view .react-calendar__month-view__days__day--neighboringMonth {
+  color: #aaa;
+  background: transparent;
+  opacity: 0.6;
+  transform: none;
+}
+.full-calendar-view .react-calendar__month-view__days__day--neighboringMonth:hover {
+  background: transparent;
+  transform: none;
+}
+  
+/* Vistas Año/Década/Siglo en vista expandida */
+.full-calendar-view .react-calendar__year-view .react-calendar__tile,
+.full-calendar-view .react-calendar__decade-view .react-calendar__tile,
+.full-calendar-view .react-calendar__century-view .react-calendar__tile {
+  padding: 1em 0.5em;
+  border-radius: 8px;
+  aspect-ratio: auto;
+  margin: 2px;
+}
+.full-calendar-view .react-calendar__year-view__months__month,
+.full-calendar-view .react-calendar__decade-view__years__year,
+.full-calendar-view .react-calendar__century-view__decades__decade {
+  background: #fff;
+  border-radius: 6px;
+  padding: 1em 0.5em;
+  color: #333;
+  transition: background-color 0.2s;
+  border: 1px solid #eee;
+  border-color: #a8d8ff;
+}
+.full-calendar-view .react-calendar__year-view__months__month:hover,
+.full-calendar-view .react-calendar__decade-view__years__year:hover,
+.full-calendar-view .react-calendar__century-view__decades__decade:hover,
+.full-calendar-view .react-calendar__year-view__months__month:focus,
+.full-calendar-view .react-calendar__decade-view__years__year:focus,
+.full-calendar-view .react-calendar__century-view__decades__decade:focus {
+  background-color: #e9f5ff;
+  color: #007aff;
+  border-color: #a8d8ff;
+}
+  
+/* Botón para colapsar calendario */
+.collapse-calendar-button {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: #555;
+  font-size: 1.4em;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+.collapse-calendar-button:hover {
+  background-color: #f0f0f0;
+  color: #000;
+  border-radius: 50%;
+}
+  
+/* Acciones internas (botones Siguiente/Atrás) */
+.calendar-container .internal-actions {
+  background-color: transparent; /* Para glassmorphism */
+  border-top: var(--border-glass); /* Borde sutil para separar */
+  padding: 0.25rem 1rem 0.5rem 1rem;
+  margin-top: 0.25rem;
+}
+
+.calendar-container .internal-actions .prev-button,
+.calendar-container .internal-actions .next-button {
+  font-family: var(--sf-pro-font);
+  font-size: 17pt; /* Tamaño iOS */
+  font-weight: 500; /* Semibold */
+  padding: 0.6em 1.2em;
+  border-radius: 12px; /* Bordes más redondeados */
+}
+
+.calendar-container .internal-actions .prev-button {
+  background-color: rgba(120, 120, 128, 0.12); /* Gris translúcido iOS */
+  color: var(--color-text-primary);
+}
+.calendar-container .internal-actions .prev-button:hover {
+  background-color: rgba(120, 120, 128, 0.20);
+}
+
+.calendar-container .internal-actions .next-button {
+  background-color: var(--booking-accent-color);
+  color: #fff;
+}
+.calendar-container .internal-actions .next-button:hover:not(:disabled) {
+  filter: brightness(90%);
+}
+.calendar-container .internal-actions .next-button:disabled {
+  background-color: rgba(var(--booking-accent-rgb, 0, 122, 255), 0.5);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Ajustes para iconos de navegación del calendario completo */
+.full-calendar-view .react-calendar__navigation button svg {
+  stroke-width: 2.5; /* Iconos de flecha más gruesos/visibles */
+}
+
+/* Icono de expandir/colapsar en la tira de semana */
+.week-strip-expand-button svg {
+ /* Podríamos necesitar un icono específico aquí si FiCalendar no es suficientemente "wireframe 3D" */
+}
+
+/* Animaciones (placeholder, se detallarán después) */
+/* Para la expansión del contenedor */
+.full-calendar-view-wrapper {
+  /* transition max-height ya existe */
+  /* Se añadirán otras para transformaciones si es necesario */
+}
+
+/* Para celdas de la tira semanal al expandir */
+.calendar-container.expanded-view .week-strip-day-item {
+  /* Se definirán transformaciones y opacidad */
+}
+
+/* Para filas mensuales al expandir */
+.react-calendar__month-view__days .react-calendar__tile {
+  /* Se podría animar la opacidad con delay por fila */
+}
+
+/* Navegación del calendario completo (Mes Año + Flechas) */
+/* Esta es la parte que el usuario marcó en ROJO */
+.full-calendar-view .react-calendar__navigation {
+  display: flex; /* o el display que tenga por defecto */
+  /* Por defecto, está contenido dentro de full-calendar-view-wrapper que tiene max-height: 0 */
+  /* No es necesario ocultarlo explícitamente aquí si el wrapper ya lo hace */
+  /* Sin embargo, si queremos controlarlo independientemente de la animación del wrapper: */
+  /* opacity: 0; */
+  /* visibility: hidden; */
+  /* transition: opacity 0.3s ease-in-out; */
+}
+
+/* Cuando el contenedor principal está expandido, y el wrapper del calendario completo es visible, 
+   aseguramos que la navegación también lo sea (si se ocultó independientemente antes) */
+.calendar-container.expanded-view .full-calendar-view-wrapper.visible .full-calendar-view .react-calendar__navigation {
+  /* opacity: 1; */
+  /* visibility: visible; */
+  /* Los estilos de display, flex, etc., ya deberían estar aplicados por react-calendar por defecto */
+}
+
+/* Tira de semana SÍ debe ser visible en modo colapsado */
+.calendar-container.compact-view .week-strip-view {
+    display: flex; /* o block, según la estructura interna de week-strip-view */
+}
+
+/* Tira de semana PUEDE ocultarse o modificarse en modo expandido, según diseño */
+/* Si se quiere mantener visible la tira de semana incluso en modo expandido, como antes: */
+.calendar-container.expanded-view .week-strip-view {
+   display: flex !important; /* O la regla que la mantenía visible */
+   padding-bottom: 0.1rem; /* Aún más reducido si está visible Y el calendario expandido */
+}
+
+/* Si, por el contrario, la tira de semana debe OCULTARSE cuando el calendario está expandido: */
+/* .calendar-container.expanded-view .week-strip-view {
+    display: none;
+} */
+
+/* Estilo para el día seleccionado */
+.day-cell.selected .day-number {
+  background-color: var(--booking-accent-color);
+  color: #fff;
+  font-weight: 700;
+}
+
+/* Estilo para el día de hoy no seleccionado */
+.internal-actions .next-button,
+.internal-actions .prev-button {
+  /* Se heredan estilos de .next-button y .prev-button globales de BookingForm.css */
+  /* Si se necesitaran overrides específicos para DateStep: */
+   background-color: var(--booking-accent-color); /* ejemplo */
+   color: #ffffff; /* ejemplo */
+}
+
+.internal-actions .next-button:disabled {
+  background-color: #cccccc;
+  color: #666666;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Asegurar que el botón "Siguiente" de DateStep también use el color de acento */
+.date-step-container .next-button {
+    background-color: var(--booking-accent-color);
+    color: white;
+}
+
+.date-step-container .next-button:hover:not(:disabled) {
+    filter: brightness(90%);
+}
+
+/* Estilo para el botón de mes anterior/siguiente */
+.month-navigation button {
+  /* ... existing code ... */
+}
+  

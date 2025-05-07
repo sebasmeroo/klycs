@@ -3,7 +3,25 @@ import { doc, getDoc, addDoc, collection, Timestamp, getDocs, query } from 'fire
 import { db } from '../../firebase/config';
 import { BookingSettings, BookingService, Professional } from '../cardeditor/types'; // Importar Professional, quitar Card si no se usa directamente aquí
 import './BookingForm.css';
-import { FiX, FiArrowLeft } from 'react-icons/fi';
+import { FiArrowLeft } from 'react-icons/fi';
+import ServiceStep from './bookingFormSteps/ServiceStep'; // <-- IMPORTAR NUEVO COMPONENTE
+import DateStep from './bookingFormSteps/DateStep'; // <-- IMPORTAR NUEVO COMPONENTE
+import TimeStep from './bookingFormSteps/TimeStep'; // <-- IMPORTAR NUEVO COMPONENTE
+import ProfessionalStep from './bookingFormSteps/ProfessionalStep'; // <-- IMPORTAR NUEVO COMPONENTE
+import DetailsStep from './bookingFormSteps/DetailsStep'; // <-- IMPORTAR NUEVO COMPONENTE
+
+// --- NUEVA FUNCIÓN HELPER: hexToRgb ---
+const hexToRgb = (hex: string): string | null => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (result) {
+    const r = parseInt(result[1], 16);
+    const g = parseInt(result[2], 16);
+    const b = parseInt(result[3], 16);
+    return `${r}, ${g}, ${b}`; // Devuelve string "r, g, b"
+  } 
+  return null; // Devuelve null si el formato hex es inválido
+};
+// --- FIN FUNCIÓN HELPER ---
 
 // Interfaz para los datos iniciales
 interface InitialBookingData {
@@ -16,12 +34,20 @@ interface InitialBookingData {
 interface BookingFormProps {
   cardId: string;
   userId: string; // ID del dueño del negocio/tarjeta
-  onClose: () => void;
-  inlineMode?: boolean;
+  onClose?: () => void; // onClose ahora es opcional, para "cancelar" o "volver" si el padre lo implementa
+  inlineMode?: boolean; // Se usará principalmente para variantes de estilo menores, no para comportamiento modal
   initialStep?: number;
   initialData?: InitialBookingData | null;
-  onInlineComplete?: (data: { date: string; time: string; serviceId: string; professionalId?: string }) => void; // Añadir professionalId opcional
+  // onInlineComplete podría ya no ser relevante si inlineMode no define un flujo funcionalmente distinto
+  onInlineComplete?: (data: { date: string; time: string; serviceId: string; professionalId?: string }) => void;
+  accentColor?: string; // <--- AÑADIDO
 }
+
+// NUEVO: Interfaz para el componente ProgressBar (opcional, si lo hacemos separado)
+// interface ProgressBarProps {
+//   currentStep: number;
+//   totalSteps: number;
+// }
 
 const BookingForm: React.FC<BookingFormProps> = ({
   cardId,
@@ -30,7 +56,8 @@ const BookingForm: React.FC<BookingFormProps> = ({
   inlineMode = false,
   initialStep = 1,
   initialData = null,
-  onInlineComplete
+  onInlineComplete,
+  accentColor
 }) => {
   // Estados para carga y datos de configuración
   const [settings, setSettings] = useState<BookingSettings | null>(null);
@@ -79,13 +106,6 @@ const BookingForm: React.FC<BookingFormProps> = ({
           console.log("BookingSettings encontrados:", fetchedSettings);
           if (fetchedSettings.enabled !== false) { // Considerar true o undefined como habilitado
             setSettings(fetchedSettings);
-
-            // Preseleccionar servicio (solo si no viene de initialData y hay servicios)
-             if (!selectedServiceId && fetchedSettings.services && fetchedSettings.services.length > 0) {
-               if (!inlineMode && !initialData?.serviceId) {
-                 setSelectedServiceId(fetchedSettings.services[0].id);
-               }
-             }
 
             // 2. Cargar Profesionales SI está habilitado en settings
             if (fetchedSettings.allowProfessionalSelection) {
@@ -152,11 +172,12 @@ const BookingForm: React.FC<BookingFormProps> = ({
 
   // --- Lógica de pasos (AJUSTADA) ---
   const professionalStepEnabled = settings?.allowProfessionalSelection ?? false;
-  // Considerar el paso activo solo si está habilitado Y no hubo error cargando profesionales Y hay profesionales
   const professionalStepAvailable = professionalStepEnabled && !errorProfessionals && professionals.length > 0;
 
-  let baseSteps = inlineMode ? 3 : 4; // Modal: Servicio, Fecha, Hora, Detalles | Inline: Fecha, Hora, Servicio
-  const totalSteps = baseSteps + (professionalStepAvailable ? 1 : 0);
+  // Nueva secuencia y cálculo de totalSteps:
+  // 1: Fecha, 2: Hora, [3: Profesional si aplica], 4 (o 3): Servicio, 5 (o 4): Detalles
+  const baseNumberOfSteps = 4; // Fecha, Hora, Servicio, Detalles son la base
+  const totalSteps = baseNumberOfSteps + (professionalStepAvailable ? 1 : 0);
 
   // Log para depuración
   useEffect(() => {
@@ -229,90 +250,67 @@ const BookingForm: React.FC<BookingFormProps> = ({
 
   // Mapeo de pasos lógicos a componentes (AJUSTADO)
   const getStepComponent = (step: number): (() => React.JSX.Element | null) => {
-     // Modal: Servicio(1) -> Fecha(2) -> Hora(3) -> [Profesional(4)] -> Detalles(5 o 4)
-     // Inline: Fecha(1) -> Hora(2) -> [Profesional(3)] -> Servicio(4 o 3)
-
-     if (inlineMode) {
-        const professionalStepNumberInline = 3;
-        if (professionalStepAvailable && step === professionalStepNumberInline) return renderProfessionalStep;
-
-        let adjustedStepInline = step;
-        if (professionalStepAvailable && step >= professionalStepNumberInline) {
-             adjustedStepInline = step - (step === professionalStepNumberInline ? 0 : 1); // Ajustar índice para los pasos posteriores al de profesional
-        }
-
-        switch (adjustedStepInline) {
-          case 1: return renderDateStep;
-          case 2: return renderTimeStep;
-          case 3: return renderServiceStep; // Este sería el último paso si no hay profesional
-          default: return () => null;
-        }
-     } else { // Modo Modal
-        const professionalStepNumberModal = 4;
-        if (professionalStepAvailable && step === professionalStepNumberModal) return renderProfessionalStep;
-
-        let adjustedStepModal = step;
-         if (professionalStepAvailable && step >= professionalStepNumberModal) {
-             adjustedStepModal = step - (step === professionalStepNumberModal ? 0 : 1); // Ajustar índice para los pasos posteriores
-         }
-
-        switch (adjustedStepModal) {
-          case 1: return renderServiceStep;
-          case 2: return renderDateStep;
-          case 3: return renderTimeStep;
-          case 4: return renderDetailsStep; // Este sería el último paso si no hay profesional
-          default: return () => null;
-        }
-     }
+    const stepProfessionalActualNum = 3;
+    
+    if (step === 1) return () => <DateStep selectedDate={selectedDate} onDateChange={d => {setSelectedDate(d); setFormError(null);}} formError={formError} onNextStep={nextStep} onPrevStep={prevStep} currentStep={step}/>;
+    if (step === 2) return () => <TimeStep selectedTime={selectedTime} onTimeChange={t => {setSelectedTime(t); setFormError(null);}} formError={formError} onNextStep={nextStep} onPrevStep={prevStep} currentStep={step}/>;
+    
+    if (professionalStepAvailable) {
+      if (step === stepProfessionalActualNum) 
+        return () => <ProfessionalStep professionals={professionals} selectedProfessionalId={selectedProfessionalId} onProfessionalChange={id => {setSelectedProfessionalId(id); setFormError(null);}} loadingProfessionals={loadingProfessionals} errorProfessionals={errorProfessionals} formError={formError} onNextStep={nextStep} onPrevStep={prevStep} currentStep={step} totalSteps={totalSteps} inlineMode={inlineMode}/>;
+      if (step === stepProfessionalActualNum + 1) // Servicio después de Profesional
+        return () => <ServiceStep settings={settings} selectedServiceId={selectedServiceId} onServiceChange={id => {setSelectedServiceId(id); setFormError(null);}} formError={formError} onNextStep={nextStep} onPrevStep={prevStep} currentStep={step} totalSteps={totalSteps} inlineMode={inlineMode} professionalStepAvailable={professionalStepAvailable}/>;
+      if (step === stepProfessionalActualNum + 2) // Detalles después de Servicio (con Profesional)
+        return () => <DetailsStep customerName={customerName} customerEmail={customerEmail} onCustomerNameChange={setCustomerName} onCustomerEmailChange={setCustomerEmail} formError={formError} onPrevStep={prevStep} onSubmit={handleBookingSubmit} isSubmitting={isSubmitting} currentStep={step}/>;
+    } else {
+      // Flujo sin Profesional
+      if (step === stepProfessionalActualNum) // Servicio es el paso 3 si no hay Profesional
+        return () => <ServiceStep settings={settings} selectedServiceId={selectedServiceId} onServiceChange={id => {setSelectedServiceId(id); setFormError(null);}} formError={formError} onNextStep={nextStep} onPrevStep={prevStep} currentStep={step} totalSteps={totalSteps} inlineMode={inlineMode} professionalStepAvailable={professionalStepAvailable}/>;
+      if (step === stepProfessionalActualNum + 1) // Detalles es el paso 4 si no hay Profesional
+        return () => <DetailsStep customerName={customerName} customerEmail={customerEmail} onCustomerNameChange={setCustomerName} onCustomerEmailChange={setCustomerEmail} formError={formError} onPrevStep={prevStep} onSubmit={handleBookingSubmit} isSubmitting={isSubmitting} currentStep={step}/>;
+    }
+    
+    return () => null; // Default: si el número de paso no coincide, no renderizar nada
   };
 
   // Funciones de navegación entre pasos (AJUSTADO)
   const nextStep = () => {
-    setFormError(null);
-
-    const currentStepFunction = getStepComponent(currentStep);
+    setFormError(null); 
     let isValid = true;
+    const currentStepRenderFunc = getStepComponent(currentStep);
+    if (!currentStepRenderFunc) return; // No debería ocurrir si la lógica de pasos es correcta
+    
+    const stepComponentElement = currentStepRenderFunc();
+    if (!stepComponentElement || !stepComponentElement.type) return; // Chequeo adicional
 
-    // Mapeo de funciones de render a sus validaciones
-    if (currentStepFunction === renderServiceStep) isValid = validateService();
-    else if (currentStepFunction === renderDateStep) isValid = validateDate();
-    else if (currentStepFunction === renderTimeStep) isValid = validateTime();
-    else if (currentStepFunction === renderProfessionalStep) isValid = validateProfessional();
-    else if (currentStepFunction === renderDetailsStep) isValid = validateDetails(); // Detalles nunca es 'siguiente', llama a submit
+    const componentType = stepComponentElement.type; // No se necesita @ts-ignore si se maneja bien
 
-    if (!isValid) {
-      return;
-    }
+    if (componentType === DateStep) isValid = validateDate();
+    else if (componentType === TimeStep) isValid = validateTime();
+    else if (componentType === ProfessionalStep) isValid = validateProfessional();
+    else if (componentType === ServiceStep) isValid = validateService();
+    // DetailsStep se valida a través de su propio botón "onSubmit" que llama a handleBookingSubmit.
 
-    // Lógica de avance o completar
+    if (!isValid) return;
+
     if (currentStep < totalSteps) {
       setCurrentStep(prev => prev + 1);
-    } else if (inlineMode && currentStep === totalSteps && onInlineComplete) {
-      // Último paso en modo inline (ya validado arriba)
-      onInlineComplete({
-        date: selectedDate,
-        time: selectedTime,
-        serviceId: selectedServiceId,
-        professionalId: professionalStepAvailable ? selectedProfessionalId : undefined
-      });
-    } else if (!inlineMode && currentStep === totalSteps) {
-       // Último paso modal (Detalles). El botón "Confirmar" llama a handleBookingSubmit.
-       // No se hace nada aquí.
-    }
+    } 
+    // La lógica de onInlineComplete para inlineMode se podría revisar o eliminar si inlineMode ya no dicta un flujo distinto.
+    // else if (inlineMode && currentStep === totalSteps && onInlineComplete) { 
+    //   onInlineComplete({ date: selectedDate, time: selectedTime, serviceId: selectedServiceId, professionalId: professionalStepAvailable ? selectedProfessionalId : undefined });
+    // }
   };
 
   const prevStep = () => {
-     setFormError(null);
-     if (currentStep > 1) {
-      setCurrentStep(prev => prev - 1);
-     }
+    setFormError(null);
+    if (currentStep > 1) setCurrentStep(prev => prev - 1);
   };
 
 
   // Manejador del envío final (AJUSTADO para incluir professionalId y ruta correcta)
   const handleBookingSubmit = async (e?: React.FormEvent) => {
-    if (inlineMode) return; // Submit solo en modal
-    if(e) e.preventDefault();
+    if(e) e.preventDefault(); 
     if(!validateDetails()) return; // Validar detalles antes de enviar
 
     setFormError(null);
@@ -326,7 +324,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
        const professionalName = professionalStepAvailable ? professionals.find(p => p.id === selectedProfessionalId)?.name : undefined;
 
        const newBookingData: any = {
-         professionalUserId: userId, // ID del dueño del negocio/tarjeta
+         professionalUserId: userId, 
          cardId: cardId,
          serviceId: selectedServiceId,
          serviceName: serviceName,
@@ -337,302 +335,89 @@ const BookingForm: React.FC<BookingFormProps> = ({
          createdAt: Timestamp.now(),
        };
 
-       if (professionalStepAvailable && selectedProfessionalId) {
-         newBookingData.professionalId = selectedProfessionalId; // ID del profesional que realizará el servicio
-         if (professionalName) {
-            newBookingData.professionalName = professionalName;
-         }
+       if (professionalStepAvailable && selectedProfessionalId && professionalName) {
+         newBookingData.professionalId = selectedProfessionalId;
+         newBookingData.professionalName = professionalName;
        }
 
-       console.log("Guardando reserva con datos:", newBookingData);
-
-       // Guardar en la subcolección del usuario dueño según reglas: users/{userId}/bookings
        const targetBookingCollectionPath = `users/${userId}/bookings`;
-       console.log("Guardando en la colección:", targetBookingCollectionPath);
-       const docRef = await addDoc(collection(db, targetBookingCollectionPath), newBookingData);
-
-       console.log("Reserva guardada con ID: ", docRef.id);
-       setBookingSuccess(true); // Mostrar mensaje de éxito
-
+       await addDoc(collection(db, targetBookingCollectionPath), newBookingData);
+       setBookingSuccess(true); 
     } catch (error: any) {
-      console.error("Error al guardar la reserva en Firestore: ", error);
-      setFormError(`Ocurrió un error al guardar tu reserva: ${error.message}. Código: ${error.code}`);
+      setFormError(`Ocurrió un error al guardar tu reserva: ${error.message}.`);
       setBookingSuccess(false);
     } finally {
        setIsSubmitting(false);
     }
   };
 
-  // --- Renderizado de Pasos Individuales (CON TÍTULOS Y BOTONES AJUSTADOS) ---
-
-   const renderServiceStep = () => {
-    let stepNumber = 1; // Default Modal
-    if (inlineMode) {
-        stepNumber = professionalStepAvailable ? 4 : 3;
-    }
-
+  // --- Renderizado Principal (SIN MODAL) ---
+  if (loadingSettings) return <div className="booking-form-container loading-state">Cargando configuración...</div>;
+  if (errorSettings) return <div className="booking-form-container error-state"><h4>Error al cargar</h4><p>{errorSettings}</p></div>;
+  if (!settings || settings.enabled === false) { // Simplificado: si no hay settings o están deshabilitados
+    return <div className="booking-form-container notice-state"><p>Las reservas no están habilitadas actualmente.</p></div>;
+  }
+  if (!settings.services || settings.services.length === 0) { // Chequeo separado para servicios
+     return <div className="booking-form-container notice-state"><p>No hay servicios disponibles para reservar en este momento.</p></div>;
+  }
+  
+  if (bookingSuccess) {
+    const accentRgb = accentColor ? hexToRgb(accentColor) : null;
     return (
-    <>
-      <h4 className="step-title">{stepNumber}. Selecciona Servicio</h4>
-       <div className="booking-form-group">
-         <label htmlFor="serviceSelect">Servicio:</label>
-         <select
-           id="serviceSelect"
-           value={selectedServiceId}
-           onChange={(e) => { setSelectedServiceId(e.target.value); setFormError(null); }}
-           required
-           className="booking-form-select"
-           disabled={!settings?.services || settings.services.length === 0}
-         >
-           <option value="" disabled>{!settings?.services || settings.services.length === 0 ? 'No hay servicios' : 'Selecciona...'}</option>
-           {settings?.services?.map(service => (
-             <option key={service.id} value={service.id}>
-               {service.name} ({service.duration} min{service.price ? ` - ${service.price}€` : ''})
-             </option>
-           ))}
-         </select>
-       </div>
-       {formError && <p className="booking-form-error">{formError}</p>}
-       <div className={`step-actions ${currentStep > 1 ? 'space-between' : 'justify-end'}`}>
-         {currentStep > 1 && (
-            <button type="button" onClick={prevStep} className="prev-button">
-              <FiArrowLeft /> Atrás
-            </button>
-          )}
-         <button
-           type="button"
-           onClick={nextStep}
-           className="next-button"
-           disabled={!selectedServiceId || !settings?.services || settings.services.length === 0}
-         >
-           {(inlineMode && currentStep === totalSteps) ? 'Verificar y Continuar' : 'Siguiente'}
-         </button>
-       </div>
-    </>
-   )};
-
-  const renderDateStep = () => {
-     let stepNumber = 2; // Default Modal
-     if (inlineMode) {
-         stepNumber = 1;
-     }
-     return (
-     <>
-      <h4 className="step-title">{stepNumber}. Elige Fecha</h4>
-       <div className="booking-form-group">
-         <label htmlFor="dateSelect">Fecha:</label>
-         <input
-           type="date"
-           id="dateSelect"
-           value={selectedDate}
-           onChange={(e) => { setSelectedDate(e.target.value); setFormError(null); }}
-           required
-           className="booking-form-input"
-           min={new Date().toISOString().split('T')[0]}
-         />
-       </div>
-       {formError && <p className="booking-form-error">{formError}</p>}
-        <div className={`step-actions ${currentStep > 1 ? 'space-between' : 'justify-end'}`}>
-          {currentStep > 1 && (
-             <button type="button" onClick={prevStep} className="prev-button">
-               <FiArrowLeft /> Atrás
-             </button>
-           )}
-         <button type="button" onClick={nextStep} className="next-button" disabled={!selectedDate}>
-           Siguiente
-         </button>
-       </div>
-     </>
-   )};
-
-  const renderTimeStep = () => {
-     let stepNumber = 3; // Default Modal
-     if (inlineMode) {
-         stepNumber = 2;
-     }
-     return (
-     <>
-      <h4 className="step-title">{stepNumber}. Elige Hora</h4>
-       <div className="booking-form-group">
-         <label htmlFor="timeSelect">Hora:</label>
-         <input
-           type="time"
-           id="timeSelect"
-           value={selectedTime}
-           onChange={(e) => { setSelectedTime(e.target.value); setFormError(null); }}
-           required
-           className="booking-form-input"
-         />
-         {/* <p className="availability-hint">(Integrar disponibilidad real aquí)</p> */}
-       </div>
-       {formError && <p className="booking-form-error">{formError}</p>}
-        <div className={`step-actions ${currentStep > 1 ? 'space-between' : 'justify-end'}`}>
-          {currentStep > 1 && (
-             <button type="button" onClick={prevStep} className="prev-button">
-               <FiArrowLeft /> Atrás
-             </button>
-           )}
-         <button type="button" onClick={nextStep} className="next-button" disabled={!selectedTime}>
-           Siguiente
-         </button>
-       </div>
-     </>
-   )};
-
-   const renderProfessionalStep = () => {
-       let stepNumber = 4; // Default Modal
-       if (inlineMode) {
-           stepNumber = 3;
-       }
-       return (
-       <>
-         <h4 className="step-title">{stepNumber}. Selecciona Profesional</h4>
-         <div className="booking-form-group">
-           <label htmlFor="professionalSelect">Profesional:</label>
-           <select
-             id="professionalSelect"
-             value={selectedProfessionalId}
-             onChange={(e) => { setSelectedProfessionalId(e.target.value); setFormError(null); }}
-             required
-             className="booking-form-select"
-             disabled={loadingProfessionals || professionals.length === 0}
-           >
-             <option value="" disabled>
-               {loadingProfessionals ? 'Cargando...' : (professionals.length === 0 ? 'No hay profesionales' : 'Selecciona...')}
-             </option>
-             {professionals.map(prof => (
-               <option key={prof.id} value={prof.id}>
-                 {prof.name || `Profesional ${prof.id.substring(0, 5)}`}
-               </option>
-             ))}
-           </select>
-         </div>
-         {/* Mostrar error específico de profesionales aquí */}
-         {errorProfessionals && <p className="booking-form-error">{errorProfessionals}</p>}
-         {/* Mostrar error general del paso (ej. no seleccionado) */}
-         {formError && <p className="booking-form-error">{formError}</p>}
-         <div className={`step-actions space-between`}>
-           <button type="button" onClick={prevStep} className="prev-button">
-             <FiArrowLeft /> Atrás
-           </button>
-           <button
-             type="button"
-             onClick={nextStep}
-             className="next-button"
-              // Deshabilitar si no se seleccionó, si está cargando, o si hubo error al cargar
-             disabled={!selectedProfessionalId || loadingProfessionals || !!errorProfessionals}
-           >
-              {(inlineMode && currentStep === totalSteps) ? 'Verificar y Continuar' : 'Siguiente'}
-           </button>
-         </div>
-       </>
-   )};
-
-   const renderDetailsStep = () => { // Solo para modo modal
-       const stepNumber = totalSteps;
-       return (
-       <>
-         <h4 className="step-title">{stepNumber}. Tus Datos</h4>
-         <div className="booking-form-group">
-           <label htmlFor="customerName">Nombre:</label>
-           <input type="text" id="customerName" value={customerName} onChange={(e) => {setCustomerName(e.target.value); setFormError(null);}} required className="booking-form-input" />
-         </div>
-         <div className="booking-form-group">
-           <label htmlFor="customerEmail">Email:</label>
-           <input type="email" id="customerEmail" value={customerEmail} onChange={(e) => {setCustomerEmail(e.target.value); setFormError(null);}} required className="booking-form-input" />
-         </div>
-         {formError && <p className="booking-form-error">{formError}</p>}
-         <div className="step-actions space-between">
-             <button type="button" onClick={prevStep} className="prev-button">
-               <FiArrowLeft /> Atrás
-             </button>
-           <button
-             type="button"
-             onClick={handleBookingSubmit} // Llama directamente al submit
-             className="submit-booking-button"
-             disabled={isSubmitting || !customerName || !customerEmail || !validateEmail(customerEmail)}
-           >
-             {isSubmitting ? 'Confirmando...' : 'Confirmar Reserva'}
-           </button>
-         </div>
-       </>
-   )};
-
-  // --- Renderizado Principal (AJUSTAR MENSAJES) ---
-
-   const overallLoading = loadingSettings; // La carga inicial crítica es la de settings
-   const overallError = errorSettings; // Mostrar error principal de settings si existe
-
-   if (overallLoading) {
-    const LoadingComponent = <div className={`booking-form-${inlineMode ? 'inline' : 'modal'} loading`}>Cargando configuración...</div>;
-    return inlineMode ? LoadingComponent : <div className="booking-form-overlay">{LoadingComponent}</div>;
-   }
-
-   // Mostrar error de settings si ocurrió
-   if (overallError) {
-     const ErrorComponent = (
-       <div className={`booking-form-${inlineMode ? 'inline' : 'modal'} error`}>
-         <h4>Error al Cargar</h4>
-         <p>{overallError}</p>
-         {!inlineMode && <button onClick={onClose} className="close-button simple">Cerrar</button>}
-       </div>
-     );
-     return inlineMode ? ErrorComponent : <div className="booking-form-overlay">{ErrorComponent}</div>;
-   }
-
-   // Caso: Settings cargados pero reservas deshabilitadas o sin servicios
-   if (!settings || settings.enabled === false || !settings.services || settings.services.length === 0) {
-       let message = "Las reservas no están habilitadas actualmente.";
-       if (settings && settings.enabled !== false && (!settings.services || settings.services.length === 0)) {
-           message = "No hay servicios disponibles para reservar en este momento.";
-       }
-      const NoticeComponent = (
-        <div className={`booking-form-${inlineMode ? 'inline' : 'modal'} notice`}>
-          <p>{message}</p>
-          {!inlineMode && <button onClick={onClose} className="close-button simple">Cerrar</button>}
-        </div>
-      );
-      return inlineMode ? NoticeComponent : <div className="booking-form-overlay">{NoticeComponent}</div>;
-   }
-
-   // Mensaje de éxito (solo modal)
-  if (bookingSuccess && !inlineMode) {
-      const SuccessComponent = (
-         <div className="booking-form-modal success">
-           <h3>¡Reserva Solicitada!</h3>
-           <p>Tu solicitud ha sido enviada. Recibirás confirmación por email.</p>
-           <button onClick={onClose} className="close-button simple">Cerrar</button>
-         </div>
-       );
-      return <div className="booking-form-overlay">{SuccessComponent}</div>;
+      <div 
+        className="booking-form-container success-state"
+        style={{
+          '--booking-accent-color': accentColor || '#007AFF',
+          '--booking-accent-rgb': accentRgb || '0, 122, 255'
+        } as React.CSSProperties}
+      >
+        <h3>¡Reserva Solicitada!</h3>
+        <p>Tu solicitud ha sido enviada. Recibirás confirmación por email.</p>
+        {/* Aquí podrías añadir un botón para "Hacer otra reserva" o similar si lo deseas */}
+      </div>
+    );
   }
 
-  // Si settings está cargado y habilitado, y no hay error de settings, renderizar el formulario
-  const FormContent = (
-    <div className={inlineMode ? "booking-form-inline" : "booking-form-modal"}>
-      {!inlineMode && (
-        <button onClick={onClose} className="close-button icon-button" title="Cerrar">
-          <FiX />
-        </button>
-      )}
-      {!inlineMode && <h3 className="booking-form-title">Realizar Reserva</h3>}
+  const progressPercent = totalSteps > 0 ? (currentStep / totalSteps) * 100 : 0;
+  const accentRgb = accentColor ? hexToRgb(accentColor) : null;
+
+  return (
+    <div 
+      className={`booking-form-container ${inlineMode ? 'style-inline-variant' : 'style-full-flow'}`}
+      style={{
+        '--booking-accent-color': accentColor || '#007AFF',
+        '--booking-accent-rgb': accentRgb || '0, 122, 255'
+      } as React.CSSProperties}
+    >
+      {/* Título Eliminado 
+      <h3 className="booking-form-title">Realizar Reserva</h3> 
+      */}
+      
+      {/* Contenedor para el componente del paso actual */}
       <div className="booking-steps-container">
-        {/* Mostrar error de profesionales si ocurrió y el paso no está activo */}
-        {errorProfessionals && !professionalStepAvailable && (
-            <p className="booking-form-error subtle">Advertencia: {errorProfessionals}</p>
+        {/* Mostrar error de carga de profesionales sólo en el paso de Profesional */}
+        {errorProfessionals && currentStep === (professionalStepAvailable ? 3 : 0) && professionalStepAvailable && (
+            <p className="booking-form-error subtle">Advertencia al cargar profesionales: {errorProfessionals}</p>
         )}
-        {/* Renderizar el componente del paso actual */}
+        
+        {/* Renderizar el componente devuelto por getStepComponent */}
         {getStepComponent(currentStep)()}
       </div>
-      {!inlineMode && totalSteps > 1 && (
-          <div className="booking-step-indicator">
-              Paso {currentStep} de {totalSteps}
+
+      {/* Barra de progreso MOVIDA al final */}
+      {totalSteps > 0 && (
+        <div className="progress-bar-container bottom-border-style"> {/* Añadir clase opcional para estilo */} 
+          {/* Texto de pasos eliminado */} 
+          <div className="progress-bar">
+            <div 
+              className="progress-bar-fill"
+              style={{ width: `${progressPercent}%` }}
+            ></div>
           </div>
+        </div>
       )}
     </div>
   );
-
-  return inlineMode ? FormContent : <div className="booking-form-overlay">{FormContent}</div>;
 };
 
 export default BookingForm; 

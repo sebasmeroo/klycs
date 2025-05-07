@@ -1,0 +1,190 @@
+/* DetailsStep.css */
+
+/* Asumiendo que las variables CSS (--sf-pro-font, --color-*, --shadow-*, etc.) 
+   están definidas globalmente (ej. en index.css o :root en otro archivo) */
+
+.details-step-container {
+  background-color: var(--color-background-neutral, #F2F2F7); /* Fondo neutro base */
+  border-radius: 18px 18px 0 0; /* Mismo redondeo que otros pasos */
+  box-shadow: var(--shadow-container, 0px 4px 12px rgba(0, 0, 0, 0.08)), 
+              var(--glow-purple, 0 0 20px rgba(142, 68, 173, 0.3)); /* Mismas sombras */
+  position: relative;
+  overflow: hidden; /* Ocultar overflow para mantener bordes */
+  padding: 1.5rem; /* Padding interno */
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem; /* Espacio entre elementos */
+}
+
+/* Efecto Glassmorphism */
+.details-step-container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.15); /* Opacidad del fondo para glass */
+  backdrop-filter: blur(12px) saturate(160%); /* Ajustar blur/saturación */
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  z-index: 0;
+  border-radius: 18px; /* Mismo redondeo que el contenedor */
+}
+
+/* Posicionar contenido sobre el fondo glass */
+.details-step-container .booking-form-group,
+.details-step-container .booking-form-error,
+.details-step-container .step-actions {
+  position: relative;
+  z-index: 1;
+}
+
+/* Estilos para etiquetas */
+.details-step-container .booking-form-group label {
+  font-family: var(--sf-pro-font, sans-serif);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #333333 !important; /* Forzar color oscuro para etiquetas */
+  margin-bottom: 0.4rem;
+  display: block;
+}
+
+/* Estilos para inputs (asegurar color de texto) */
+.details-step-container .booking-form-input {
+  font-family: var(--sf-pro-font, sans-serif);
+  font-size: 16pt; /* Tamaño consistente */
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: none; /* Sin borde por defecto */
+  background-color: rgba(118, 118, 128, 0.12); /* Fondo input iOS */
+  color: #1c1c1e !important; /* Forzar color de texto oscuro */
+  width: 100%;
+  box-sizing: border-box;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.details-step-container .booking-form-input::placeholder {
+  color: rgba(60, 60, 67, 0.45);
+}
+
+.details-step-container .booking-form-input:focus {
+  background-color: rgba(118, 118, 128, 0.20);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(var(--booking-accent-rgb, 0, 122, 255), 0.25); /* Foco con acento */
+}
+
+/* Estilos para errores (heredados o específicos) */
+.details-step-container .booking-form-error.internal-error {
+  background-color: rgba(255, 59, 48, 0.1); 
+  color: #FF3B30; 
+  padding: 12px 15px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  text-align: left; 
+  margin-top: 0; /* Resetear margen si viene de estilos globales */
+  font-family: var(--sf-pro-font, sans-serif);
+}
+
+/* Estilos para botones (Asegurar colores de texto específicos) */
+.details-step-container .step-actions {
+  margin-top: 1rem; /* Ajustar espacio sobre los botones */
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(60, 60, 67, 0.15); /* Separador sutil */
+}
+
+/* Asegurar que los botones usan las variables y estilos correctos */
+.details-step-container .prev-button,
+.details-step-container .submit-booking-button {
+  font-family: var(--sf-pro-font, -apple-system, sans-serif);
+  font-size: 17pt; 
+  font-weight: 500; 
+  padding: 0.6em 1.2em;
+  border-radius: 12px; 
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s, filter 0.2s, opacity 0.2s;
+  /* Heredar resto de estilos (colores, hover, disabled) de BookingForm.css 
+     o copiarlos aquí para asegurar consistencia */
+}
+
+/* Ejemplo de sobreescritura si fuera necesario: */
+/* .details-step-container .prev-button { ... } */
+/* .details-step-container .submit-booking-button { ... } */
+
+/* Hereda .booking-form-group, .booking-form-input, .booking-form-error, .step-actions, .prev-button, .next-button de BookingForm.css o de los CSS globales si existen.
+   Si es necesario, se pueden sobreescribir o añadir especificidad aquí.
+*/
+
+/* Estilo para las etiquetas dentro de este paso si se quiere diferenciar */
+.details-step-container .booking-form-group label {
+  font-size: 0.85rem;
+  color: rgba(235, 235, 245, 0.6); /* SF Pro text subhued */
+  margin-bottom: 0.3rem;
+  display: block;
+}
+
+/* Ajustes específicos para los inputs de este paso si es necesario */
+.details-step-container .booking-form-input {
+  background-color: rgba(118, 118, 128, 0.12); /* iOS input background */
+  border: 0.5px solid rgba(118, 118, 128, 0.24); /* iOS input border */
+  color: #fff; /* Texto blanco */
+  border-radius: 10px; /* Bordes redondeados iOS */
+  padding: 12px 15px;
+  font-size: 1rem; /* Tamaño de fuente SF Pro */
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+  width: 100%;
+  box-sizing: border-box;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.details-step-container .booking-form-input::placeholder {
+  color: rgba(235, 235, 245, 0.4);
+}
+
+.details-step-container .booking-form-input:focus {
+  background-color: rgba(118, 118, 128, 0.20);
+  border-color: rgba(0, 122, 255, 0.5); /* iOS blue focus */
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
+}
+
+/* Si el error debe tener un estilo específico dentro de DetailsStep */
+.details-step-container .booking-form-error.internal-error {
+  background-color: rgba(255, 59, 48, 0.1); /* Fondo rojo translúcido iOS error */
+  color: #FF3B30; /* Rojo iOS error */
+  padding: 10px 15px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  text-align: left; /* Alineación a la izquierda para errores dentro del flujo */
+  margin-top: 0; /* Ajustar si es necesario */
+}
+
+/* Botón de submit (Confirmar Reserva) */
+.details-step-container .submit-booking-button {
+  background-color: var(--booking-accent-color);
+  color: white;
+  /* Hereda otros estilos de .next-button si se usa esa clase, o define aquí */
+}
+
+.details-step-container .submit-booking-button:hover:not(:disabled) {
+  filter: brightness(90%);
+}
+
+.details-step-container .submit-booking-button:disabled {
+  background-color: rgba(var(--booking-accent-rgb, 0, 122, 255), 0.5); /* Deshabilitado con acento */
+  color: rgba(255, 255, 255, 0.8);
+  opacity: 0.8; /* Ajustar opacidad si se ve muy claro */
+  cursor: not-allowed;
+}
+
+/* Botón de Atrás */
+.details-step-container .prev-button {
+  /* Estilos si son diferentes, o hereda de BookingForm.css */
+}
+
+/* Media queries si son necesarias para ajustar el layout de botones en móvil */
+
+/* FIN DetailsStep.css */ 

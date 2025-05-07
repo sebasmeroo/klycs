@@ -1,6 +1,7 @@
 import React from 'react';
 import './CardEditor.css';
-import { FiInfo, FiEdit, FiImage, FiType, FiLayers, FiSliders, FiSave } from 'react-icons/fi';
+import { FiInfo, FiEdit, FiImage, FiType, FiLayers, FiSliders, FiSave, FiDroplet } from 'react-icons/fi';
+import { CardTheme } from './types';
 
 interface CardFormProps {
   title: string;
@@ -16,6 +17,8 @@ interface CardFormProps {
   handleBackgroundColorChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleBackgroundGradientChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   handleBackgroundFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  theme: CardTheme;
+  handleThemeChange: (newTheme: Partial<CardTheme>) => void;
 }
 
 const CardForm: React.FC<CardFormProps> = ({
@@ -31,7 +34,9 @@ const CardForm: React.FC<CardFormProps> = ({
   handleBackgroundTypeChange,
   handleBackgroundColorChange,
   handleBackgroundGradientChange,
-  handleBackgroundFileChange
+  handleBackgroundFileChange,
+  theme,
+  handleThemeChange
 }) => {
   return (
     <form id="cardForm" className="card-editor-form" onSubmit={handleSubmit}>
@@ -200,6 +205,31 @@ const CardForm: React.FC<CardFormProps> = ({
             </small>
           </div>
         )}
+      </div>
+
+      <div className="form-group theme-colors-group">
+        <label htmlFor="primaryColor" className="form-label">
+          <FiDroplet size={14} />
+          Color de Acento Principal
+        </label>
+        <div className="color-picker-container">
+          <input
+            type="color"
+            id="primaryColor"
+            className="form-control color-picker"
+            value={theme.primaryColor || '#6366f1'}
+            onChange={(e) => handleThemeChange({ primaryColor: e.target.value })}
+          />
+          <input
+            type="text"
+            value={theme.primaryColor || '#6366f1'}
+            className="form-control color-text"
+            onChange={(e) => handleThemeChange({ primaryColor: e.target.value })}
+          />
+        </div>
+        <small className="form-text">
+          Este color se usará para botones, enlaces activos y otros elementos destacados.
+        </small>
       </div>
 
       <div className="card-editor-footer">
