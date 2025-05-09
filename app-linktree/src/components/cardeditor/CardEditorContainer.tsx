@@ -1,17 +1,20 @@
 import React, { useState, useEffect, useRef, MouseEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { doc, getDoc, updateDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, setDoc, collection, query, where, getDocs, orderBy, QueryDocumentSnapshot, DocumentData, addDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { db, storage, auth } from '../../firebase/config';
 import { v4 as uuidv4 } from 'uuid';
-import { FiShoppingBag, FiPlus, FiTrash2, FiArrowLeft, FiSave, FiInfo, FiLayers, FiLink, FiLoader, FiEye, FiRefreshCw, FiCalendar } from 'react-icons/fi';
+import { FiShoppingBag, FiPlus, FiTrash2, FiArrowLeft, FiSave, FiInfo, FiLayers, FiLink, FiLoader, FiEye, FiRefreshCw, FiCalendar, FiMove, FiFilm } from 'react-icons/fi';
 import { deleteImageFromStorage, uploadCardImage } from '../../utils/storageUtils';
+import { getIdTokenResult } from 'firebase/auth';
+
+// Importar TODOS los tipos necesarios desde types.ts
+import { Card, CardLink, Product, CardBackground, CardTheme, TemplateType, BookingSettings, CardSectionType, CARD_SECTION_TYPES, Professional, CoverMediaItem } from './types';
 
 // Importar componentes mejorados
 import CardForm from './CardForm';
 import LinksManager from './LinksManager';
 import ProductSelector from './ProductSelector';
-import { Card, CardLink, Product, CardBackground, CardTheme, TemplateType, BookingSettings } from './types';
 import { 
   compressImage, 
   compressBackgroundImage, 
@@ -20,9 +23,27 @@ import {
 } from '../../utils/imageCompression';
 import CompressionInfo from '../common/CompressionInfo';
 import BookingManager from '../booking/BookingManager';
+import SectionOrderEditor from './subcomponents/SectionOrderEditor';
+import CardVisualsEditor from './subcomponents/CardVisualsEditor';
+import CardProductsEditor from './subcomponents/CardProductsEditor';
+import TemplateSelector from './subcomponents/TemplateSelector';
+import CardPreviewPane from './subcomponents/CardPreviewPane';
+import CoverSliderEditor from './subcomponents/CoverSliderEditor';
 
 // Importar estilos
 import './CardEditor.css';
+
+// Asumimos o definimos un tipo para las secciones del editor si no existe
+// Si ya existe un tipo como EditorSectionType, lo modificaremos.
+// Si no, lo creamos:
+type EditorSectionType = 
+  | 'basic-info' 
+  | 'background-style' 
+  | 'links-section' 
+  | 'products-section' 
+  | 'booking-section' 
+  | 'layout-section'
+  | 'coverSlider-editor';
 
 interface CardEditorContainerProps {
   cardId: string;
@@ -30,10 +51,8 @@ interface CardEditorContainerProps {
   onReturn?: () => void;
 }
 
-// Interfaz Card sin bookingSettings, ya que vive en subcolección
-interface ExtendedCard extends Omit<Card, 'backgroundType' | 'bookingSettings'> {
-  backgroundType?: 'image' | 'color' | 'gradient' | 'pattern';
-}
+// Definir un orden por defecto para las secciones
+const DEFAULT_SECTION_ORDER: CardSectionType[] = ['userProfileInfo', 'header', 'image', 'description', 'links', 'products', 'booking'];
 
 const CardEditorContainer: React.FC<CardEditorContainerProps> = ({ 
   cardId, 
@@ -42,78 +61,46 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
 }) => {
   const navigate = useNavigate();
   
-  // Estados para la tarjeta
-  const [card, setCard] = useState<ExtendedCard | null>(null);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  // --- Estados Principales --- 
+  const [card, setCard] = useState<Card | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   
-  // Estados para almacenar las imágenes comprimidas para subir
-  const [mainImageFile, setMainImageFile] = useState<File | null>(null);
-  const [backgroundImageFile, setBackgroundImageFile] = useState<File | null>(null);
-
-  // Estados para compresión de imágenes
-  const [mainImageCompressionStatus, setMainImageCompressionStatus] = useState<CompressionStatus>('idle');
-  const [mainImageCompressionData, setMainImageCompressionData] = useState<{
-    originalSize?: number;
-    compressedSize?: number;
-    originalFormat?: string;
-    compressionRatio?: number;
-  }>({});
-  
-  const [bgImageCompressionStatus, setBgImageCompressionStatus] = useState<CompressionStatus>('idle');
-  const [bgImageCompressionData, setBgImageCompressionData] = useState<{
-    originalSize?: number;
-    compressedSize?: number;
-    originalFormat?: string;
-    compressionRatio?: number;
-  }>({});
-  
-  // Estados para fondo y tema
-  const [background, setBackground] = useState<CardBackground>({ 
-    type: 'color',
-    color: '#ffffff'
-  });
-  const [theme, setTheme] = useState<CardTheme>({
-    primaryColor: '#6366f1',
-    secondaryColor: '#4f46e5',
-    textColor: '#333333',
-    linkColor: '#6366f1'
-  });
-  const [layout, setLayout] = useState<'standard' | 'compact' | 'featured' | 'grid' | 'custom'>('standard');
-  const [animation, setAnimation] = useState<'none' | 'fade' | 'slide' | 'bounce'>('none');
-  
-  // Estados para template
+  // --- Estados de la Tarjeta (se inicializan en processCardData) --- 
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [imagePreview, setImagePreview] = useState<string | null>(null); // Preview local
+  const [mainImageFile, setMainImageFile] = useState<File | null>(null); // Archivo para subir
+  const [backgroundImageFile, setBackgroundImageFile] = useState<File | null>(null); // Archivo para subir
+  const [background, setBackground] = useState<CardBackground>({ type: 'color', color: '#ffffff' });
+  const [theme, setTheme] = useState<CardTheme>({ primaryColor: '#6366f1', secondaryColor: '#4f46e5', textColor: '#333333', linkColor: '#6366f1' });
   const [template, setTemplate] = useState<TemplateType>('basic');
   const [storeName, setStoreName] = useState('');
-  
-  // Estados para los enlaces
-  const [links, setLinks] = useState<CardLink[]>([]);
-  const [linkTitle, setLinkTitle] = useState('');
-  const [linkUrl, setLinkUrl] = useState('');
-  const [editingLinkId, setEditingLinkId] = useState<string | null>(null);
-  const [showLinkForm, setShowLinkForm] = useState(false);
+  const [links, setLinks] = useState<CardLink[]>([]); // Estado principal de los enlaces
+  const [cardProducts, setCardProducts] = useState<Product[]>([]); // Productos de la tarjeta actual
+  const [bookingSettings, setBookingSettings] = useState<BookingSettings | undefined>(undefined);
+  const [sectionOrder, setSectionOrder] = useState<CardSectionType[]>(DEFAULT_SECTION_ORDER);
+  const [userProducts, setUserProducts] = useState<Product[]>([]); // Productos disponibles del usuario
+  const [coverMediaItems, setCoverMediaItems] = useState<CoverMediaItem[]>([]); // <-- RESTAURAR ESTADO
 
-  // Estados para productos
+  // --- Estados del Editor UI --- 
+  const [selectedSection, setSelectedSection] = useState<EditorSectionType>('basic-info');
+  const [layout, setLayout] = useState<'standard' | 'compact' | 'featured' | 'grid' | 'custom'>('standard');
+  const [animation, setAnimation] = useState<'none' | 'fade' | 'slide' | 'bounce'>('none');
+  const [mainImageCompressionStatus, setMainImageCompressionStatus] = useState<CompressionStatus>('idle');
+  const [mainImageCompressionData, setMainImageCompressionData] = useState<{ originalSize?: number; compressedSize?: number; originalFormat?: string; compressionRatio?: number }>({});
+  const [bgImageCompressionStatus, setBgImageCompressionStatus] = useState<CompressionStatus>('idle');
+  const [bgImageCompressionData, setBgImageCompressionData] = useState<{ originalSize?: number; compressedSize?: number; originalFormat?: string; compressionRatio?: number }>({});
   const [showProductSelector, setShowProductSelector] = useState(false);
-  const [userProducts, setUserProducts] = useState<Product[]>([]);
-  const [cardProducts, setCardProducts] = useState<Product[]>([]);
   const [iframeKey, setIframeKey] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
-
-  // Estados para drag-to-scroll
   const [isDraggingPreview, setIsDraggingPreview] = useState(false);
   const [startYPreview, setStartYPreview] = useState(0);
   const [scrollTopStartPreview, setScrollTopStartPreview] = useState(0);
 
-  // Estado de sección seleccionada para navegación lateral
-  const [selectedSection, setSelectedSection] = useState<'basic-info'|'background-style'|'links-section'|'products-section'|'booking-section'>('basic-info');
-
-  // *** Nuevo estado para la configuración de reservas - inicializar con undefined ***
-  const [bookingSettings, setBookingSettings] = useState<BookingSettings | undefined>(undefined);
+  // Definir qué plantillas están disponibles
+  const availableTemplates: TemplateType[] = ['basic', 'link', 'shop', 'headerStore', 'miniShop']; // Asegúrate que coincida con tus tipos y lógica
 
   // Función para abrir la vista pública de la tarjeta en nueva pestaña
   const handlePreviewClick = () => {
@@ -124,9 +111,11 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
   };
 
   useEffect(() => {
-    const fetchCardAndSettingsData = async () => {
+    const fetchCardAndRelatedData = async () => {
       setLoading(true);
       setError(null);
+      setLinks([]);
+      setCardProducts([]);
 
       if (!cardId) {
         setError("ID de tarjeta no especificado");
@@ -140,8 +129,10 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
         return;
       }
 
+      const currentUserId = auth.currentUser.uid;
+
       try {
-        // 1. Cargar datos de la tarjeta principal
+        // --- 1. Cargar datos del Documento Principal de la Tarjeta --- 
         const cardRef = doc(db, 'cards', cardId);
         const cardDoc = await getDoc(cardRef);
 
@@ -153,17 +144,60 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
         }
 
         console.log("Tarjeta principal encontrada");
-        const cardData = cardDoc.data() as ExtendedCard;
+        const cardData = { id: cardDoc.id, ...cardDoc.data() } as Card;
 
         // Validar permiso
-        if (cardData.userId !== auth.currentUser?.uid) {
+        if (cardData.userId !== currentUserId) {
           console.error("Error: El usuario no tiene permiso para editar esta tarjeta.");
           setError("No tienes permiso para editar esta tarjeta.");
           setLoading(false);
           return;
         }
 
-        // 2. Cargar datos de bookingSettings desde la subcolección
+        // --- 2. Cargar Enlaces desde Subcolección --- 
+        let fetchedLinks: CardLink[] = [];
+        try {
+          const linksRef = collection(db, 'cards', cardId, 'links');
+          const linksQuery = query(linksRef, orderBy('order', 'asc'));
+          const linksSnapshot = await getDocs(linksQuery);
+          fetchedLinks = linksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CardLink));
+          console.log("Enlaces cargados:", fetchedLinks.length);
+        } catch (linkError) {
+          console.error("Error cargando enlaces desde subcolección:", linkError);
+        }
+
+        // --- 3. Cargar Productos Asociados desde Subcolección --- 
+        let fetchedAssociatedProducts: Product[] = [];
+        try {
+          const associatedProductsRef = collection(db, 'cards', cardId, 'cardProducts');
+          const associatedProductsQuery = query(associatedProductsRef, orderBy('order', 'asc'));
+          const associatedProductsSnapshot = await getDocs(associatedProductsQuery);
+          console.log("Asociaciones de producto encontradas:", associatedProductsSnapshot.docs.length);
+          
+          const productIdsToFetch = associatedProductsSnapshot.docs.map(doc => doc.data().productId as string);
+
+          if (productIdsToFetch.length > 0) {
+            const userProductsRef = collection(db, 'users', currentUserId, 'products');
+            const productDetailsQuery = query(userProductsRef, where('__name__', 'in', productIdsToFetch.slice(0, 30)));
+            const productDetailsSnapshot = await getDocs(productDetailsQuery);
+            
+            const productDetailsMap = new Map<string, Product>();
+            productDetailsSnapshot.docs.forEach(doc => {
+              productDetailsMap.set(doc.id, { id: doc.id, ...doc.data() } as Product);
+            });
+            
+            fetchedAssociatedProducts = associatedProductsSnapshot.docs.map(assocDoc => {
+              const productId = assocDoc.data().productId;
+              return productDetailsMap.get(productId);
+            }).filter((p): p is Product => p !== undefined);
+            
+            console.log("Detalles de productos asociados cargados:", fetchedAssociatedProducts.length);
+          }
+        } catch (productError) {
+          console.error("Error cargando productos asociados:", productError);
+        }
+
+        // --- 4. Cargar BookingSettings desde Subcolección (si aplica) --- 
         let fetchedBookingSettings: BookingSettings | undefined = undefined;
         const settingsRef = doc(db, 'cards', cardId, 'bookingSettings', 'settings');
         try {
@@ -173,17 +207,13 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
             fetchedBookingSettings = settingsDoc.data() as BookingSettings;
           } else {
             console.warn("No se encontró documento 'settings' en la subcolección bookingSettings. Se usarán valores por defecto.");
-            // Podríamos crear el documento aquí si falta por alguna razón?
-            // O simplemente inicializar con valores por defecto como hacemos abajo.
           }
-        } catch (settingsError: any) { // Capturar error específico de settings
+        } catch (settingsError: any) {
            console.error("Error cargando BookingSettings desde subcolección:", settingsError);
-           // No establecer error principal, pero loguear.
-           // Continuar con la carga del resto de la tarjeta.
         }
 
-        // 3. Procesar y actualizar estados locales
-        processCardData(cardData, fetchedBookingSettings);
+        // --- 5. Procesar y actualizar todos los estados locales --- 
+        processCardData(cardData, fetchedLinks, fetchedAssociatedProducts, fetchedBookingSettings);
 
       } catch (error: any) {
         console.error('Error al acceder a Firestore para cargar tarjeta principal:', error);
@@ -193,24 +223,22 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
     };
 
     if (userData && cardId && auth.currentUser) {
-      fetchCardAndSettingsData();
+      fetchCardAndRelatedData();
     }
 
-    // Llamar a fetchUserProducts aquí también
     if (auth.currentUser) {
         fetchUserProducts(auth.currentUser.uid); 
     } else {
         console.warn("No hay usuario autenticado, no se pueden cargar productos.")
     }
 
-  }, [cardId, userData, navigate]); // Dependencias
+  }, [cardId, userData, navigate]);
 
-  // Modificar fetchUserProducts para cargar desde Firestore
   const fetchUserProducts = async (userId: string) => {
     try {
       console.log(`Cargando productos para el usuario: ${userId}`);
       const productsRef = collection(db, 'users', userId, 'products');
-      const q = query(productsRef); // Podrías añadir filtros si es necesario (ej. where('active', '==', true))
+      const q = query(productsRef);
       const querySnapshot = await getDocs(q);
       
       const fetchedProducts = querySnapshot.docs.map(doc => ({
@@ -223,8 +251,8 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
       
     } catch (error) {
       console.error('Error al cargar productos desde Firestore:', error);
-      setError("Error al cargar los productos disponibles."); // Informar al usuario
-      setUserProducts([]); // Asegurar estado vacío en caso de error
+      setError("Error al cargar los productos disponibles.");
+      setUserProducts([]);
     }
   };
 
@@ -249,13 +277,10 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
       const selectedFile = e.target.files[0];
       
       try {
-        // Actualizar estado para mostrar que la compresión está en proceso
         setMainImageCompressionStatus('compressing');
         
-        // Comprimir imagen antes de guardarla
         const result = await compressImage(selectedFile);
         
-        // Actualizar estado de compresión con el resultado
         setMainImageCompressionStatus(result.success ? 'success' : 'error');
         setMainImageCompressionData({
           originalSize: result.originalSize,
@@ -264,10 +289,8 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
           compressionRatio: result.compressionRatio
         });
         
-        // Guardar el archivo comprimido para subirlo después
         setMainImageFile(result.file);
         
-        // Crear preview local usando la función de utilidad
         const previewUrl = await getImagePreview(result.file);
         setImagePreview(previewUrl);
         
@@ -275,10 +298,8 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
         console.error('Error al comprimir imagen principal:', error);
         setMainImageCompressionStatus('error');
         
-        // En caso de error, usar el archivo original
         setMainImageFile(selectedFile);
         
-        // Crear preview del archivo original
         const previewUrl = await getImagePreview(selectedFile);
         setImagePreview(previewUrl);
       }
@@ -302,13 +323,10 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
       const selectedFile = e.target.files[0];
       
       try {
-        // Actualizar estado para mostrar que la compresión está en proceso
         setBgImageCompressionStatus('compressing');
         
-        // Comprimir imagen de fondo utilizando la función especializada
         const result = await compressBackgroundImage(selectedFile);
         
-        // Actualizar estado de compresión con el resultado
         setBgImageCompressionStatus(result.success ? 'success' : 'error');
         setBgImageCompressionData({
           originalSize: result.originalSize,
@@ -317,10 +335,8 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
           compressionRatio: result.compressionRatio
         });
         
-        // Guardar el archivo comprimido para subirlo después
         setBackgroundImageFile(result.file);
         
-        // Crear preview local para la imagen de fondo usando la función de utilidad
         const previewUrl = await getImagePreview(result.file);
         setBackground(prev => ({ ...prev, imageURL: previewUrl }));
         
@@ -328,10 +344,8 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
         console.error('Error al comprimir imagen de fondo:', error);
         setBgImageCompressionStatus('error');
         
-        // En caso de error, usar el archivo original
         setBackgroundImageFile(selectedFile);
         
-        // Crear preview del archivo original usando la función de utilidad
         const previewUrl = await getImagePreview(selectedFile);
         setBackground(prev => ({ ...prev, imageURL: previewUrl }));
       }
@@ -362,30 +376,52 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
       const userId = auth.currentUser.uid;
       if (!userId) throw new Error('No se pudo obtener el ID del usuario');
 
-      // 1. Subir imágenes si es necesario y obtener URLs
+      // --- Determinar el estado premium LEYENDO CLAIMS ---
+      let determinedPremiumStatus = false; // Por defecto false
+      try {
+        // Forzar refresco del token para obtener los claims más recientes
+        const idTokenResult = await auth.currentUser.getIdTokenResult(true); 
+        const stripeRole = idTokenResult.claims.stripeRole as string | undefined;
+        console.log("[handleSubmit] Claims obtenidos:", idTokenResult.claims);
+        console.log("[handleSubmit] Stripe Role Claim:", stripeRole);
+        
+        // AJUSTA 'pro' SI EL NOMBRE DE TU ROL PREMIUM ES DIFERENTE
+        if (stripeRole === 'pro') { 
+          determinedPremiumStatus = true;
+          console.log("[handleSubmit] Claim indica premium. determinedPremiumStatus = true");
+        } else {
+          console.log("[handleSubmit] Claim NO indica premium. determinedPremiumStatus = false");
+        }
+      } catch (claimError) {
+         console.error("[handleSubmit] Error al obtener claims, asumiendo no premium:", claimError);
+         determinedPremiumStatus = false; // Asumir no premium si hay error leyendo claims
+      }
+      
+      console.log("[handleSubmit] Estado premium determinado final (determinedPremiumStatus):", determinedPremiumStatus);
+
       let imageURL = card.imageURL || '';
-      let backgroundImageURL = card.backgroundImageURL || ''; // Usar el valor actual del estado 'card' como base
+      let backgroundImageURL = card.backgroundImageURL || '';
       if (mainImageFile) { imageURL = await uploadCardImage(mainImageFile, userId, 'main', card.imageURL); }
       if (backgroundImageFile && background.type === 'image') { backgroundImageURL = await uploadCardImage(backgroundImageFile, userId, 'background', card.backgroundImageURL); }
 
-      // 2. Preparar datos para el DOCUMENTO PRINCIPAL de la tarjeta
-      const cardDataToUpdate: Partial<ExtendedCard> = {
+      const cardDataToUpdate: Partial<Card> = {
         userId: userId, 
         title,
         description,
         imageURL,
-        links: links || [],
-        products: cardProducts || [],
         template,
         storeName,
-        backgroundType: background.type,
-        active: card.active, // Mantener estado active y views del estado 'card'
+        backgroundType: background.type as Card['backgroundType'],
+        active: card.active,
         views: card.views || 0,
         theme: theme,
-        // NO incluimos bookingSettings aquí
+        sectionOrder: sectionOrder,
+        coverMediaItems: coverMediaItems, 
+        isPremiumUser: determinedPremiumStatus, // <-- USAR EL VALOR DE LOS CLAIMS
+        lastUpdate: Date.now() 
       };
-
-      // Añadir campos de fondo condicionalmente al documento principal
+      
+      // Lógica para limpiar campos de fondo según el tipo (existente)
       if (background.type === 'color' && background.color) {
         cardDataToUpdate.backgroundColor = background.color;
         cardDataToUpdate.backgroundGradient = undefined; 
@@ -395,7 +431,7 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
         cardDataToUpdate.backgroundColor = undefined;
         cardDataToUpdate.backgroundImageURL = undefined;
       } else if (background.type === 'image') {
-        cardDataToUpdate.backgroundImageURL = backgroundImageURL || background.imageURL; // Usar URL subida o la del estado 'background'
+        cardDataToUpdate.backgroundImageURL = backgroundImageURL || background.imageURL;
         cardDataToUpdate.backgroundColor = undefined;
         cardDataToUpdate.backgroundGradient = undefined;
       } else {
@@ -404,41 +440,39 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
          cardDataToUpdate.backgroundImageURL = undefined;
       }
 
-      // Eliminar claves undefined del objeto principal
+      // Eliminar claves undefined antes de guardar (existente)
       Object.keys(cardDataToUpdate).forEach(keyStr => {
-        const key = keyStr as keyof Partial<ExtendedCard>;
+        const key = keyStr as keyof Partial<Card>;
         if (cardDataToUpdate[key] === undefined) {
           delete cardDataToUpdate[key];
         }
       });
 
-      // 3. Guardar datos del DOCUMENTO PRINCIPAL
+      console.log('[handleSubmit] Datos que se guardarán en Firestore:', cardDataToUpdate);
       const cardDocRef = doc(db, 'cards', cardId);
-      console.log('Actualizando documento principal de tarjeta:', cardDataToUpdate);
       await updateDoc(cardDocRef, cardDataToUpdate);
       console.log('Documento principal actualizado.');
 
-      // 4. Guardar datos de bookingSettings en la SUBCOLECCIÓN
-      if (bookingSettings !== undefined) { // Solo guardar si hay datos de settings
+      // Actualizar settings de booking si existen (existente)
+      if (bookingSettings !== undefined) {
         const settingsRef = doc(db, 'cards', cardId, 'bookingSettings', 'settings');
         console.log('Actualizando documento de settings en subcolección:', bookingSettings);
-        // Usar setDoc con merge: true es una buena práctica aquí para no sobrescribir
-        // campos que no estén en nuestro objeto local si hubieran sido añadidos por otro lado.
-        // O simplemente setDoc si siempre queremos sobreescribir con el estado actual.
         await setDoc(settingsRef, bookingSettings, { merge: true }); 
         console.log('Documento de settings actualizado.');
       } else {
          console.log('No hay datos de bookingSettings en el estado local para guardar.');
       }
 
-      // 5. Actualizar estado local y feedback
+      // Actualizar estado local (existente)
       const updatedLocalCard = { 
           ...card, 
-          ...cardDataToUpdate // Actualizar con los datos guardados en el doc principal
-      } as ExtendedCard;
+          ...cardDataToUpdate 
+      } as Card;
       setCard(updatedLocalCard);
-      setBookingSettings(bookingSettings); // Asegurarse que el estado local de settings está sincronizado
+      setBookingSettings(bookingSettings);
+      setCoverMediaItems(coverMediaItems); 
 
+      // Resetear estados de UI (existente)
       setMainImageFile(null);
       setBackgroundImageFile(null);
       setMainImageCompressionStatus('idle');
@@ -453,137 +487,90 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
     }
   };
 
-  const openAddLinkForm = () => {
-    setEditingLinkId(null);
-    setLinkTitle('');
-    setLinkUrl('');
-    setShowLinkForm(true);
-  };
-
-  const handleEditLink = (link: CardLink) => {
-    setEditingLinkId(link.id);
-    setLinkTitle(link.title);
-    setLinkUrl(link.url);
-    setShowLinkForm(true);
-  };
-
-  const handleSaveLink = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (editingLinkId) {
-      // Actualizar enlace existente
-      const updatedLinks = links.map(link => 
-        link.id === editingLinkId
-          ? { ...link, title: linkTitle, url: linkUrl }
-          : link
-      );
-      setLinks(updatedLinks);
-    } else {
-      // Crear nuevo enlace
-      const newLink: CardLink = {
-        id: uuidv4(),
-        title: linkTitle,
-        url: linkUrl,
-        active: true
-      };
-      setLinks([...links, newLink]);
-    }
-    
-    // Limpiar formulario
-    setLinkTitle('');
-    setLinkUrl('');
-    setEditingLinkId(null);
-    setShowLinkForm(false);
-  };
-
-  const handleDeleteLink = (linkId: string) => {
-    const updatedLinks = links.filter(link => link.id !== linkId);
-    setLinks(updatedLinks);
-  };
-
-  const toggleLinkActive = (linkId: string) => {
-    const updatedLinks = links.map(link => 
-      link.id === linkId ? { ...link, active: !link.active } : link
-    );
-    setLinks(updatedLinks);
-  };
-
-  const cancelLinkEdit = () => {
-    setLinkTitle('');
-    setLinkUrl('');
-    setEditingLinkId(null);
-    setShowLinkForm(false);
-  };
-
   const toggleProductSelectorVisibility = () => {
     setShowProductSelector(!showProductSelector);
   };
 
-  const handleAddProductToCard = (product: Product) => {
-    // Verificar si el producto ya está en la tarjeta
+  const handleAddProductToCard = async (product: Product) => {
+    if (!card) {
+      setError("Datos de la tarjeta no cargados.");
+      return;
+    }
+    // Evitar añadir si ya está (revisión en el estado local primero para UI rápida)
     if (cardProducts.some(p => p.id === product.id)) {
-      console.log("El producto ya está en la tarjeta.");
-      // Opcional: Mostrar un mensaje al usuario
-      return; 
+      console.log("El producto ya está en la tarjeta (estado local).");
+      return;
     }
-    // Añadir el producto al estado local
-    setCardProducts(prevProducts => [...prevProducts, product]);
-    // Opcional: Cerrar el selector después de añadir
-    // setShowProductSelector(false);
+
+    const associationId = await handleAddProductAssociationInFirestore(card.id, product.id);
+
+    if (associationId) {
+      // Actualizar el estado local 'cardProducts' para reflejar el cambio en la UI
+      // El producto que se añade ya es el objeto Product completo
+      setCardProducts(prevProducts => [...prevProducts, product]);
+      setSuccess(`Producto '${product.title}' añadido a la tarjeta.`);
+    } else {
+      // El error ya se establece en handleAddProductAssociationInFirestore
+      // pero podrías añadir un mensaje más específico si quieres.
+    }
   };
 
-  const handleRemoveProductFromCard = (productId: string) => {
-    if (cardProducts && Array.isArray(cardProducts)) {
-      const updatedProducts = cardProducts.filter(product => product.id !== productId);
-      setCardProducts(updatedProducts);
-      console.log('Producto eliminado de la tarjeta:', productId, 'Lista actualizada:', updatedProducts);
+  const handleRemoveProductFromCard = async (productIdToRemove: string) => {
+    if (!card) {
+      setError("Datos de la tarjeta no cargados.");
+      return;
+    }
+
+    const success = await handleRemoveProductAssociationFromFirestore(card.id, productIdToRemove);
+
+    if (success) {
+      // Actualizar el estado local 'cardProducts'
+      setCardProducts(prevProducts => prevProducts.filter(p => p.id !== productIdToRemove));
+      const removedProduct = userProducts.find(p => p.id === productIdToRemove);
+      setSuccess(`Producto '${removedProduct?.title || 'seleccionado'}' quitado de la tarjeta.`);
+    } else {
+      // El error ya se establece en handleRemoveProductAssociationFromFirestore
     }
   };
 
-  // Construir la URL pública para el iframe
   const getPublicCardUrl = () => {
     if (!userData || !cardId) return '';
     const origin = window.location.origin;
     const usernameParam = userData.username || userData.uid;
-    // Asegurarse de que no haya dobles barras
     return `${origin}/${usernameParam}/card/${cardId}`.replace(/([^:]\/)\/+/g, "$1");
   };
 
   const publicCardUrl = getPublicCardUrl();
 
-  // Función para recargar el iframe cambiando la key
   const handleReloadPreview = () => {
     setIframeKey(prevKey => prevKey + 1);
   };
 
-  // --- Manejadores para Drag-to-Scroll --- 
   const handlePreviewMouseDown = (e: MouseEvent<HTMLDivElement>) => {
-    // Solo activa si el clic es directamente sobre el contenedor (no el botón de recarga)
     if (e.target !== e.currentTarget) return; 
     
     const iframeContentWindow = iframeRef.current?.contentWindow;
     if (!iframeContentWindow) return;
 
     setIsDraggingPreview(true);
-    setStartYPreview(e.pageY); // Usar pageY para coordenadas relativas al documento
-    // Intentar obtener scrollTop del documento dentro del iframe
+    setStartYPreview(e.pageY);
     const currentScrollTop = iframeContentWindow.document.documentElement.scrollTop || iframeContentWindow.document.body.scrollTop;
     setScrollTopStartPreview(currentScrollTop);
-    e.currentTarget.style.cursor = 'grabbing'; // Cambiar cursor en el contenedor
+    e.currentTarget.style.cursor = 'grabbing';
     e.preventDefault();
   };
 
   const handlePreviewMouseLeave = (e: MouseEvent<HTMLDivElement>) => {
     if (isDraggingPreview) {
       setIsDraggingPreview(false);
-      e.currentTarget.style.cursor = 'grab'; // Restaurar cursor
+      e.currentTarget.style.cursor = 'grab';
     }
   };
 
   const handlePreviewMouseUp = (e: MouseEvent<HTMLDivElement>) => {
     if (isDraggingPreview) {
       setIsDraggingPreview(false);
-      e.currentTarget.style.cursor = 'grab'; // Restaurar cursor
+      e.currentTarget.style.cursor = 'grab';
     }
   };
 
@@ -594,79 +581,59 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
     if (!iframeContentWindow) return;
 
     const y = e.pageY;
-    const walk = y - startYPreview; // Cuánto se movió el ratón
-    const newScrollTop = scrollTopStartPreview - walk; // Calcular nueva posición
+    const walk = y - startYPreview;
+    const newScrollTop = scrollTopStartPreview - walk;
     
-    // Intentar hacer scroll dentro del iframe
     iframeContentWindow.scrollTo(0, newScrollTop);
   };
-  // --- Fin Manejadores Drag-to-Scroll ---
 
-  // *** Nuevo handler para actualizar bookingSettings ***
   const handleBookingSettingsChange = (newSettings: BookingSettings) => {
     setBookingSettings(newSettings);
   };
 
-  const processCardData = (cardData: ExtendedCard, initialBookingSettings?: BookingSettings) => {
-    // Formatear productos si existen
-    const products = (cardData.products || []).map((product: any) => {
-      // Unir con la lista de productos del usuario para obtener imageURL
-      const original = userData.products?.find((u: any) => u.id === product.id);
-      return {
-        ...product,
-        price: typeof product.price === 'number' ? product.price : parseFloat(product.price) || 0,
-        imageURL: original?.imageURL || ''
-      };
-    });
+  const handleOrderChange = (newOrder: CardSectionType[]) => {
+    setSectionOrder(newOrder);
+  };
 
+  const processCardData = (
+    cardData: Card, 
+    initialLinks: CardLink[], 
+    initialProducts: Product[], 
+    initialBookingSettings?: BookingSettings
+  ) => {
     setCard(cardData);
-    setTitle(cardData.title);
+    setTitle(cardData.title || '');
     setDescription(cardData.description || '');
-    if (cardData.imageURL) {
-      setImagePreview(cardData.imageURL);
-    }
-    
-    // Configurar plantilla
+    setImagePreview(cardData.imageURL || null);
     setTemplate(cardData.template || 'basic');
     setStoreName(cardData.storeName || '');
     
-    // Configurar el fondo
-    const cardBackground: CardBackground = {
-      type: (cardData.backgroundType as 'image' | 'color' | 'gradient' | 'pattern') || 'color'
-    };
-
-    if (cardBackground.type === 'color') {
-      cardBackground.color = cardData.backgroundColor || '#ffffff';
-    } else if (cardBackground.type === 'gradient') {
-      cardBackground.gradient = cardData.backgroundGradient || 'linear-gradient(135deg, #4b6cb7 0%, #182848 100%)';
-    } else if (cardBackground.type === 'image') {
-      cardBackground.imageURL = cardData.backgroundImageURL || undefined;
-    }
-
+    const cardBackground: CardBackground = { type: cardData.backgroundType || 'color' };
+    if (cardBackground.type === 'color') cardBackground.color = cardData.backgroundColor || '#ffffff';
+    else if (cardBackground.type === 'gradient') cardBackground.gradient = cardData.backgroundGradient || 'linear-gradient(135deg, #4b6cb7 0%, #182848 100%)';
+    else if (cardBackground.type === 'image') cardBackground.imageURL = cardData.backgroundImageURL || undefined;
     setBackground(cardBackground);
-    
-    // Configurar enlaces y productos
-    setLinks(cardData.links || []);
-    setCardProducts(products);
-    
-    // *** Inicializar el estado de bookingSettings ***
-    setBookingSettings(initialBookingSettings || {
-      enabled: false,
-      services: [],
-      availability: {},
-      acceptOnlinePayments: false,
-      allowProfessionalSelection: false
-    });
+    setTheme(cardData.theme || { primaryColor: '#6366f1', secondaryColor: '#4f46e5', textColor: '#333333', linkColor: '#6366f1' });
 
-    // *** Inicializar el estado del tema ***
-    setTheme(cardData.theme || {
-      primaryColor: '#6366f1',
-      secondaryColor: '#4f46e5',
-      textColor: '#333333',
-      linkColor: '#6366f1'
-    });
+    setLinks(initialLinks);
+    setCardProducts(initialProducts);
+    setCoverMediaItems(cardData.coverMediaItems || []);
     
-    // Cargar productos del usuario
+    if (cardData.sectionOrder && cardData.sectionOrder.length > 0) {
+      const validSectionsFromDB = cardData.sectionOrder.filter(section => 
+          (CARD_SECTION_TYPES as ReadonlyArray<string>).includes(section)
+      );
+      const uniqueValidSections = [...new Set(validSectionsFromDB)];
+      
+      const missingSections = DEFAULT_SECTION_ORDER.filter(s => !uniqueValidSections.includes(s));
+      
+      setSectionOrder([...uniqueValidSections, ...missingSections]);
+    } else {
+      setSectionOrder(DEFAULT_SECTION_ORDER);
+    }
+    
+    setBookingSettings(initialBookingSettings || { enabled: false, services: [], availability: {}, acceptOnlinePayments: false });
+
     if (auth.currentUser) {
       fetchUserProducts(auth.currentUser.uid);
     }
@@ -674,7 +641,158 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
     setLoading(false);
   };
 
-  // Si está cargando, mostrar indicador
+  // --- NUEVAS FUNCIONES CRUD PARA ENLACES EN FIRESTORE ---
+  const handleAddLinkToFirestore = async (currentCardId: string, linkData: Omit<CardLink, 'id' | 'active'> & { active?: boolean }): Promise<string | null> => {
+    if (!auth.currentUser) {
+      setError("Usuario no autenticado.");
+      return null;
+    }
+    try {
+      const linksCollectionRef = collection(db, 'cards', currentCardId, 'links');
+      // Añadir un campo 'order' si quieres mantener un orden específico, por ejemplo, basado en la longitud actual de links
+      const dataToAdd = {
+        ...linkData,
+        title: linkData.title.trim(), // Asegurar que no haya espacios extra
+        url: linkData.url.trim(),
+        active: linkData.active !== undefined ? linkData.active : true,
+        createdAt: Date.now(), // Opcional: timestamp de creación
+        order: links.length // Ejemplo básico de orden
+      };
+      const docRef = await addDoc(linksCollectionRef, dataToAdd);
+      console.log("Enlace añadido a Firestore con ID: ", docRef.id);
+      return docRef.id;
+    } catch (error) {
+      console.error("Error añadiendo enlace a Firestore: ", error);
+      setError("Error al guardar el nuevo enlace.");
+      return null;
+    }
+  };
+
+  const handleUpdateLinkInFirestore = async (currentCardId: string, linkId: string, linkData: Partial<Omit<CardLink, 'id'>>): Promise<boolean> => {
+    if (!auth.currentUser) {
+      setError("Usuario no autenticado.");
+      return false;
+    }
+    try {
+      const linkDocRef = doc(db, 'cards', currentCardId, 'links', linkId);
+      const dataToUpdate: Partial<Omit<CardLink, 'id'> & { lastUpdated?: number }> = { ...linkData };
+      if (linkData.title) dataToUpdate.title = linkData.title.trim();
+      if (linkData.url) dataToUpdate.url = linkData.url.trim();
+      dataToUpdate.lastUpdated = Date.now(); // Opcional: timestamp de actualización
+
+      await updateDoc(linkDocRef, dataToUpdate);
+      console.log("Enlace actualizado en Firestore: ", linkId);
+      return true;
+    } catch (error) {
+      console.error("Error actualizando enlace en Firestore: ", error);
+      setError("Error al actualizar el enlace.");
+      return false;
+    }
+  };
+
+  const handleDeleteLinkFromFirestore = async (currentCardId: string, linkId: string): Promise<boolean> => {
+    if (!auth.currentUser) {
+      setError("Usuario no autenticado.");
+      return false;
+    }
+    try {
+      const linkDocRef = doc(db, 'cards', currentCardId, 'links', linkId);
+      await deleteDoc(linkDocRef);
+      console.log("Enlace eliminado de Firestore: ", linkId);
+      // Opcional: Reordenar los demás enlaces si el campo 'order' es importante
+      return true;
+    } catch (error) {
+      console.error("Error eliminando enlace de Firestore: ", error);
+      setError("Error al eliminar el enlace.");
+      return false;
+    }
+  };
+  // --- FIN FUNCIONES CRUD PARA ENLACES ---
+
+  // --- NUEVAS FUNCIONES CRUD PARA PRODUCTOS ASOCIADOS A LA TARJETA EN FIRESTORE ---
+  const handleAddProductAssociationInFirestore = async (currentCardId: string, productIdToAdd: string): Promise<string | null> => {
+    if (!auth.currentUser) {
+      setError("Usuario no autenticado.");
+      return null;
+    }
+    if (!currentCardId || !productIdToAdd) {
+      setError("ID de tarjeta o producto no válido.");
+      return null;
+    }
+
+    try {
+      // Verificar si la asociación ya existe para evitar duplicados
+      const cardProductsRef = collection(db, 'cards', currentCardId, 'cardProducts');
+      const q = query(cardProductsRef, where("productId", "==", productIdToAdd));
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        console.warn(`El producto ${productIdToAdd} ya está asociado a la tarjeta ${currentCardId}.`);
+        // Podríamos devolver el ID existente si es necesario, o simplemente null/indicar que no se añadió de nuevo.
+        return querySnapshot.docs[0].id; // Opcional: devolver ID existente
+      }
+
+      const dataToAdd = {
+        productId: productIdToAdd,
+        addedAt: serverTimestamp(), // Usar serverTimestamp para la marca de tiempo del servidor
+        order: cardProducts.length // Ejemplo básico de orden (los productos ya en estado + 1)
+      };
+      const docRef = await addDoc(cardProductsRef, dataToAdd);
+      console.log(`Asociación de producto ${productIdToAdd} añadida a tarjeta ${currentCardId} con ID de asociación: ${docRef.id}`);
+      return docRef.id;
+    } catch (error) {
+      console.error("Error añadiendo asociación de producto a Firestore: ", error);
+      setError("Error al añadir el producto a la tarjeta.");
+      return null;
+    }
+  };
+
+  const handleRemoveProductAssociationFromFirestore = async (currentCardId: string, productIdToRemove: string): Promise<boolean> => {
+    if (!auth.currentUser) {
+      setError("Usuario no autenticado.");
+      return false;
+    }
+    if (!currentCardId || !productIdToRemove) {
+      setError("ID de tarjeta o producto no válido.");
+      return false;
+    }
+
+    try {
+      const cardProductsRef = collection(db, 'cards', currentCardId, 'cardProducts');
+      const q = query(cardProductsRef, where("productId", "==", productIdToRemove));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        console.warn(`No se encontró la asociación del producto ${productIdToRemove} en la tarjeta ${currentCardId} para eliminar.`);
+        return false; // No se encontró nada que borrar
+      }
+
+      // Debería haber solo un documento de asociación por producto en una tarjeta
+      const associationDocId = querySnapshot.docs[0].id;
+      const docToDeleteRef = doc(db, 'cards', currentCardId, 'cardProducts', associationDocId);
+      await deleteDoc(docToDeleteRef);
+      console.log(`Asociación del producto ${productIdToRemove} eliminada de la tarjeta ${currentCardId}.`);
+      // Opcional: Reordenar los demás productos si el campo 'order' es importante
+      return true;
+    } catch (error) {
+      console.error("Error eliminando asociación de producto de Firestore: ", error);
+      setError("Error al quitar el producto de la tarjeta.");
+      return false;
+    }
+  };
+  // --- FIN FUNCIONES CRUD PARA PRODUCTOS ASOCIADOS ---
+
+  // NUEVO HANDLER para actualizar los items del carrusel desde CoverSliderEditor
+  const handleUpdateCoverMediaItems = (newItems: CoverMediaItem[]) => {
+    setCoverMediaItems(newItems);
+    // Actualizar el estado 'card' para que la preview (si depende de él) y el guardado funcionen
+    if (card) {
+      setCard(prevCard => ({
+        ...(prevCard as Card),
+        coverMediaItems: newItems,
+      }));
+    }
+  };
+
   if (loading) {
     return (
       <div className="loader-container">
@@ -684,7 +802,6 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
     );
   }
 
-  // Si hay error y no hay tarjeta, mostrar mensaje
   if (error && !card) {
     return (
       <div className="error-container">
@@ -696,9 +813,11 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
     );
   }
 
+  // Determinar si el usuario es premium (esto debería venir de userData o un contexto)
+  const isPremium = true; // FORZAR A TRUE PARA PRUEBAS
+
   return (
     <div className="card-editor-container">
-      {/* Notificación fija de éxito */}
       {success && !loading && (
         <div className="notification success-notification">
           {success}
@@ -723,7 +842,6 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
                 <><FiSave /><span>Guardar Cambios</span></>
               )}
             </button>
-            {/* Botón para abrir la vista pública de la tarjeta */}
             <button
               type="button"
               className="preview-header-button"
@@ -734,217 +852,87 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
           </div>
         )}
       </div>
-      {/* Navegación lateral */}
       <div className="editor-main">
         <aside className="editor-sidebar">
           <ul>
-            <li><button onClick={() => setSelectedSection('basic-info')}><FiInfo /></button></li>
-            <li><button onClick={() => setSelectedSection('background-style')}><FiLayers /></button></li>
-            <li><button onClick={() => setSelectedSection('links-section')}><FiLink /></button></li>
-            <li><button onClick={() => setSelectedSection('products-section')}><FiShoppingBag /></button></li>
-            <li><button onClick={() => setSelectedSection('booking-section')}><FiCalendar /></button></li>
+            <li><button onClick={() => setSelectedSection('basic-info')} title="Información Básica"><FiInfo /></button></li>
+            <li><button onClick={() => setSelectedSection('background-style')} title="Estilo de Fondo"><FiLayers /></button></li>
+            {/* OPCIÓN DE CARRUSEL SI ES PREMIUM (TEMPORALMENTE FORZADO) */}
+            {true && (
+              <li><button onClick={() => setSelectedSection('coverSlider-editor')} title="Carrusel de Portada" className={selectedSection === 'coverSlider-editor' ? 'active' : ''}><FiFilm /></button></li>
+            )}
+            <li><button onClick={() => setSelectedSection('links-section')} title="Enlaces"><FiLink /></button></li>
+            <li><button onClick={() => setSelectedSection('products-section')} title="Productos"><FiShoppingBag /></button></li>
+            <li><button onClick={() => setSelectedSection('booking-section')} title="Reservas"><FiCalendar /></button></li>
+            <li><button onClick={() => setSelectedSection('layout-section')} title="Orden de Secciones"><FiMove /></button></li>
           </ul>
         </aside>
         <div className={`editor-content selected-${selectedSection}`}>
-          {/* Mensaje de error */}
           {error && (
             <div className="alert alert-error mb-4">
               {error}
             </div>
           )}
-          {/* Sección de formulario básica y fondo */}
           {(selectedSection === 'basic-info' || selectedSection === 'background-style') && (
             <div className="card-editor-content">
               <div className="card-editor-form-container">
-                 {/* --- Sección Selector de Plantilla --- */}
-                 <div className="form-section template-selector-section"> 
-                   <h4 className="section-title"><FiLayers /> Plantilla</h4>
-                   <div className="template-selector">
-                     {(['basic', 'link', 'shop'] as TemplateType[]).map(t => (
-                       <button 
-                         key={t} 
-                         type="button"
-                         className={`template-btn ${template === t ? 'active' : ''}`}
-                         onClick={() => handleTemplateChange(t)}
-                       >
-                         {t.charAt(0).toUpperCase() + t.slice(1)} {/* Capitalizar nombre */}
-                       </button>
-                     ))}
-                   </div>
-                   {/* Campo Store Name (solo visible si template es 'shop') */} 
-                   {template === 'shop' && (
-                     <div className="form-group mt-3"> 
-                       <label htmlFor="storeName" className="form-label">Nombre de la Tienda</label>
-                       <input 
-                         type="text" 
-                         id="storeName"
-                         className="form-control" 
-                         value={storeName} 
-                         onChange={(e) => setStoreName(e.target.value)} 
-                       />
-                     </div>
-                   )}
-                 </div>
-                 {/* --- Fin Selector Plantilla --- */}
-
-                 <CardForm 
+                 <TemplateSelector 
+                    availableTemplates={availableTemplates}
+                    currentTemplate={template}
+                    onTemplateChange={handleTemplateChange}
+                    storeName={storeName}
+                    onStoreNameChange={handleStoreNameChange}
+                 />
+                 <CardVisualsEditor 
                     title={title}
                     description={description}
-                    backgroundType={background.type === 'pattern' ? 'color' : background.type}
-                    backgroundColor={background.color || '#ffffff'}
-                    backgroundGradient={background.gradient || 'linear-gradient(135deg, #4b6cb7 0%, #182848 100%)'}
+                    background={background}
+                    theme={theme}
+                    mainImageCompressionStatus={mainImageCompressionStatus}
+                    mainImageCompressionData={mainImageCompressionData}
+                    bgImageCompressionStatus={bgImageCompressionStatus}
+                    bgImageCompressionData={bgImageCompressionData}
                     handleTitleChange={handleTitleChange}
                     handleDescriptionChange={handleDescriptionChange}
                     handleFileChange={handleFileChange}
-                    handleSubmit={handleSubmit}
                     handleBackgroundTypeChange={handleBackgroundTypeChange}
                     handleBackgroundColorChange={handleBackgroundColorChange}
                     handleBackgroundGradientChange={handleBackgroundGradientChange}
                     handleBackgroundFileChange={handleBackgroundFileChange}
-                    theme={theme}
                     handleThemeChange={handleThemeChange}
+                    handleSubmit={handleSubmit}
                  />
-                 {/* Información de compresión para imagen principal */}
-                 {mainImageCompressionStatus !== 'idle' && (
-                   <div className="compression-info-container">
-                     <CompressionInfo 
-                       status={mainImageCompressionStatus}
-                       originalSize={mainImageCompressionData.originalSize}
-                       compressedSize={mainImageCompressionData.compressedSize}
-                       originalFormat={mainImageCompressionData.originalFormat}
-                       compressionRatio={mainImageCompressionData.compressionRatio}
-                       showDetails={true}
-                     />
-                   </div>
-                 )}
-                 
-                 {/* Información de compresión para imagen de fondo */}
-                 {bgImageCompressionStatus !== 'idle' && background.type === 'image' && (
-                   <div className="compression-info-container">
-                     <CompressionInfo 
-                       status={bgImageCompressionStatus}
-                       originalSize={bgImageCompressionData.originalSize}
-                       compressedSize={bgImageCompressionData.compressedSize}
-                       originalFormat={bgImageCompressionData.originalFormat}
-                       compressionRatio={bgImageCompressionData.compressionRatio}
-                       showDetails={true}
-                     />
-                   </div>
-                 )}
               </div>
-              <div 
-                 className="card-preview-container" 
-                 style={{ cursor: isDraggingPreview ? 'grabbing' : 'grab' }} // Aplicar cursor dinámico
-                 onMouseDown={handlePreviewMouseDown} 
-                 onMouseLeave={handlePreviewMouseLeave}
-                 onMouseUp={handlePreviewMouseUp}
-                 onMouseMove={handlePreviewMouseMove}
-              >
-                 {/* Botón de Recarga (asegurar que no interfiera con mousedown) */}
-                 <button 
-                   type="button" 
-                   onClick={handleReloadPreview} 
-                   className="reload-preview-button" 
-                   title="Recargar previsualización"
-                   style={{ zIndex: 11 }} // Aumentar z-index por si acaso
-                 >
-                   <FiRefreshCw />
-                 </button>
-                 {publicCardUrl ? (
-                   <iframe 
-                     ref={iframeRef} // Asignar ref
-                     key={iframeKey} 
-                     src={publicCardUrl}
-                     className="card-preview-iframe" 
-                     title="Previsualización de Tarjeta Pública"
-                     style={{ pointerEvents: isDraggingPreview ? 'none' : 'auto' }} // Deshabilitar eventos de ratón en iframe mientras se arrastra el contenedor
-                   ></iframe>
-                 ) : (
-                   <div className="card-preview-placeholder">
-                     <p>No se puede generar la URL de previsualización.</p>
-                   </div>
-                 )}
-              </div>
+              <CardPreviewPane 
+                publicCardUrl={publicCardUrl}
+                iframeKey={iframeKey}
+                iframeRef={iframeRef}
+                isDraggingPreview={isDraggingPreview}
+                onReloadPreview={handleReloadPreview}
+                onMouseDown={handlePreviewMouseDown}
+                onMouseLeave={handlePreviewMouseLeave}
+                onMouseUp={handlePreviewMouseUp}
+                onMouseMove={handlePreviewMouseMove}
+              />
             </div>
           )}
-          {/* Sección de enlaces */}
-          {selectedSection === 'links-section' && (
+          {selectedSection === 'links-section' && card && (
             <LinksManager 
+              cardId={card.id}
               links={links}
-              linkTitle={linkTitle}
-              linkUrl={linkUrl}
-              editingLinkId={editingLinkId}
-              showLinkForm={showLinkForm}
-              setLinkTitle={setLinkTitle}
-              setLinkUrl={setLinkUrl}
-              openAddLinkForm={openAddLinkForm}
-              handleSaveLink={handleSaveLink}
-              handleEditLink={handleEditLink}
-              handleDeleteLink={handleDeleteLink}
-              toggleLinkActive={toggleLinkActive}
-              cancelLinkEdit={cancelLinkEdit}
+              onLocalLinksChange={setLinks}
+              onAddLinkToFirestore={handleAddLinkToFirestore}
+              onUpdateLinkInFirestore={handleUpdateLinkInFirestore}
+              onDeleteLinkFromFirestore={handleDeleteLinkFromFirestore}
             />
           )}
-          {/* Sección de productos */}
           {selectedSection === 'products-section' && (
-            <div className="products-section">
-              <div className="section-header">
-                <h3 className="section-title">
-                  <FiShoppingBag /> 
-                  Productos
-                </h3>
-                <button
-                  type="button"
-                  className="add-button"
-                  onClick={toggleProductSelectorVisibility}
-                >
-                  <FiPlus /> Añadir productos
-                </button>
-              </div>
-              
-              {/* Lista de productos en la tarjeta */}
-              {cardProducts.length > 0 ? (
-                <div className="selected-products">
-                  <div className="selected-products-grid">
-                    {cardProducts.map(product => (
-                      <div key={product.id} className="selected-product-card">
-                        {product.imageURL && (
-                          <div className="selected-product-image">
-                            <img 
-                              src={product.imageURL} 
-                              alt={product.title} 
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = 'https://via.placeholder.com/150?text=Sin+imagen';
-                              }}
-                            />
-                          </div>
-                        )}
-                        <div className="selected-product-info">
-                          <h4 className="selected-product-title">{product.title}</h4>
-                          <p className="selected-product-price">{product.price.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</p>
-                        </div>
-                        <div className="selected-product-actions">
-                          <button
-                            type="button"
-                            className="remove-selected-product"
-                            onClick={() => handleRemoveProductFromCard(product.id)}
-                            title="Eliminar producto"
-                          >
-                            <FiTrash2 />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="no-selected-products">
-                  <p>No has seleccionado ningún producto para esta tarjeta.</p>
-                </div>
-              )}
-            </div>
+            <CardProductsEditor 
+              cardProducts={cardProducts} 
+              toggleProductSelectorVisibility={toggleProductSelectorVisibility} 
+              handleRemoveProductFromCard={handleRemoveProductFromCard} 
+            />
           )}
-          {/* *** Nueva Sección para Reservas *** */}
           {selectedSection === 'booking-section' && (
             <BookingManager 
               cardId={cardId}
@@ -952,10 +940,24 @@ const CardEditorContainer: React.FC<CardEditorContainerProps> = ({
               onSettingsChange={handleBookingSettingsChange} 
             />
           )}
+          {selectedSection === 'layout-section' && (
+            <SectionOrderEditor 
+              sectionOrder={sectionOrder} 
+              onOrderChange={handleOrderChange}
+            />
+          )}
+          {/* RENDERIZAR COVER SLIDER EDITOR (TEMPORALMENTE FORZADO) */}
+          {selectedSection === 'coverSlider-editor' && true && auth.currentUser && (
+            <CoverSliderEditor 
+              currentItems={coverMediaItems} 
+              onUpdateItems={handleUpdateCoverMediaItems} 
+              cardId={cardId} 
+              userId={auth.currentUser.uid}
+            />
+          )}
         </div>
       </div>
       
-      {/* Selector de productos (modal) */}
       {showProductSelector && (
         <ProductSelector 
           userProducts={userProducts}

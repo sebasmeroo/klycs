@@ -115,6 +115,22 @@ service cloud.firestore {
         allow update, delete: if false; 
       }
       // --- FIN NUEVO BLOQUE 'analyticsEvents' ---
+
+      // --- REGLAS PARA SUBCOLECCIÓN 'links' ---
+      match /links/{linkId} {
+        // Solo el dueño de la tarjeta puede leer y escribir enlaces
+        allow read, write: if request.auth != null &&
+                               get(/databases/$(database)/documents/cards/$(cardId)).data.userId == request.auth.uid;
+      }
+      // --- FIN REGLAS 'links' ---
+
+      // --- REGLAS PARA SUBCOLECCIÓN 'cardProducts' ---
+      match /cardProducts/{cardProductId} {
+        // Solo el dueño de la tarjeta puede leer y escribir las asociaciones de productos
+        allow read, write: if request.auth != null &&
+                               get(/databases/$(database)/documents/cards/$(cardId)).data.userId == request.auth.uid;
+      }
+      // --- FIN REGLAS 'cardProducts' ---
     }
     
     // Permitir lectura de datos de ventas solo al vendedor y comprador

@@ -2,6 +2,14 @@
 
 export type TemplateType = 'basic' | 'link' | 'shop' | 'standard' | 'headerStore' | 'miniShop';
 
+// Interfaz para item del carrusel de portada (NUEVO)
+export interface CoverMediaItem {
+  id: string; 
+  url: string;
+  type: 'image' | 'video' | 'gif'; 
+  altText?: string;
+}
+
 export interface CardLink {
   id: string;
   title: string;
@@ -12,12 +20,13 @@ export interface CardLink {
 export interface Product {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   price: number;
-  imageURL: string;
-  url?: string;
+  imageURL?: string;
+  type: 'digital' | 'service';
+  active?: boolean;
   autoUrl?: string;
-  active: boolean;
+  url?: string;
 }
 
 // --- AÑADIR INTERFAZ PROFESSIONAL --- 
@@ -37,24 +46,31 @@ export interface CardTheme {
 
 export interface Card {
   id: string;
+  userId: string;
   title: string;
-  description: string;
+  description?: string;
   imageURL?: string;
-  links: CardLink[];
-  products: Product[];
-  autoUrl?: string;
+  coverImageUrl?: string;
+  avatarUrl?: string;
+  displayName?: string;
+  bio?: string;
   active: boolean;
-  views: number;
-  createdAt: number;
+  views?: number;
+  createdAt?: number;
+  lastUpdate?: number;
+  template?: TemplateType;
   backgroundType?: 'image' | 'color' | 'gradient' | 'pattern';
   backgroundColor?: string;
   backgroundGradient?: string;
   backgroundImageURL?: string;
-  userId: string;
-  template?: TemplateType;
-  storeName?: string;
-  bookingSettings?: BookingSettings;
   theme?: CardTheme;
+  storeName?: string;
+  sectionOrder?: CardSectionType[];
+  bookingEnabled?: boolean;
+  linkCount?: number;
+  productCount?: number;
+  isPremiumUser?: boolean;
+  coverMediaItems?: CoverMediaItem[];
 }
 
 export interface CardBackground {
@@ -108,3 +124,20 @@ export interface BookingSettings {
 }
 
 // --- Fin Interfaces de Reservas --- 
+
+// Tipos para las secciones de la tarjeta y su orden
+export const CARD_SECTION_TYPES = [
+  'userProfileInfo', // NUEVO: Para el bloque de avatar/nombre/bio
+  'header',      // Para el título de la tarjeta
+  'image',       // Imagen principal de la tarjeta
+  'coverSlider', // NUEVO: Para el carrusel de portada premium
+  'description', // Descripción de la tarjeta
+  'links',       // Sección de enlaces
+  'products',    // Sección de productos
+  'booking'      // Sección de reservas (BookingForm)
+] as const;
+
+export type CardSectionType = typeof CARD_SECTION_TYPES[number];
+
+// Tipo para el estado de compresión de imágenes
+export type CompressionStatus = 'idle' | 'compressing' | 'success' | 'error'; 

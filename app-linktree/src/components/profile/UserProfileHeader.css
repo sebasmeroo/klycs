@@ -1,0 +1,52 @@
+/* UserProfileHeader.css - Estilos para el encabezado del perfil */
+
+.user-profile-header {
+  /* Estilos para el contenedor principal si son necesarios */
+  /* text-align: center; ya viene de la clase bootstrap */
+  /* margin-bottom: 1rem; o lo que corresponda, viene de bootstrap mb-4 */
+}
+
+/* Estilos para el Avatar (similar a CardCoverImage pero para avatar) */
+.profile-avatar,
+.profile-avatar-placeholder {
+  width: 96px;           
+  height: 96px;          
+  border-radius: 50%;    
+  object-fit: cover;     
+  border: 2px solid rgba(255, 255, 255, 0.8); /* Borde blanco semitransparente opcional */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08); 
+  background-color: #eee; 
+  display: block; 
+  margin-left: auto;
+  margin-right: auto;
+  /* margin-bottom: 1rem; - Ajustado por mb-3 en el JSX original? */
+}
+
+.profile-avatar-placeholder {
+  /* display: flex; ya viene de bootstrap d-flex */
+  /* align-items: center; ya viene de bootstrap */
+  /* justify-content: center; ya viene de bootstrap */
+  font-size: 2.5rem; 
+  font-weight: bold;
+  color: #aaa; 
+  border: 2px solid #ddd; 
+  box-shadow: none; 
+}
+
+.profile-display-name {
+  font-size: 1.5rem; /* Ajustar tamaño según diseño */
+  font-weight: 600;
+  margin-top: 0.75rem;
+  margin-bottom: 0.25rem;
+  /* color: heredado via style prop */
+}
+
+.profile-bio-text {
+  font-size: 1rem;
+  /* color: heredado via style prop */
+  opacity: 0.9;
+  line-height: 1.5;
+  max-width: 500px; /* Evitar que sea demasiado ancho */
+  margin-left: auto;
+  margin-right: auto;
+} 

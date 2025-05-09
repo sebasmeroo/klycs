@@ -317,16 +317,6 @@
   .card-editor-content {
     grid-template-columns: 1fr;
   }
-  .card-preview-container {
-    position: relative;
-    margin-top: 1rem;
-    order: -1;
-    top: 0;
-  }
-  .card-preview {
-    max-width: 100%;
-    aspect-ratio: 9/16;
-  }
   .card-editor-footer {
     flex-direction: column;
     align-items: stretch;
@@ -341,17 +331,6 @@
 @media (min-width: 641px) and (max-width: 1024px) {
   .card-editor-content {
     grid-template-columns: 50% 50%;
-  }
-  .card-preview-container {
-    position: relative;
-    margin-top: 1rem;
-    order: 0;
-    width: 100%;
-    padding-top: 0;
-  }
-  .card-preview {
-    max-width: 100%;
-    aspect-ratio: 9/16;
   }
 }
 
@@ -1658,6 +1637,10 @@
 }
 
 /* Estilos para el selector de plantillas */
+/* 
+Estilos para el selector de plantillas movidos a 
+app-linktree/src/components/cardeditor/subcomponents/TemplateSelector.css
+
 .template-selector {
   display: flex;
   flex-wrap: wrap;
@@ -1693,18 +1676,9 @@
   font-weight: 600;
 }
 
-/* Ajuste para el input de Store Name */
 .template-selector-section .form-group {
   margin-top: 1rem;
 }
-
-/* Nota: Los estilos específicos de cada plantilla han sido movidos a archivos separados
-   en la carpeta templates/ para mejor organización y mantenimiento.
-   Ver: 
-   - templates/CommonTemplate.css
-   - templates/StandardTemplate.css
-   - templates/HeaderStoreTemplate.css
-   - templates/MiniShopTemplate.css
 */
 
 /* Responsive styles for templates */
@@ -2034,7 +2008,7 @@
   position: absolute;
   top: 25px; /* Aumentado para bajarlo un poco */
   right: 25px; /* Aumentado para moverlo a la izquierda */
-  z-index: 10; 
+  z-index: 11; 
   background-color: rgba(0, 0, 0, 0.5);
   color: white;
   border: none;
@@ -2058,3 +2032,8 @@
 .reload-preview-button:active {
   transform: scale(0.95); /* Efecto al pulsar */
 } 
+
+/* Los estilos para la sección de Orden de Secciones (Layout Section)
+   han sido movidos a app-linktree/src/components/cardeditor/subcomponents/SectionOrderEditor.css */
+
+/* ... (si hay otros estilos DESPUÉS de la sección de ordenamiento, deben permanecer aquí) ... */ 

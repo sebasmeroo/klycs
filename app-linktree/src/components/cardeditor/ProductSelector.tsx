@@ -2,17 +2,7 @@ import React, { useState } from 'react';
 import './CardEditor.css';
 import './ProductSelector.css';
 import { FiShoppingBag, FiDollarSign, FiPlus, FiX, FiSearch, FiFilter, FiTag, FiEye } from 'react-icons/fi';
-
-interface Product {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  imageURL: string;
-  url?: string;
-  autoUrl?: string;
-  active: boolean;
-}
+import { Product } from './types';
 
 interface ProductSelectorProps {
   userProducts: Product[];
@@ -174,12 +164,11 @@ const ProductSelector: React.FC<ProductSelectorProps> = ({
                 Mostrando {filteredProducts.length} de {userProducts.length} productos
               </div>
               <div className="products-grid">
-                {filteredProducts.map(product => (
+                {filteredProducts.map((product: Product) => (
                   <div
                     key={product.id}
-                    className={`product-card ${!product.active ? 'product-inactive' : ''} ${isProductInCard(product.id) ? 'product-selected' : ''}`}
+                    className={`product-card ${product.active === false ? 'product-inactive' : ''} ${isProductInCard(product.id) ? 'product-selected' : ''}`}
                     onClick={() => {
-                      if (!product.active) return;
                       if (isProductInCard(product.id)) {
                         handleRemoveProductFromCard(product.id);
                       } else {
@@ -196,14 +185,14 @@ const ProductSelector: React.FC<ProductSelectorProps> = ({
                             (e.target as HTMLImageElement).src = 'https://via.placeholder.com/150?text=Sin+imagen';
                           }}
                         />
-                        {!product.active && (
+                        {product.active === false && (
                           <div className="product-inactive-badge">Inactivo</div>
                         )}
                       </div>
                     ) : (
                       <div className="product-image product-image-placeholder">
                         <FiShoppingBag size={32} />
-                        {!product.active && (
+                        {product.active === false && (
                           <div className="product-inactive-badge">Inactivo</div>
                         )}
                       </div>
@@ -235,7 +224,7 @@ const ProductSelector: React.FC<ProductSelectorProps> = ({
                             type="button"
                             className="add-product-button"
                             onClick={(e) => { e.stopPropagation(); handleAddProductToCard(product); }}
-                            disabled={!product.active}
+                            disabled={product.active === false}
                           >
                             <FiPlus size={14} />
                             Añadir

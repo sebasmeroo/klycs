@@ -1,0 +1,47 @@
+/* app-linktree/src/components/cardeditor/subcomponents/TemplateSelector.css */
+
+.template-selector-section {
+  /* Estilos para el contenedor de la sección, si son necesarios más allá de .form-section */
+  /* Por ejemplo: padding-bottom: 1.5rem; */
+}
+
+.template-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem; /* O quitar si el .form-group de storeName maneja el espacio */
+  width: 100%;
+}
+
+.template-btn {
+  padding: 0.6rem 1rem;
+  border: 1px solid #444444;
+  background: #222222;
+  color: #cccccc;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-grow: 1; /* Para que ocupen espacio similar */
+  text-align: center;
+  min-width: 80px; /* Ancho mínimo */
+}
+
+.template-btn:hover {
+  background: #333333;
+  border-color: #FF4500;
+}
+
+.template-btn.active {
+  background: #FF4500;
+  color: white;
+  border-color: #FF4500;
+  font-weight: 600;
+}
+
+/* Ajuste para el input de Store Name (ya definido en CardEditor.css como .form-group, .form-label, .form-control) */
+.template-selector-section .form-group {
+  /* Puedes añadir estilos específicos si es necesario */
+  /* margin-top: 1rem; // Ya está en el JSX con mt-3 */
+} 

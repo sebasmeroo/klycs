@@ -1,0 +1,11 @@
+/* app-linktree/src/components/cardeditor/subcomponents/CardVisualsEditor.css */
+
+/* Estilos específicos para CardVisualsEditor si son necesarios */
+.card-visuals-editor {
+  /* Contenedor principal para la edición visual de la tarjeta */
+}
+
+/* Si se necesitan estilos más específicos para los contenedores de CompressionInfo dentro de este componente */
+.card-visuals-editor .compression-info-container {
+  /* margin-top: 1rem; o similar, si el mt-3 de bootstrap no es suficiente o no se usa */
+} 

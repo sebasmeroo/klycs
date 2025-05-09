@@ -1,0 +1,122 @@
+/* PremiumCoverSlider.css - Estilos para el carrusel de portada premium */
+
+.premium-cover-slider-container {
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+  border-radius: 18px; /* Bordes redondeados, estilo iOS */
+  position: relative; /* Necesario para la navegación/paginación de Swiper */
+  background-color: #f0f0f0; /* Color de fondo mientras carga o si falla todo */
+}
+
+.premium-cover-slider-container.fallback-active .fallback-image {
+  /* Estilos para la imagen de fallback cuando no hay items */
+  width: 100%;
+  min-height: 300px; /* Una altura menor para el fallback general */
+  object-fit: contain; /* Para que se vea el placeholder sin recortar mucho */
+  border-radius: 18px;
+  background-color: #e0e0e0;
+}
+
+.premium-swiper-instance {
+  width: 100%;
+  height: 100%; 
+  border-radius: 18px; 
+}
+
+.premium-swiper-slide {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden; 
+  border-radius: 18px; 
+  background-color: #f0f0f0; 
+}
+
+.premium-slide-media {
+  display: block;
+  width: 100%;
+  min-height: 600px; /* Sincronizado con CardCoverImage.css */
+  object-fit: cover;
+  border-radius: 18px;
+  background-color: #e0e0e0; 
+  /* Sombra sutil y moderna, inspirada en elementos de iOS */
+  /* Aplicar directamente aquí o en el contenedor .premium-cover-slider-container */
+  /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0,0,0,0.05); */
+}
+
+
+/* Ajustes para la navegación y paginación de Swiper */
+.premium-swiper-instance .swiper-button-next,
+.premium-swiper-instance .swiper-button-prev {
+  color: #ffffff;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 50%;
+  width: 44px; /* Un poco más grandes */
+  height: 44px;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+  opacity: 0.7;
+}
+
+.premium-swiper-instance:hover .swiper-button-next,
+.premium-swiper-instance:hover .swiper-button-prev {
+  opacity: 1;
+}
+
+.premium-swiper-instance .swiper-button-next:hover,
+.premium-swiper-instance .swiper-button-prev:hover {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.premium-swiper-instance .swiper-button-next::after,
+.premium-swiper-instance .swiper-button-prev::after {
+  font-size: 1.5rem; 
+}
+
+.premium-swiper-instance .swiper-pagination-bullet {
+  background: rgba(255, 255, 255, 0.8);
+  opacity: 1;
+  width: 8px;
+  height: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.premium-swiper-instance .swiper-pagination-bullet-active {
+  background: #ffffff;
+  transform: scale(1.2);
+}
+
+/* Adaptación para tema oscuro (si se implementa una clase .dark-theme) */
+.dark-theme .premium-cover-slider-container {
+  background-color: #2c2c2e;
+}
+
+.dark-theme .premium-swiper-slide {
+  background-color: #2c2c2e;
+}
+
+.dark-theme .premium-slide-media {
+  background-color: #3a3a3c; 
+  /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), 0 1px 4px rgba(0,0,0,0.15); */
+}
+
+.dark-theme .premium-swiper-instance .swiper-button-next,
+.dark-theme .premium-swiper-instance .swiper-button-prev {
+  color: #1c1c1e; /* Flechas oscuras sobre fondo claro de botón */
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+.dark-theme .premium-swiper-instance .swiper-button-next:hover,
+.dark-theme .premium-swiper-instance .swiper-button-prev:hover {
+  background-color: rgba(255, 255, 255, 0.6);
+}
+
+.dark-theme .premium-swiper-instance .swiper-pagination-bullet {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.dark-theme .premium-swiper-instance .swiper-pagination-bullet-active {
+  background: #000000;
+}
+
+/* Ocultar la importación en PremiumCoverSlider.tsx ya que este archivo CSS se importará globalmente o donde sea necesario */
+/* @import './PremiumCoverSlider.css'; */ 

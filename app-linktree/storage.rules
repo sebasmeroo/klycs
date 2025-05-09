@@ -44,5 +44,15 @@ service firebase.storage {
       allow write: if request.auth != null && request.auth.uid == userId;
     }
     // --- FIN NUEVA REGLA ---
+
+    // --- REGLA PARA ARCHIVOS DEL CARRUSEL DE PORTADA ---
+    match /users/{userId}/cards/{cardId}/coverSlider/{fileName} {
+      // Permitir leer a cualquiera (para mostrar el carrusel públicamente)
+      allow read: if true;
+      // Permitir escribir (subir, borrar) solo si el usuario está autenticado
+      // y su ID coincide con el {userId} de la ruta.
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    // --- FIN REGLA CARRUSEL ---
   }
 }

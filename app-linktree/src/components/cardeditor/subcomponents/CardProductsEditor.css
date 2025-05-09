@@ -1,0 +1,31 @@
+/* app-linktree/src/components/cardeditor/subcomponents/CardProductsEditor.css */
+
+/* Estilos que eran específicos para .products-section y sus hijos en CardEditor.css */
+/* Si .products-section, .section-header, .section-title, .add-button,
+   .selected-products, .selected-products-grid, .selected-product-card, etc.,
+   tenían estilos globales en CardEditor.css, esos se aplicarán.
+   Aquí solo se añaden o sobreescriben estilos si es necesario para este componente específico. */
+
+.products-section {
+  /* Ejemplo: background-color: #121212; si se quiere un fondo ligeramente diferente */
+  /* La clase .products-section ya existe en CardEditor.css, sus estilos base se aplicarán.
+     Podemos añadir más especificidad aquí si es necesario. */
+}
+
+.products-section .section-header {
+  /* Estilos para el header dentro de la sección de productos */
+}
+
+.products-section .selected-products-grid {
+  /* Estilos para la grilla de productos */
+}
+
+.no-selected-products {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #888888; /* Un color de texto más tenue */
+  font-size: 0.95rem;
+  background-color: rgba(255, 255, 255, 0.03); /* Fondo muy sutil */
+  border-radius: 8px;
+  border: 1px dashed #444444;
+} 

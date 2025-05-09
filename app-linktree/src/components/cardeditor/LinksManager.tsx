@@ -1,45 +1,104 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './CardEditor.css';
 import { FiLink, FiPlus, FiCheck, FiEdit, FiTrash2, FiX, FiExternalLink } from 'react-icons/fi';
-
-interface CardLink {
-  id: string;
-  title: string;
-  url: string;
-  active: boolean;
-}
+import { v4 as uuidv4 } from 'uuid';
+import { CardLink } from './types';
 
 interface LinksManagerProps {
+  cardId: string;
   links: CardLink[];
-  linkTitle: string;
-  linkUrl: string;
-  editingLinkId: string | null;
-  showLinkForm: boolean;
-  setLinkTitle: (title: string) => void;
-  setLinkUrl: (url: string) => void;
-  openAddLinkForm: () => void;
-  handleSaveLink: (e: React.FormEvent) => void;
-  handleEditLink: (link: CardLink) => void;
-  handleDeleteLink: (linkId: string) => void;
-  toggleLinkActive: (linkId: string) => void;
-  cancelLinkEdit: () => void;
+  onLocalLinksChange: (newLinks: CardLink[]) => void;
+  onAddLinkToFirestore: (cardId: string, linkData: Omit<CardLink, 'id' | 'active'> & { active?: boolean }) => Promise<string | null>;
+  onUpdateLinkInFirestore: (cardId: string, linkId: string, linkData: Partial<Omit<CardLink, 'id'>>) => Promise<boolean>;
+  onDeleteLinkFromFirestore: (cardId: string, linkId: string) => Promise<boolean>;
 }
 
 const LinksManager: React.FC<LinksManagerProps> = ({
+  cardId,
   links,
-  linkTitle,
-  linkUrl,
-  editingLinkId,
-  showLinkForm,
-  setLinkTitle,
-  setLinkUrl,
-  openAddLinkForm,
-  handleSaveLink,
-  handleEditLink,
-  handleDeleteLink,
-  toggleLinkActive,
-  cancelLinkEdit
+  onLocalLinksChange,
+  onAddLinkToFirestore,
+  onUpdateLinkInFirestore,
+  onDeleteLinkFromFirestore,
 }) => {
+  const [linkTitle, setLinkTitle] = useState('');
+  const [linkUrl, setLinkUrl] = useState('');
+  const [editingLinkId, setEditingLinkId] = useState<string | null>(null);
+  const [showLinkForm, setShowLinkForm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const openAddLinkForm = () => {
+    setEditingLinkId(null);
+    setLinkTitle('');
+    setLinkUrl('');
+    setShowLinkForm(true);
+  };
+
+  const handleEditLink = (link: CardLink) => {
+    setEditingLinkId(link.id);
+    setLinkTitle(link.title);
+    setLinkUrl(link.url);
+    setShowLinkForm(true);
+  };
+
+  const handleSaveLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!linkTitle.trim() || !linkUrl.trim()) return;
+    setIsSubmitting(true);
+
+    if (editingLinkId) {
+      const success = await onUpdateLinkInFirestore(cardId, editingLinkId, { title: linkTitle, url: linkUrl });
+      if (success) {
+        const updatedLinks = links.map(link =>
+          link.id === editingLinkId
+            ? { ...link, title: linkTitle, url: linkUrl }
+            : link
+        );
+        onLocalLinksChange(updatedLinks);
+      }
+    } else {
+      const newLinkData = { title: linkTitle, url: linkUrl, active: true };
+      const newId = await onAddLinkToFirestore(cardId, newLinkData);
+      if (newId) {
+        const newLinkEntry: CardLink = { id: newId, ...newLinkData };
+        onLocalLinksChange([...links, newLinkEntry]);
+      }
+    }
+    
+    setIsSubmitting(false);
+    cancelLinkEdit();
+  };
+
+  const handleDeleteLink = async (linkId: string) => {
+    setIsSubmitting(true);
+    const success = await onDeleteLinkFromFirestore(cardId, linkId);
+    if (success) {
+      const updatedLinks = links.filter(link => link.id !== linkId);
+      onLocalLinksChange(updatedLinks);
+    }
+    setIsSubmitting(false);
+  };
+
+  const toggleLinkActive = async (link: CardLink) => {
+    setIsSubmitting(true);
+    const newActiveState = !link.active;
+    const success = await onUpdateLinkInFirestore(cardId, link.id, { active: newActiveState });
+    if (success) {
+      const updatedLinks = links.map(l =>
+        l.id === link.id ? { ...l, active: newActiveState } : l
+      );
+      onLocalLinksChange(updatedLinks);
+    }
+    setIsSubmitting(false);
+  };
+
+  const cancelLinkEdit = () => {
+    setLinkTitle('');
+    setLinkUrl('');
+    setEditingLinkId(null);
+    setShowLinkForm(false);
+  };
+
   return (
     <div className="links-section">
       <div className="links-header">
@@ -47,10 +106,11 @@ const LinksManager: React.FC<LinksManagerProps> = ({
           <FiLink />
           Enlaces
         </h3>
-        <button 
-          type="button" 
+        <button
+          type="button"
           className="add-link-button"
           onClick={openAddLinkForm}
+          disabled={isSubmitting}
         >
           <FiPlus />
           <span>Añadir enlace</span>
@@ -73,6 +133,7 @@ const LinksManager: React.FC<LinksManagerProps> = ({
               placeholder="Ej: Mi sitio web"
               required
               autoFocus
+              disabled={isSubmitting}
             />
           </div>
           <div className="form-group">
@@ -88,20 +149,21 @@ const LinksManager: React.FC<LinksManagerProps> = ({
               onChange={(e) => setLinkUrl(e.target.value)}
               placeholder="https://ejemplo.com"
               required
+              disabled={isSubmitting}
             />
           </div>
           <div className="link-form-buttons">
-            <button 
-              type="button" 
+            <button
+              type="button"
               className="cancel-button"
               onClick={cancelLinkEdit}
+              disabled={isSubmitting}
             >
               <FiX />
               Cancelar
             </button>
-            <button type="submit" className="save-button">
-              <FiCheck />
-              {editingLinkId ? 'Actualizar' : 'Guardar'}
+            <button type="submit" className="save-button" disabled={isSubmitting}>
+              {isSubmitting ? 'Guardando...' : (editingLinkId ? <><FiCheck /> Actualizar</> : <><FiCheck /> Guardar</>)}
             </button>
           </div>
         </form>
@@ -111,8 +173,8 @@ const LinksManager: React.FC<LinksManagerProps> = ({
         {links.length > 0 ? (
           <div className="links-list">
             {links.map(link => (
-              <div 
-                key={link.id} 
+              <div
+                key={link.id}
                 className={`link-item ${!link.active ? 'link-inactive' : ''}`}
               >
                 <div className="link-info">
@@ -126,16 +188,18 @@ const LinksManager: React.FC<LinksManagerProps> = ({
                   <button
                     type="button"
                     className="toggle-link-button"
-                    onClick={() => toggleLinkActive(link.id)}
+                    onClick={() => toggleLinkActive(link)}
                     title={link.active ? 'Desactivar enlace' : 'Activar enlace'}
+                    disabled={isSubmitting}
                   >
-                    {link.active ? <FiCheck /> : <FiX />}
+                    {isSubmitting && editingLinkId === link.id ? '...' : (link.active ? <FiCheck /> : <FiX />) }
                   </button>
                   <button
                     type="button"
                     className="edit-link-button"
                     onClick={() => handleEditLink(link)}
                     title="Editar enlace"
+                    disabled={isSubmitting}
                   >
                     <FiEdit />
                   </button>
@@ -144,8 +208,9 @@ const LinksManager: React.FC<LinksManagerProps> = ({
                     className="delete-link-button"
                     onClick={() => handleDeleteLink(link.id)}
                     title="Eliminar enlace"
+                    disabled={isSubmitting}
                   >
-                    <FiTrash2 />
+                    {isSubmitting && editingLinkId === link.id ? '...' : <FiTrash2 /> }
                   </button>
                 </div>
               </div>
@@ -155,10 +220,11 @@ const LinksManager: React.FC<LinksManagerProps> = ({
           <div className="no-links-message">
             <FiLink size={32} style={{ opacity: 0.5, marginBottom: '1rem' }} />
             <p>No hay enlaces. Añade algunos para que aparezcan en tu tarjeta.</p>
-            <button 
-              type="button" 
+            <button
+              type="button"
               className="add-first-link-button"
               onClick={openAddLinkForm}
+              disabled={isSubmitting}
             >
               <FiPlus />
               Añadir primer enlace

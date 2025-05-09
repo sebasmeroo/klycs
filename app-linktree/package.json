@@ -11,6 +11,9 @@
     "deploy": "npm run build && firebase deploy"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@fullcalendar/core": "^6.1.17",
     "@fullcalendar/daygrid": "^6.1.17",
     "@fullcalendar/interaction": "^6.1.17",
@@ -35,12 +38,14 @@
     "react-router-dom": "^7.5.1",
     "react-share": "^5.2.2",
     "recharts": "^2.15.3",
+    "swiper": "^11.2.6",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.22.0",
     "@tailwindcss/postcss": "^4.1.5",
     "@types/react": "^19.0.10",
+    "@types/react-beautiful-dnd": "^13.1.8",
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.21",

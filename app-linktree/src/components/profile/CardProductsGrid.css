@@ -1,0 +1,72 @@
+/* CardProductsGrid.css - Estilos para la cuadrícula de productos (Estilo iOS) */
+
+.rendered-section-title-linktree {
+  font-weight: 600; /* Un poco más bold, común en títulos iOS */
+  margin-bottom: 1.25rem;
+  text-align: center;
+  /* color: viene de style prop */
+}
+
+.rendered-featured-products-linktree {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); /* Grid responsivo */
+  gap: 1rem;
+  /* margin-bottom: 1.5rem; (mb-4) viene de bootstrap */
+}
+
+.rendered-product-item-linktree {
+  border-radius: 10px; /* Radio iOS más sutil */
+  overflow: hidden;
+  background-color: #f9f9f9; /* Blanco ligeramente roto */
+  /* box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04); */ /* Sombra opcional muy sutil */
+  border: 1px solid rgba(0, 0, 0, 0.08); /* Borde fino */
+  text-align: left; 
+  transition: background-color 0.2s ease;
+}
+
+/* Ajuste para fondo oscuro (asume que UserProfile añade esta clase al contenedor principal) */
+.dark-background .rendered-product-item-linktree {
+  background-color: #2c2c2e; /* Gris oscuro iOS */
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.rendered-product-item-linktree:hover {
+   background-color: #efeff4; 
+}
+.dark-background .rendered-product-item-linktree:hover {
+   background-color: #3a3a3c; 
+}
+
+.rendered-product-image-linktree {
+  width: 100%;
+  height: 120px; 
+  object-fit: cover;
+  background-color: #e5e5ea; 
+}
+
+.rendered-product-info {
+  padding: 10px 12px; 
+}
+
+.rendered-product-title {
+  font-size: 0.9rem; 
+  font-weight: 600; 
+  margin-bottom: 2px; 
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #1c1c1e; 
+}
+.dark-background .rendered-product-title {
+  color: #f2f2f7; 
+}
+
+.rendered-product-price {
+  font-size: 0.85rem; 
+  color: #8a8a8e; 
+  opacity: 1; 
+  margin-top: 0;
+}
+.dark-background .rendered-product-price {
+   color: #8d8d92; 
+} 

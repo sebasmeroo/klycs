@@ -1,0 +1,99 @@
+/* app-linktree/src/components/cardeditor/subcomponents/SectionOrderEditor.css */
+
+/* Estilos para la sección de Orden de Secciones (Layout Section) */
+/* Estas clases podrían necesitar ser más específicas o ajustadas si hay colisiones */
+
+.layout-section .section-title {
+  /* Si .section-title es una clase global en CardEditor.css y quieres mantener su estilo base,
+     puedes simplemente heredar o añadir especificidad si es necesario. */
+  /* color: #FF4500; Ya debería heredarse si .section-title es global con ese color */ 
+  margin-bottom: 1rem; 
+}
+
+.layout-section .form-text {
+  /* color: #cccccc; Ya debería heredarse si .form-text es global */
+  font-size: 0.9rem;
+  /* margin-bottom: 1.5rem; o la clase mb-4 que tenías */
+}
+
+.section-order-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 1.5rem;
+}
+
+.section-order-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #1A1A1A; 
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+  border: 1px solid #333333;
+  transition: background-color 0.2s ease;
+}
+
+.section-order-item:hover {
+  background-color: #222222;
+}
+
+.section-name {
+  font-weight: 500;
+  color: #E0E0E0; 
+  flex-grow: 1;
+}
+
+.section-order-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.section-order-controls .control-button {
+  background-color: #2a2a2a;
+  color: #FF4500;
+  border: 1px solid #444444;
+  border-radius: 6px;
+  padding: 0.5rem;
+  font-size: 1rem; 
+  line-height: 1; 
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.section-order-controls .control-button:hover:not(:disabled) {
+  background-color: #333333;
+  border-color: #FF4500;
+}
+
+.section-order-controls .control-button:disabled {
+  color: #555555;
+  background-color: #202020;
+  border-color: #333333;
+  cursor: not-allowed;
+}
+
+/* Estilos para el Drag Handle */
+.drag-handle {
+  background: none;
+  border: none;
+  color: #888888; /* Color grisáceo para el handle */
+  cursor: grab;
+  padding: 0.5rem; /* Área de clic un poco más grande */
+  margin-left: 0.5rem; /* Separarlo del nombre */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+/* Estilos para el item mientras se arrastra */
+.section-order-item.dragging {
+  opacity: 0.5;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  /* Puedes añadir otros estilos, como un borde */
+  /* border: 1px dashed #FF4500; */
+} 

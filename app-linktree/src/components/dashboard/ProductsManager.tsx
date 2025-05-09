@@ -2,15 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { v4 as uuidv4 } from 'uuid';
-
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: string;
-  imageUrl: string;
-  active: boolean;
-}
+import { Product } from '../cardeditor/types';
 
 interface ProductsManagerProps {
   userData: any;
@@ -18,10 +10,11 @@ interface ProductsManagerProps {
 
 const ProductsManager: React.FC<ProductsManagerProps> = ({ userData }) => {
   const [products, setProducts] = useState<Product[]>([]);
-  const [name, setName] = useState('');
+  const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
+  const [imageURL, setImageURL] = useState('');
+  const [productType, setProductType] = useState<'digital' | 'service'>('digital');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +23,28 @@ const ProductsManager: React.FC<ProductsManagerProps> = ({ userData }) => {
   // Cargar productos existentes cuando se monta el componente
   useEffect(() => {
     if (userData && userData.products) {
-      setProducts(userData.products);
+      const loadedProducts = userData.products.map((p: any) => {
+        let numericPrice = 0;
+        if (typeof p.price === 'number') {
+          numericPrice = p.price;
+        } else if (typeof p.price === 'string') {
+          numericPrice = parseFloat(String(p.price).replace(',', '.') || '0');
+        } // Si no es string o number, se queda en 0 por defecto. 
+          // Esto simplifica el manejo de tipos para datos antiguos/inesperados.
+
+        return {
+          id: p.id,
+          title: p.name || p.title || '',
+          description: p.description || '',
+          price: isNaN(numericPrice) ? 0 : numericPrice, 
+          imageURL: p.imageUrl || p.imageURL,
+          type: p.type || 'digital',
+          active: p.active !== undefined ? p.active : true,
+          autoUrl: p.autoUrl, // Incluir si existen en tu tipo Product
+          url: p.url,         // Incluir si existen en tu tipo Product
+        };
+      });
+      setProducts(loadedProducts);
     }
   }, [userData]);
 
@@ -44,7 +58,11 @@ const ProductsManager: React.FC<ProductsManagerProps> = ({ userData }) => {
     
     try {
       const userDocRef = doc(db, 'users', userData.uid);
-      await updateDoc(userDocRef, { products: updatedProducts });
+      const productsToSave = updatedProducts.map(p => ({
+        ...p,
+        price: typeof p.price === 'string' ? parseFloat(p.price.replace(',', '.')) : p.price,
+      }));
+      await updateDoc(userDocRef, { products: productsToSave });
       setSuccess('Productos guardados correctamente');
       setTimeout(() => setSuccess(null), 3000);
     } catch (error: any) {
@@ -59,7 +77,7 @@ const ProductsManager: React.FC<ProductsManagerProps> = ({ userData }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name.trim()) {
+    if (!title.trim()) {
       setError('Debes proporcionar un nombre para el producto');
       return;
     }
@@ -69,8 +87,8 @@ const ProductsManager: React.FC<ProductsManagerProps> = ({ userData }) => {
       return;
     }
     
-    // Validar que el precio es un número
-    if (isNaN(parseFloat(price.replace(',', '.')))) {
+    const numericPrice = parseFloat(price.replace(',', '.'));
+    if (isNaN(numericPrice)) {
       setError('Por favor, introduce un precio válido');
       return;
     }
@@ -82,10 +100,11 @@ const ProductsManager: React.FC<ProductsManagerProps> = ({ userData }) => {
       updatedProducts = updatedProducts.map(product => 
         product.id === editingId ? { 
           ...product, 
-          name, 
+          title,
           description, 
-          price, 
-          imageUrl 
+          price: numericPrice,
+          imageURL,
+          type: productType,
         } : product
       );
       setEditingId(null);
@@ -93,10 +112,11 @@ const ProductsManager: React.FC<ProductsManagerProps> = ({ userData }) => {
       // Añadir nuevo producto
       const newProduct: Product = {
         id: uuidv4(),
-        name,
+        title,
         description,
-        price,
-        imageUrl,
+        price: numericPrice,
+        imageURL,
+        type: productType,
         active: true
       };
       updatedProducts = [...updatedProducts, newProduct];
@@ -104,18 +124,20 @@ const ProductsManager: React.FC<ProductsManagerProps> = ({ userData }) => {
     
     setProducts(updatedProducts);
     saveProductsToFirestore(updatedProducts);
-    setName('');
+    setTitle('');
     setDescription('');
     setPrice('');
-    setImageUrl('');
+    setImageURL('');
+    setProductType('digital');
   };
 
   // Editar producto
   const handleEdit = (product: Product) => {
-    setName(product.name);
-    setDescription(product.description);
-    setPrice(product.price);
-    setImageUrl(product.imageUrl);
+    setTitle(product.title);
+    setDescription(product.description || '');
+    setPrice(String(product.price));
+    setImageURL(product.imageURL || '');
+    setProductType(product.type || 'digital');
     setEditingId(product.id);
   };
 
@@ -158,13 +180,13 @@ const ProductsManager: React.FC<ProductsManagerProps> = ({ userData }) => {
         <h3 className="mb-3">{editingId ? 'Editar Producto' : 'Añadir Nuevo Producto'}</h3>
         
         <div className="form-group">
-          <label htmlFor="productName">Nombre</label>
+          <label htmlFor="productTitle">Nombre</label>
           <input
             type="text"
-            id="productName"
+            id="productTitle"
             className="form-control"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
             placeholder="Nombre de tu producto"
             required
           />
@@ -194,15 +216,28 @@ const ProductsManager: React.FC<ProductsManagerProps> = ({ userData }) => {
             required
           />
         </div>
+
+        <div className="form-group">
+          <label htmlFor="productType">Tipo de Producto</label>
+          <select
+            id="productType"
+            className="form-control"
+            value={productType}
+            onChange={(e) => setProductType(e.target.value as 'digital' | 'service')}
+          >
+            <option value="digital">Digital</option>
+            <option value="service">Servicio</option>
+          </select>
+        </div>
         
         <div className="form-group">
-          <label htmlFor="productImage">URL de imagen</label>
+          <label htmlFor="productImageURL">URL de imagen</label>
           <input
             type="text"
-            id="productImage"
+            id="productImageURL"
             className="form-control"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
+            value={imageURL}
+            onChange={(e) => setImageURL(e.target.value)}
             placeholder="https://ejemplo.com/imagen.jpg"
           />
         </div>
@@ -222,10 +257,11 @@ const ProductsManager: React.FC<ProductsManagerProps> = ({ userData }) => {
               className="btn btn-secondary" 
               onClick={() => {
                 setEditingId(null);
-                setName('');
+                setTitle('');
                 setDescription('');
                 setPrice('');
-                setImageUrl('');
+                setImageURL('');
+                setProductType('digital');
               }}
             >
               Cancelar
@@ -248,18 +284,19 @@ const ProductsManager: React.FC<ProductsManagerProps> = ({ userData }) => {
                 className={`product-editor-item ${!product.active ? 'inactive' : ''}`}
               >
                 <div className="product-editor-details">
-                  {product.imageUrl && (
+                  {product.imageURL && (
                     <div className="product-editor-image">
-                      <img src={product.imageUrl} alt={product.name} />
+                      <img src={product.imageURL} alt={product.title} />
                     </div>
                   )}
                   <div className="product-editor-info">
-                    <p className="product-editor-name">{product.name}</p>
+                    <p className="product-editor-name">{product.title}</p>
                     <p className="product-editor-price">{product.price} €</p>
                     {product.description && (
                       <p className="product-editor-description">{product.description}</p>
                     )}
                   </div>
+                  <p className="product-editor-type" style={{fontSize: '0.8em', color: '#666'}}>Tipo: {product.type}</p>
                 </div>
                 
                 <div className="product-editor-actions">
@@ -303,18 +340,18 @@ const ProductsManager: React.FC<ProductsManagerProps> = ({ userData }) => {
             <p className="text-center">Añade productos para ver cómo se verán en tu perfil</p>
           ) : (
             <div className="products-grid">
-              {products.filter(product => product.active).map((product) => (
+              {products.filter(p => p.active === true || p.active === undefined).map((product) => (
                 <div 
                   key={product.id}
                   className="product-preview-item"
                 >
-                  {product.imageUrl && (
+                  {product.imageURL && (
                     <div className="product-preview-image">
-                      <img src={product.imageUrl} alt={product.name} />
+                      <img src={product.imageURL} alt={product.title} />
                     </div>
                   )}
                   <div className="product-preview-info">
-                    <h4 className="product-preview-name">{product.name}</h4>
+                    <h4 className="product-preview-name">{product.title}</h4>
                     <p className="product-preview-price">{product.price} €</p>
                     {product.description && (
                       <p className="product-preview-description">{product.description}</p>

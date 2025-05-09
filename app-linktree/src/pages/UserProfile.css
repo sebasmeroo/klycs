@@ -18,38 +18,6 @@
   margin: 1.5rem 0;
 }
 
-.profile-header {
-  text-align: center;
-  margin-bottom: 2rem;
-  width: 100%;
-}
-
-.profile-avatar {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 4px solid #ffffff;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  margin: 0 auto 1.5rem;
-  display: block;
-}
-
-.profile-username {
-  font-size: 2rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-  color: #333;
-}
-
-.profile-bio {
-  font-size: 1.1rem;
-  color: #666;
-  max-width: 600px;
-  margin: 0 auto;
-  line-height: 1.6;
-}
-
 /* Estilos para la tarjeta individual */
 .single-card {
   background-color: #fff;
@@ -504,6 +472,7 @@ body::-webkit-scrollbar {
   scrollbar-width: none;
   /* IE and Edge */
   -ms-overflow-style: none;
+  padding-bottom: 50px; /* Ejemplo: Asegurar espacio al final */
 }
 
 .user-profile-render-container::-webkit-scrollbar {
@@ -640,8 +609,61 @@ body::-webkit-scrollbar {
 }
 
 /* Botón final inline (Verificar y Continuar) */
-.booking-form-inline .next-button:last-child { /* Aplicar al último botón en las acciones */
-  /* Estilo específico si queremos diferenciarlo */
-   /* background-color: #FFA500; /* Ejemplo: Naranja más claro */
-   /* border-color: #FFA500; */
-} 
+.booking-form-inline .next-button:last-child { 
+  /* ... */
+}
+
+/* Estilos para Productos */
+/*
+.rendered-section-title-linktree {
+  font-weight: bold;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.rendered-featured-products-linktree {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
+  gap: 1rem;
+}
+
+.rendered-product-item-linktree {
+  border-radius: 12px; 
+  overflow: hidden;
+  background-color: rgba(255, 255, 255, 0.1); 
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  text-align: center;
+}
+
+.dark-background .rendered-product-item-linktree {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.rendered-product-image-linktree {
+  width: 100%;
+  height: 120px; 
+  object-fit: cover;
+  background-color: #eee;
+}
+
+.rendered-product-info {
+  padding: 0.75rem;
+}
+
+.rendered-product-title {
+  font-size: 0.9rem;
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rendered-product-price {
+  font-size: 0.85rem;
+  color: inherit; 
+  opacity: 0.9;
+}
+*/
+
+/* ... más estilos ... */ 

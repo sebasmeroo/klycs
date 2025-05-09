@@ -2,7 +2,7 @@
 
 /* Contenedor principal con fondo */
 .user-profile-render-container.linktree-style {
-  padding-top: 2rem;
+  padding-top: 0;
   padding-bottom: 2rem;
 }
 

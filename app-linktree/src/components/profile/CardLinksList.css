@@ -1,0 +1,26 @@
+/* CardLinksList.css - Estilos para la lista de enlaces de la tarjeta */
+
+.rendered-links-container-linktree {
+  /* Estilos para el contenedor si son necesarios */
+  /* margin-bottom: 1.5rem; (mb-4) viene de bootstrap */
+}
+
+.rendered-link-button-linktree {
+  /* Copiar estilos de botones de enlace desde UserProfile.css */
+  display: block;
+  margin-bottom: 1rem;
+  padding: 12px 15px;
+  border: 1px solid transparent; 
+  border-radius: 8px; 
+  text-align: center;
+  text-decoration: none;
+  /* background-color: ...; - Estos dependen del tema de la tarjeta, 
+     se deberían aplicar tal vez con variables CSS o inline styles desde el padre */
+  /* color: ...; */
+  transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.rendered-link-button-linktree:hover {
+  transform: scale(1.03);
+  /* Podríamos añadir estilos de hover específicos aquí */
+} 

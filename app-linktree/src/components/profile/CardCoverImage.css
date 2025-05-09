@@ -1,0 +1,44 @@
+/* CardCoverImage.css - Estilos para el componente de imagen de portada */
+
+.rendered-main-image-container {
+  margin-bottom: 1.5rem;
+  overflow: hidden; /* Clave para que el border-radius de la imagen interna no sobresalga */
+  border-radius: 18px; /* Bordes más redondeados, estilo iOS */
+  /* Considera añadir una sombra aquí si quieres que el contenedor tenga la sombra en lugar de la imagen directamente */
+  /* box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1); */
+}
+
+.rendered-main-image-linktree {
+  display: block;
+  width: 100%;
+  min-height: 600px; /* Altura mínima de 700px */
+  /* aspect-ratio: 16 / 9; */ /* Eliminado para controlar altura con min-height */
+  object-fit: cover;
+  border-radius: 18px; /* Sincronizado con el contenedor */
+  /* Sombra sutil y moderna, inspirada en elementos de iOS */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0,0,0,0.05);
+  background-color: #f0f0f0; /* Un gris claro como placeholder */
+  transition: transform 0.3s ease-out; /* Para futuras interacciones o hover effects */
+}
+
+.rendered-main-image-linktree:hover {
+  /* transform: scale(1.02); */ /* Efecto sutil al pasar el mouse, opcional */
+}
+
+/* Estilos para la imagen fallback si la original falla */
+.rendered-main-image-linktree.fallback-image {
+  /* object-fit: contain; */ /* Mantiene el placeholder sin recortar tanto */
+  /* background-color: #e9e9e9; */ /* Un color ligeramente diferente para el fallback */
+}
+
+/* Media query para modo oscuro, si tienes un tema oscuro */
+@media (prefers-color-scheme: dark) {
+  .rendered-main-image-linktree {
+    background-color: #333; /* Placeholder más oscuro */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), 0 1px 4px rgba(0,0,0,0.15); /* Sombra adaptada a fondos oscuros */
+  }
+
+  .rendered-main-image-linktree.fallback-image {
+    /* background-color: #2a2a2a; */
+  }
+} 
