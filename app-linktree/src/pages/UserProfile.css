@@ -545,11 +545,8 @@ body::-webkit-scrollbar {
 /* --- Estilos para el Formulario de Reserva Integrado --- */
 
 .inline-booking-container {
-  /* Espacio alrededor del contenedor del formulario inline */
-  padding: 1rem;
-  background-color: rgba(0, 0, 0, 0.1); /* Un fondo sutil opcional */
-  border-radius: 8px; /* Bordes redondeados opcionales */
-  border: 1px solid rgba(255, 255, 255, 0.1); /* Borde sutil opcional */
+  width: 100%; 
+  margin-bottom: 5px; /* Espaciado inferior de 1px */
 }
 
 /* Estilos para el contenido del formulario cuando está inline */

@@ -1,0 +1,78 @@
+/* FloatingTabBar.css */
+.floating-tab-bar {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background-color: var(--tab-bar-bg, rgba(255, 255, 255, 0.85)); 
+  backdrop-filter: blur(10px) saturate(180%);
+  -webkit-backdrop-filter: blur(10px) saturate(180%);
+  border-radius: 28px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 10px rgba(0,0,0,0.1);
+  padding: 8px 12px; /* Reducir padding vertical si el indicador no está */
+  z-index: 1000;
+  width: auto;
+  gap: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  /* overflow: hidden; Ya no es necesario si no hay indicador */
+}
+
+.tab-item {
+  background-color: transparent;
+  border: none;
+  color: var(--tab-item-inactive-color, #8A8A8E); 
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border-radius: 20px; 
+  cursor: pointer;
+  /* Restaurar transición de background-color */
+  transition: background-color 0.25s ease, color 0.25s ease; 
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 10px;
+  line-height: 1.2;
+  min-width: 60px;
+  /* position: relative; z-index: 2; Ya no son necesarios */
+}
+
+.tab-icon {
+  font-size: 22px;
+  margin-bottom: 2px;
+}
+
+.tab-item:hover {
+  /* Restaurar un hover sutil si se desea */
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.tab-item.active {
+  /* Restaurar el fondo para el item activo */
+  background-color: var(--tab-item-active-bg, rgba(0, 122, 255, 0.12)); /* Usar una nueva variable o la de color con opacidad */
+  color: var(--tab-item-active-color, #007AFF);
+  font-weight: 600;
+}
+
+/* La variable --tab-item-active-bg se puede definir en styleVariables 
+   o simplemente usar el color activo con una opacidad aquí. 
+   Por simplicidad, usaré una opacidad fija aquí por ahora,
+   pero idealmente se controlaría con una variable que tome el 
+   activeItemColor y le aplique una opacidad. */
+
+.tab-item.active .tab-label {
+  color: var(--tab-item-active-color, #007AFF);
+}
+
+.tab-label {
+  font-size: 11px;
+  margin-top: 2px;
+  color: var(--tab-item-inactive-color, #8A8A8E);
+  font-weight: 500;
+}
+
+/* Estilos para el indicador de slide (ELIMINADOS) */
+/* .tab-bar-slider-indicator { ... } */ 

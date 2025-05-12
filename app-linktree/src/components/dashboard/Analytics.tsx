@@ -267,6 +267,7 @@ const Analytics: React.FC<AnalyticsProps> = ({ userData }) => {
 
           {analyticsData.viewsPerDay.length > 0 && (
             <div className="chart-container main-chart"> 
+            
               <h3>Visitas por Día</h3> 
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={analyticsData.viewsPerDay} margin={{ top: 5, right: 0, left: -25, bottom: 5 }}>

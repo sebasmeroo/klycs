@@ -1,13 +1,11 @@
 import React from 'react';
 // Import Swiper React components
 import { Swiper, SwiperSlide } from 'swiper/react';
-
-// Import Swiper styles - RE-AÑADIDOS PORQUE PARECEN NECESARIOS
-import 'swiper/css';
-import 'swiper/css/navigation';
-import 'swiper/css/pagination';
-import 'swiper/css/effect-fade';
-import 'swiper/css/autoplay';
+import 'swiper/css'; // RESTAURADO
+import 'swiper/css/navigation'; // RESTAURADO
+import 'swiper/css/pagination'; // RESTAURADO
+import 'swiper/css/effect-fade'; // RESTAURADO
+import 'swiper/css/autoplay'; // RESTAURADO
 
 // import required modules
 import { Navigation, Pagination, Autoplay, EffectFade } from 'swiper/modules';
@@ -33,6 +31,7 @@ interface PremiumCoverSliderProps {
   fallbackImageUrl?: string;
   onErrorCallback?: (e: React.SyntheticEvent<HTMLImageElement | HTMLVideoElement>, mediaId: string, fallbackUrl: string) => void;
   failedMedia?: Record<string, boolean>; 
+  children?: React.ReactNode;
 }
 
 // Función auxiliar para determinar el tipo de medio desde la URL (puede ser diferente al 'type' provisto si es un fallback)
@@ -59,12 +58,14 @@ const PremiumCoverSlider: React.FC<PremiumCoverSliderProps> = ({
   fallbackImageUrl = 'https://firebasestorage.googleapis.com/v0/b/klycs-58190.appspot.com/o/defaults%2Fno-image.png?alt=media', // Fallback genérico
   onErrorCallback,
   failedMedia = {},
+  children
 }) => {
 
   if (!mediaItems || mediaItems.length === 0) {
     return (
         <div className={`premium-cover-slider-container ${className} fallback-active`}>
             <img src={fallbackImageUrl} alt="Contenido no disponible" className="premium-slide-media fallback-image" />
+            {children}
         </div>
     ); 
   }
@@ -121,6 +122,7 @@ const PremiumCoverSlider: React.FC<PremiumCoverSliderProps> = ({
           );
         })}
       </Swiper>
+      {children}
     </div>
   );
 };

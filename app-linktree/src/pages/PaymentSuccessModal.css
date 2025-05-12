@@ -1,0 +1,102 @@
+/* --- PaymentSuccessModal.css --- */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7); /* Fondo oscuro semi-transparente */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1050; /* Asegurar que esté sobre otros elementos */
+  opacity: 0;
+  animation: fadeIn 0.3s forwards;
+}
+
+.modal-content {
+  background-color: #ffffff;
+  padding: 30px 40px;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  max-width: 90%;
+  width: 450px; /* Ancho máximo del modal */
+  transform: scale(0.9);
+  opacity: 0;
+  animation: fadeInScaleUp 0.4s 0.1s forwards;
+  position: relative; /* Para posicionar elementos internos si es necesario */
+  color: #333; /* Color de texto por defecto */
+}
+
+/* Placeholder del logo (Texto "Klycs") */
+.modal-logo-placeholder {
+  font-size: 2.5rem; /* Tamaño grande */
+  font-weight: bold;
+  margin-bottom: 15px;
+  color: #007AFF; /* Color primario (ajusta si tienes uno diferente) */
+  /* Si tuvieras una fuente específica, la añadirías aquí */
+  /* font-family: 'TuFuenteLogo', sans-serif; */
+}
+
+/* Eslogan */
+.modal-slogan {
+  font-size: 1.1rem;
+  color: #555;
+  margin-bottom: 10px;
+}
+
+/* Mensaje principal */
+.modal-message {
+  font-size: 1rem;
+  color: #333;
+  margin-bottom: 25px;
+}
+
+/* Botón de cierre */
+.modal-close-button {
+  background-color: #007AFF; /* Color primario */
+  color: white;
+  border: none;
+  padding: 10px 25px;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.modal-close-button:hover {
+  background-color: #0056b3; /* Color primario más oscuro al pasar el ratón */
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInScaleUp {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Podrías añadir animaciones de salida si el modal se desmonta con un delay */
+/* Ejemplo (requeriría lógica extra en el componente para retrasar el desmontaje):
+@keyframes fadeOutScaleDown {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+}
+*/ 

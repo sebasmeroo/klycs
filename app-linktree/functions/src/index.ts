@@ -3,48 +3,53 @@ import * as logger from "firebase-functions/logger";
 import admin from "firebase-admin";
 import Stripe from "stripe";
 
-// Inicializar Firebase Admin SDK solo si no hay apps existentes
+// Inicializar Firebase Admin SDK si no se ha hecho
 if (admin.apps.length === 0) {
   admin.initializeApp();
 }
-
 const db = admin.firestore();
-const storage = admin.storage();
+// --- EXPORTAR DB ---
+export { db };
 
-// Leer configuración de forma más segura
-// Para 2nd Gen, se usan variables de entorno. Para 1st Gen (o emulador), functions.config()
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY; // || functions.config().stripe?.secret; <- functions.config() no se usa en v2
-const appUrl = process.env.APP_URL; // || functions.config().app?.url;  <- functions.config() no se usa en v2
+// Estas variables podrían ser undefined durante el análisis del CLI,
+// pero se espera que estén presentes en el entorno de ejecución de la nube.
+// Simplemente logueamos su estado en tiempo de carga para información, sin causar errores.
+logger.info(`[GLOBAL SCOPE AT LOAD/ANALYSIS] STRIPE_SECRET_KEY_FROM_ENV_LOAD_TIME: ${process.env.STRIPE_SECRET_KEY ? 'Defined' : 'Undefined (expected at runtime)'}`);
+logger.info(`[GLOBAL SCOPE AT LOAD/ANALYSIS] APP_URL_FROM_ENV_LOAD_TIME: ${process.env.APP_URL ? 'Defined' : 'Undefined (expected at runtime)'}`);
 
-let stripe: Stripe | null = null; // Declarar stripe, inicializar como null
+let stripeInstance: Stripe | null = null;
 
-if (!stripeSecretKey) {
-  logger.error("ERROR CRÍTICO: La clave secreta de Stripe (STRIPE_SECRET_KEY) no está configurada como variable de entorno. Las funciones de Stripe fallarán.");
-  // No lanzar error aquí para permitir el despliegue, las funciones individuales lo manejarán.
-} else {
-  try {
-    stripe = new Stripe(stripeSecretKey, { // Inicializar solo si la clave existe
-      apiVersion: "2024-04-10" as Stripe.LatestApiVersion,
-    });
-  } catch (e: any) {
-    logger.error("ERROR CRÍTICO: Falló la inicialización de Stripe SDK. Verifica la STRIPE_SECRET_KEY.", e.message);
-    // stripe permanecerá null
-  }
+/**
+ * Obtiene o crea una instancia del SDK de Stripe.
+ * Esta función DEBE llamarse en tiempo de ejecución dentro de una función,
+ * no en el alcance global.
+ */
+export function getStripeInstance(): Stripe {
+    if (stripeInstance) {
+        logger.debug("[getStripeInstance] Returning existing Stripe instance.");
+        return stripeInstance;
+    }
+
+    const currentStripeSecretKey = process.env.STRIPE_SECRET_KEY; // Re-check at runtime
+    if (!currentStripeSecretKey) {
+        logger.error("[getStripeInstance] CRITICAL: STRIPE_SECRET_KEY is not available in process.env at RUNTIME.");
+        // Este error es en tiempo de ejecución, lo que está bien.
+        throw new Error("Server configuration error: Stripe secret key missing at runtime.");
+    }
+
+    try {
+        logger.info("[getStripeInstance] Creating new Stripe SDK instance.");
+        stripeInstance = new Stripe(currentStripeSecretKey, {
+            apiVersion: "2024-04-10" as Stripe.LatestApiVersion,
+            typescript: true,
+        });
+        logger.info("[getStripeInstance] New Stripe SDK instance initialized successfully at runtime.");
+        return stripeInstance;
+    } catch (e: any) {
+        logger.error("[getStripeInstance] CRITICAL: Failed to initialize Stripe SDK at runtime:", e.message);
+        throw new Error("Server error: Could not initialize payment SDK.");
+    }
 }
-
-if (!appUrl) {
-  logger.error("ERROR CRÍTICO: La URL de la aplicación (APP_URL) no está configurada como variable de entorno. Algunas funciones podrían fallar.");
-  // No lanzar error aquí.
-}
-
-/* // Comentado: El secreto ahora se configura en los parámetros de la extensión
-// Secreto del Webhook - ¡MUY IMPORTANTE!
-// Para v2, el secreto del webhook se configura al crear la función del webhook.
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-if (!webhookSecret) {
-  logger.warn("¡¡¡El secreto del webhook de Stripe (STRIPE_WEBHOOK_SECRET) no está configurado como variable de entorno!!! No se podrán verificar los webhooks.");
-}
-*/
 
 // Configuración de la plataforma
 const PLATFORM_FEE_PERCENT = 5; // 5% de comisión
@@ -59,6 +64,17 @@ interface CreateCheckoutSessionData {
   productDescription?: string;
   productPrice: number;
   productType: string;
+  currency?: string;
+  metadata?: {
+    cardId?: string;
+    serviceId?: string;
+    dateTime?: string;
+    customerName?: string;
+    customerEmail?: string;
+    sellerUserId?: string;
+    professionalId?: string;
+    professionalName?: string;
+  }
 }
 interface RecordProfileViewData {
   profileId: string;
@@ -77,74 +93,74 @@ interface RecordProductViewData {
  */
 export const createStripeConnectAccountLink = onCall(
   async (request: CallableRequest<CreateStripeConnectAccountData>) => {
-    // INICIO DE VERIFICACIONES DE CONFIGURACIÓN
-    if (!stripe) {
-      logger.error("Stripe SDK no está inicializado. Verifica la configuración de STRIPE_SECRET_KEY.");
-      throw new HttpsError("internal", "Error de configuración del servidor, por favor contacte al soporte.");
-    }
-    if (!appUrl) { // Esta función también necesita appUrl para refresh_url y return_url
-      logger.error("APP_URL no está configurada. Verifica la configuración de APP_URL.");
-      throw new HttpsError("internal", "Error de configuración del servidor (URL), por favor contacte al soporte.");
-    }
-    // FIN DE VERIFICACIONES DE CONFIGURACIÓN
+    logger.info("V4 - Running createStripeConnectAccountLink for user:", request.auth?.uid);
 
-    // Verificar autenticación
+    let stripeSdk: Stripe;
+    try {
+        stripeSdk = getStripeInstance();
+    } catch (e: any) {
+        logger.error("createStripeConnectAccountLink: Failed to get/initialize Stripe instance.", { errorMessage: e.message, errorStack: e.stack });
+        throw new HttpsError("internal", e.message || "Payment system configuration error.");
+    }
+
+    const currentAppUrl = process.env.APP_URL; // Re-check APP_URL at runtime
+    if (!currentAppUrl) {
+        logger.error("createStripeConnectAccountLink: CRITICAL - APP_URL not available in process.env at RUNTIME.");
+        throw new HttpsError("internal", "Server configuration error: Application URL missing.");
+    }
+    
     if (!request.auth) {
-      throw new HttpsError(
-        "unauthenticated",
-        "Debes estar autenticado para realizar esta acción"
-      );
+      logger.warn("createStripeConnectAccountLink: Unauthenticated access attempt.");
+      throw new HttpsError("unauthenticated", "Authentication required.");
     }
 
     const userId = request.auth.uid;
-    // const data = request.data; // No se usa data para esta función específica
+    logger.info(`createStripeConnectAccountLink: Processing for userId: ${userId} using APP_URL: ${currentAppUrl}`);
 
     try {
-      // Verificar si el usuario ya tiene una cuenta de Stripe
-      const userDoc = await db.collection("users").doc(userId).get();
+      const userDocRef = db.collection("users").doc(userId);
+      const userDoc = await userDocRef.get();
       const userData = userDoc.data();
+      let stripeAccountId = userData?.stripeAccountId;
 
-      let stripeAccountId;
-
-      if (userData?.stripeAccountId) {
-        stripeAccountId = userData.stripeAccountId;
+      if (stripeAccountId) {
+        logger.info(`createStripeConnectAccountLink: User ${userId} already has Stripe Account ID: ${stripeAccountId}`);
       } else {
-        // Crear una nueva cuenta de Stripe Connect Express
-        const account = await stripe.accounts.create({
+        logger.info(`createStripeConnectAccountLink: Creating new Stripe Account for ${userId}`);
+        const account = await stripeSdk.accounts.create({
           type: "express",
-          capabilities: {
-            card_payments: { requested: true },
-            transfers: { requested: true },
-          },
+          capabilities: { card_payments: { requested: true }, transfers: { requested: true } },
           business_type: "individual",
-          metadata: {
-            userId,
-          },
+          metadata: { userId },
         });
-
         stripeAccountId = account.id;
-
-        // Guardar el ID de la cuenta de Stripe en Firestore
-        await db.collection("users").doc(userId).update({
-          stripeAccountId: stripeAccountId,
-        });
+        logger.info(`createStripeConnectAccountLink: New Stripe Account ID '${stripeAccountId}' created for ${userId}`);
+        await userDocRef.set({ stripeAccountId: stripeAccountId, stripeConnected: false, createdAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+        logger.info(`createStripeConnectAccountLink: Stripe Account ID '${stripeAccountId}' saved for ${userId}, marked as not connected yet.`);
       }
 
-      // Crear un enlace de onboarding para la cuenta
-      const accountLink = await stripe.accountLinks.create({
+      logger.info(`createStripeConnectAccountLink: Creating Account Link for Stripe Account ID: ${stripeAccountId}`);
+      const accountLink = await stripeSdk.accountLinks.create({
         account: stripeAccountId,
-        refresh_url: `${appUrl}/dashboard?refresh=true`,
-        return_url: `${appUrl}/dashboard?success=true`,
+        refresh_url: `${currentAppUrl}/dashboard?stripe_refresh=true&account_id=${stripeAccountId}`,
+        return_url: `${currentAppUrl}/dashboard?stripe_return=true&account_id=${stripeAccountId}`,
         type: "account_onboarding",
       });
 
+      logger.info(`createStripeConnectAccountLink: Account Link created successfully: ${accountLink.url}`);
       return { url: accountLink.url };
-    } catch (error) {
-      logger.error("Error al crear cuenta de Stripe:", error);
-      throw new HttpsError(
-        "internal",
-        "Error al crear la cuenta de Stripe"
-      );
+
+    } catch (error: any) {
+      logger.error(`createStripeConnectAccountLink: Error processing for ${userId}:`, { errorMessage: error.message, errorStack: error.stack, stripeErrorType: error.type });
+      let message = "An internal error occurred while trying to connect with Stripe.";
+      if (error.type === 'StripeCardError') {
+          message = error.message;
+      } else if (error.code) {
+          message = `Database error: ${error.message}`;
+      } else if (error.message) {
+          message = error.message;
+      }
+      throw new HttpsError("internal", message);
     }
   }
 );
@@ -154,52 +170,36 @@ export const createStripeConnectAccountLink = onCall(
  */
 export const disconnectStripeAccount = onCall(
   async (request: CallableRequest<DisconnectStripeAccountData>) => {
-    // INICIO DE VERIFICACIONES DE CONFIGURACIÓN
-    if (!stripe) {
-      logger.error("Stripe SDK no está inicializado. Verifica la configuración de STRIPE_SECRET_KEY.");
-      throw new HttpsError("internal", "Error de configuración del servidor, por favor contacte al soporte.");
-    }
-    // FIN DE VERIFICACIONES DE CONFIGURACIÓN
+    logger.info("V4 - Running disconnectStripeAccount for user:", request.auth?.uid);
 
-    // Verificar autenticación
     if (!request.auth) {
-      throw new HttpsError(
-        "unauthenticated",
-        "Debes estar autenticado para realizar esta acción"
-      );
+      logger.warn("disconnectStripeAccount: Unauthenticated access attempt.");
+      throw new HttpsError("unauthenticated", "Authentication required.");
     }
-
     const userId = request.auth.uid;
-    // const data = request.data; // No se usa data para esta función específica
 
     try {
-      const userDoc = await db.collection("users").doc(userId).get();
-      const userData = userDoc.data();
+        const userDocRef = db.collection("users").doc(userId);
+        const userDoc = await userDocRef.get();
+        const userData = userDoc.data();
+        const stripeAccountId = userData?.stripeAccountId;
 
-      if (!userData?.stripeAccountId) {
-        throw new HttpsError(
-          "not-found",
-          "No se encontró una cuenta de Stripe conectada"
-        );
-      }
+        if (!stripeAccountId && !userData?.stripeConnected) {
+            logger.info(`disconnectStripeAccount: User ${userId} has no Stripe account connected or already marked as disconnected.`);
+            return { success: true, message: "No Stripe account was connected." };
+        }
+        
+        await userDocRef.update({
+            stripeConnected: false,
+            stripeDisconnectedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+        logger.info(`disconnectStripeAccount: User ${userId} (Stripe Account: ${stripeAccountId || 'N/A'}) marked as disconnected in Firestore.`);
+        
+        return { success: true, message: "Stripe account disconnected successfully." };
 
-      // Desactivar la cuenta (no la eliminamos para mantener el historial)
-      await stripe.accounts.update(userData.stripeAccountId, {
-        metadata: { disconnected: "true" },
-      });
-
-      // Actualizar el estado del usuario en Firestore
-      await db.collection("users").doc(userId).update({
-        stripeConnected: false,
-      });
-
-      return { success: true };
-    } catch (error) {
-      logger.error("Error al desconectar Stripe:", error);
-      throw new HttpsError(
-        "internal",
-        "Error al desconectar la cuenta de Stripe"
-      );
+    } catch (error: any) {
+        logger.error(`disconnectStripeAccount: Error for ${userId}:`, error);
+        throw new HttpsError("internal", error.message || "Error disconnecting Stripe account.");
     }
   }
 );
@@ -208,185 +208,148 @@ export const disconnectStripeAccount = onCall(
  * Crear una sesión de pago con Stripe Checkout
  */
 export const createCheckoutSession = onCall(
+  { secrets: ["STRIPE_SECRET_KEY", "APP_URL"] },
   async (request: CallableRequest<CreateCheckoutSessionData>) => {
-    // INICIO DE VERIFICACIONES DE CONFIGURACIÓN
-    if (!stripe) {
-      logger.error("Stripe SDK no está inicializado. Verifica la configuración de STRIPE_SECRET_KEY.");
-      throw new HttpsError("internal", "Error de configuración del servidor, por favor contacte al soporte.");
-    }
-    if (!appUrl) { // Esta función también necesita appUrl
-      logger.error("APP_URL no está configurada. Verifica la configuración de APP_URL.");
-      throw new HttpsError("internal", "Error de configuración del servidor (URL), por favor contacte al soporte.");
-    }
-    // FIN DE VERIFICACIONES DE CONFIGURACIÓN
+    logger.info("V4 - Running createCheckoutSession for user:", request.auth?.uid);
+    
+    const { 
+      productId, 
+      sellerId, 
+      productName, 
+      productDescription, 
+      productPrice, 
+      productType,
+      currency = "eur",
+      metadata: clientMetadata 
+    } = request.data; 
 
-    // Para v2, la data viene en request.data
-    const data = request.data;
+    // Declarar metadataForStripe aquí para que esté disponible en el catch
+    let metadataForStripe: Record<string, string> = {};
+
+    let stripeSdk: Stripe;
     try {
-      const {
-        productId,
-        sellerId,
-        productName,
-        productDescription,
-        productPrice,
-        productType,
-      } = data;
+        stripeSdk = getStripeInstance();
+    } catch (e: any) {
+        logger.error("createCheckoutSession: Failed to get/initialize Stripe instance.", e.message);
+        throw new HttpsError("internal", e.message || "Payment system configuration error.");
+    }
 
-      if (
-        !productId ||
-        !sellerId ||
-        !productName ||
-        !productPrice ||
-        !productType
-      ) {
-        throw new HttpsError(
-          "invalid-argument",
-          "Faltan datos requeridos para crear la sesión de pago"
-        );
-      }
+    const currentAppUrl = process.env.APP_URL;
+    if (!currentAppUrl) {
+        logger.error("createCheckoutSession: CRITICAL - APP_URL not available at RUNTIME.");
+        throw new HttpsError("internal", "Server configuration error: Application URL missing.");
+    }
+    
+    if (!sellerId || !productPrice || !productName || !productId) {
+        logger.error("createCheckoutSession: Insufficient data to create session.", request.data);
+        throw new HttpsError("invalid-argument", "Required payment data is missing.");
+    }
 
-      // Obtener la información del vendedor
-      const sellerDoc = await db.collection("users").doc(sellerId).get();
-      const sellerData = sellerDoc.data();
+    try {
+        const sellerUserDoc = await db.collection("users").doc(sellerId).get();
+        if (!sellerUserDoc.exists) {
+            logger.error(`createCheckoutSession: Seller with ID ${sellerId} not found.`);
+            throw new HttpsError("not-found", "The specified seller does not exist.");
+        }
+        const sellerData = sellerUserDoc.data();
+        const sellerStripeAccountId = sellerData?.stripeAccountId;
 
-      if (!sellerData?.stripeAccountId || !sellerData.stripeConnected) {
-        throw new HttpsError(
-          "failed-precondition",
-          "El vendedor no tiene una cuenta de Stripe conectada"
-        );
-      }
+        if (!sellerStripeAccountId || !sellerData?.stripeConnected) {
+            logger.error(`createCheckoutSession: Seller ${sellerId} does not have a connected and enabled Stripe account. AccountID: ${sellerStripeAccountId}, ConnectedStatus: ${sellerData?.stripeConnected}`);
+            throw new HttpsError("failed-precondition", "The seller is not currently able to receive payments.");
+        }
+        
+        const sellerUsername = sellerData?.username; 
+        if (!sellerUsername) {
+             logger.warn(`createCheckoutSession: Seller ${sellerId} does not have a username defined in Firestore. Falling back to sellerId for redirect URL.`);
+        }
+        
+        // Determinar la URL base para redirección (perfil del vendedor)
+        const redirectBaseUrl = `${currentAppUrl}/${sellerUsername || sellerId}`; 
+        const successRedirectUrl = `${redirectBaseUrl}?payment_success=true&session_id={CHECKOUT_SESSION_ID}&product_id=${productId}&type=${productType}`; // Añadir tipo
+        const cancelRedirectUrl = `${redirectBaseUrl}?payment_cancel=true&product_id=${productId}&type=${productType}`; // Añadir tipo
 
-      // Calcular la comisión de la plataforma
-      const amount = Math.round(productPrice * 100); // Convertir a centavos
-      const platformFee = Math.round(amount * (PLATFORM_FEE_PERCENT / 100));
+        const amount = Math.round(parseFloat(String(productPrice)) * 100);
+        const applicationFeeAmount = Math.round(amount * (PLATFORM_FEE_PERCENT / 100)); 
 
-      // Crear la sesión de checkout
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ["card"],
-        line_items: [
-          {
-            price_data: {
-              currency: "usd",
-              product_data: {
-                name: productName,
-                description: productDescription || "",
-              },
-              unit_amount: amount,
+        if (amount <= 0) {
+            logger.error(`createCheckoutSession: Invalid amount ${amount} for product ${productId}.`);
+            throw new HttpsError("invalid-argument", "Product price must be positive.");
+        }
+        if (applicationFeeAmount < 1 && amount > 0) {
+          logger.warn(`createCheckoutSession: Application fee (${applicationFeeAmount}) for product ${productId} is very low or zero.`);
+        }
+
+        // --- Preparar metadatos para Stripe --- 
+        // Limpiar/Reiniciar metadataForStripe aquí dentro del try
+        metadataForStripe = {}; 
+        
+        const addMeta = (key: string, value: any) => {
+          if (value !== undefined && value !== null) {
+            metadataForStripe[key] = String(value);
+          } else {
+             metadataForStripe[key] = ''; 
+          }
+        };
+        
+        addMeta('productId', productId);
+        addMeta('sellerUid', sellerId);
+        addMeta('buyerUid', request.auth?.uid || 'anonymous');
+        addMeta('productType', productType || 'unknown');
+        
+        if (clientMetadata) {
+          for (const key in clientMetadata) {
+            addMeta(key, (clientMetadata as any)[key]); 
+          }
+        }
+        
+        logger.info(`createCheckoutSession: Creating session...`); // Log simplificado
+        try {
+            logger.info('createCheckoutSession: Metadata being sent:', JSON.stringify(metadataForStripe)); 
+        } catch (logError) {
+            logger.error('Error serializando metadata:', logError);
+            logger.info('createCheckoutSession: Metadata (raw):', metadataForStripe); 
+        }
+        
+        const session = await stripeSdk.checkout.sessions.create({
+            payment_method_types: ["card"],
+            line_items: [{
+                price_data: {
+                    currency: currency,
+                    product_data: {
+                        name: productName,
+                        description: productDescription, 
+                    },
+                    unit_amount: amount,
+                },
+                quantity: 1,
+            }],
+            mode: "payment",
+            success_url: successRedirectUrl,
+            cancel_url: cancelRedirectUrl,
+            payment_intent_data: {
+                application_fee_amount: applicationFeeAmount > 0 ? applicationFeeAmount : undefined,
+                transfer_data: {
+                    destination: sellerStripeAccountId,
+                },
+                metadata: metadataForStripe
             },
-            quantity: 1,
-          },
-        ],
-        mode: "payment",
-        success_url: `${appUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${appUrl}/${sellerData.username || sellerId}`,
-        payment_intent_data: {
-          application_fee_amount: platformFee,
-          transfer_data: {
-            destination: sellerData.stripeAccountId,
-          },
-          metadata: {
-            productId,
-            sellerId,
-            productType,
-          },
-        },
-      });
+            metadata: metadataForStripe
+        });
+        
+        logger.info(`createCheckoutSession: Session ID ${session.id} created.`);
+        return { sessionId: session.id, url: session.url };
 
-      return { url: session.url };
-    } catch (error) {
-      logger.error("Error al crear sesión de pago:", error);
-      if (error instanceof HttpsError) throw error; // Re-lanzar errores HttpsError
-      throw new HttpsError(
-        "internal",
-        "Error al crear la sesión de pago"
-      );
+    } catch (error: any) {
+        logger.error(`createCheckoutSession: Error processing for product ${productId}, seller ${sellerId}:`, error);
+        // Ahora metadataForStripe está accesible aquí
+        if (error.type === 'StripeInvalidRequestError' && error.message.includes('metadata')) {
+             logger.error('Potential metadata issue. Metadata sent:', metadataForStripe); 
+        }
+        throw new HttpsError("internal", error.message || "Could not process payment at this time.");
     }
   }
 );
-
-/* // Comentado: Usaremos el webhook de la extensión en su lugar
-// --- Webhook para procesar eventos de Stripe (MODIFICADO para v2) ---
-export const stripeWebhook = onRequest(async (request, response) => {
-  const signature = request.headers["stripe-signature"] as string;
-  const currentWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET; // Leer desde env vars
-
-  if (!currentWebhookSecret) {
-    logger.error("⚠️ Secreto de webhook no configurado en variables de entorno.");
-    response.status(500).send("Error de configuración del servidor (webhook).");
-    return;
-  }
-
-  if (!signature) {
-    logger.error("⚠️ Falta la firma de Stripe en la cabecera.");
-    response.status(400).send("⚠️ Falta la firma de Stripe");
-    return;
-  }
-
-  let event: Stripe.Event;
-
-  try {
-    // Verificar que el evento proviene de Stripe usando request.rawBody
-    event = stripe.webhooks.constructEvent(
-      request.rawBody, // Para v2, se accede a rawBody directamente desde el objeto request
-      signature,
-      currentWebhookSecret
-    );
-  } catch (error: any) {
-    logger.error("Error al verificar webhook:", error.message);
-    response.status(400).send(`⚠️ Error de verificación del webhook: ${error.message}`);
-    return;
-  }
-
-  // Obtener el objeto de datos para acceso más fácil
-  const dataObject = event.data.object as any;
-
-  try {
-    logger.info(`Processing event: ${event.type}`);
-    // Manejar los diferentes tipos de eventos
-    switch (event.type) {
-      case "payment_intent.succeeded":
-        await handlePaymentSuccess(dataObject as Stripe.PaymentIntent);
-        break;
-
-      case "account.updated":
-        await handleAccountUpdate(dataObject as Stripe.Account);
-        break;
-
-      // --- NUEVOS CASOS PARA SUSCRIPCIONES ---
-      case "invoice.paid":
-        const invoice = dataObject as Stripe.Invoice;
-        if (invoice.subscription && invoice.customer) {
-           logger.info(`Invoice paid for subscription ${invoice.subscription} by customer ${invoice.customer}`);
-           const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
-           await updateUserPlanFromSubscription(subscription);
-        }
-        break;
-
-      case "customer.subscription.updated":
-        const subscriptionUpdated = dataObject as Stripe.Subscription;
-        logger.info(`Subscription updated for customer ${subscriptionUpdated.customer}, status: ${subscriptionUpdated.status}`);
-        await updateUserPlanFromSubscription(subscriptionUpdated);
-        break;
-
-      case "customer.subscription.deleted":
-        const subscriptionDeleted = dataObject as Stripe.Subscription;
-        logger.info(`Subscription deleted for customer ${subscriptionDeleted.customer}`);
-        await updateUserPlan(subscriptionDeleted.customer as string, 'FREE', null);
-        break;
-      // --- FIN NUEVOS CASOS ---
-
-      default:
-        logger.info(`🤷‍♀️ Unhandled event type: ${event.type}`);
-        break;
-    }
-
-    response.status(200).send({ received: true });
-  } catch (error) {
-    logger.error(`Error al procesar el evento ${event.type}:`, error);
-    response.status(500).send("Error interno al procesar el evento");
-  }
-});
-*/
 
 /**
  * Manejar el evento de pago exitoso (EXISTENTE - Revisar si aún es necesaria)
@@ -400,34 +363,56 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
 /**
  * Manejar el evento de actualización de cuenta (EXISTENTE - MANTENER)
  */
-async function handleAccountUpdate(account: Stripe.Account) {
-  logger.info("Handling account update:", account.id);
+export async function handleAccountUpdate(account: Stripe.Account) {
+  logger.info("V2 - Iniciando handleAccountUpdate para Stripe Account ID:", account.id, { accountData: account }); 
+
+  if (!account.id) {
+    logger.warn("V2 - handleAccountUpdate recibió un evento sin ID de cuenta. Abortando.", { accountData: account });
+    return;
+  }
+
   try {
+    logger.info(`V2 - Buscando usuario en Firestore con stripeAccountId: ${account.id}`);
     const usersQuery = await db
       .collection("users")
       .where("stripeAccountId", "==", account.id)
       .get();
 
     if (usersQuery.empty) {
-      logger.info(`No se encontró usuario para la cuenta ${account.id}`);
+      logger.warn(`V2 - No se encontró usuario en Firestore para la cuenta de Stripe ${account.id}`);
       return;
     }
     const userDoc = usersQuery.docs[0];
     const userId = userDoc.id;
-    const chargesEnabled = account.charges_enabled;
+    logger.info(`V2 - Usuario encontrado en Firestore: ${userId} para Stripe Account ID: ${account.id}`);
 
-    await db.collection("users").doc(userId).update({
-      stripeConnected: chargesEnabled,
+    const chargesEnabled = account.charges_enabled;
+    const payoutsEnabled = account.payouts_enabled;
+    const detailsSubmitted = account.details_submitted;
+
+    const updateData = {
+      stripeConnected: chargesEnabled, 
       stripeDetails: {
         chargesEnabled,
-        payoutsEnabled: account.payouts_enabled,
-        detailsSubmitted: account.details_submitted,
+        payoutsEnabled,
+        detailsSubmitted,
         lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+        email: account.email, 
+        country: account.country,
       },
+    };
+
+    logger.info(`V2 - Intentando actualizar Firestore para usuario ${userId} con datos:`, updateData);
+
+    await db.collection("users").doc(userId).update(updateData);
+    logger.info(`V2 - Firestore actualizado exitosamente para usuario ${userId} (Stripe Account: ${account.id})`);
+
+  } catch (error: any) {
+    logger.error(`V2 - Error en handleAccountUpdate para Stripe Account ID ${account.id}:`, {
+      errorMessage: error.message,
+      errorStack: error.stack,
+      accountData: account 
     });
-    logger.info(`Actualizada cuenta Stripe para usuario ${userId}`);
-  } catch (error) {
-    logger.error("Error al actualizar estado de cuenta:", error);
   }
 }
 
@@ -608,4 +593,81 @@ export const recordProductView = onCall(
       );
     }
   }
-); 
+);
+
+// NUEVA FUNCIÓN PARA MANEJAR WEBHOOKS DE STRIPE
+/* // Comentado temporalmente para diagnóstico de timeout
+export const stripeWebhookHandler = onRequest(
+  { secrets: ["STRIPE_WEBHOOK_SECRET", "STRIPE_SECRET_KEY"] }, 
+  async (request, response) => {
+    logger.info("V1 - Iniciando stripeWebhookHandler...");
+
+    let stripeSdk: Stripe;
+    try {
+      stripeSdk = getStripeInstance(); 
+    } catch (e: any) {
+      logger.error("stripeWebhookHandler: CRITICAL - Failed to get/initialize Stripe instance.", { errorMessage: e.message });
+      response.status(500).send(`Webhook Error: Payment system configuration error: ${e.message}`);
+      return;
+    }
+
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      logger.error("stripeWebhookHandler: CRITICAL - STRIPE_WEBHOOK_SECRET no está configurado en las variables de entorno en TIEMPO DE EJECUCIÓN.");
+      response.status(500).send("Webhook Error: Stripe webhook secret no configurado.");
+      return;
+    }
+
+    if (request.method !== "POST") {
+      logger.warn(`stripeWebhookHandler: Recibida solicitud ${request.method}, se esperaba POST.`);
+      response.setHeader("Allow", "POST");
+      response.status(405).send("Method Not Allowed");
+      return;
+    }
+
+    const sig = request.headers["stripe-signature"] as string;
+    if (!sig) {
+        logger.error("stripeWebhookHandler: No se encontró la cabecera 'stripe-signature'.");
+        response.status(400).send("Webhook Error: Falta la firma de Stripe.");
+        return;
+    }
+
+    let event: Stripe.Event;
+    try {
+      if (!request.rawBody) {
+        logger.error("stripeWebhookHandler: request.rawBody no está disponible. Asegúrate de que el middleware de parsing de body no lo consuma antes.");
+        response.status(500).send("Webhook Error: rawBody no disponible para verificación.");
+        return;
+      }
+      event = stripeSdk.webhooks.constructEvent(request.rawBody, sig, webhookSecret);
+      logger.info(`stripeWebhookHandler: Evento verificado y construido: ${event.id}, Tipo: ${event.type}`);
+    } catch (e: any) { 
+      logger.error(`stripeWebhookHandler: Error al verificar o construir el evento webhook: ${e.message}`, { errorStack: e.stack });
+      response.status(400).send(`Webhook Error: ${e.message}`);
+      return;
+    }
+
+    // Manejar el evento. Si llegamos aquí, 'event' está definido y verificado.
+    try {
+      switch (event.type) {
+        case "account.updated":
+          const account = event.data.object as Stripe.Account;
+          logger.info(`stripeWebhookHandler: Manejando evento account.updated para ${account.id}`);
+          await handleAccountUpdate(account); // Llama a tu función existente
+          break;
+        default:
+          logger.info(`stripeWebhookHandler: Evento no manejado ${event.type}`);
+      }
+      // Responde a Stripe que el evento fue recibido correctamente.
+      response.status(200).send({ received: true });
+    } catch (error: any) {
+        logger.error(`stripeWebhookHandler: Error al procesar el evento ${event.type} (${event.id}): ${error.message}`, { errorStack: error.stack });
+        // Responde 200 a Stripe para evitar reintentos si el error es de nuestra lógica interna y no recuperable por Stripe.
+        response.status(200).send({ received: true, processingError: error.message });
+    }
+  }
+);
+*/
+
+// AÑADIR ESTA LÍNEA AL FINAL PARA RE-EXPORTAR EL WEBHOOK HANDLER
+export { stripeWebhookHandler } from "./stripe-webhooks.js"; 

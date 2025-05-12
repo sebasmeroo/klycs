@@ -111,51 +111,29 @@
 
 /* Productos destacados */
 .rendered-featured-products-linktree {
-  display: flex;
-  gap: 0.75rem;
-  overflow-x: auto; 
-  padding-bottom: 1rem; 
-  /* Quitar justify-content para que empiecen a la izquierda por defecto */
-  /* justify-content: center; */ 
-  margin-left: -5px; /* Compensar padding del item */
-  margin-right: -5px;
+  padding-bottom: 1rem; /* Mantenemos padding inferior por si acaso */
 }
 
 .rendered-product-item-linktree {
-  flex: 0 0 120px; 
-  background: rgba(255, 255, 255, 0.1); 
-  border-radius: 8px;
-  overflow: hidden;
-  text-align: center;
-  color: inherit; 
-  padding: 5px; /* Añadir padding interno */
+  /* Estos estilos genéricos se eliminan para dar precedencia a CardProductsGrid.css */
 }
+
 /* Modo oscuro para fondo producto */
-.user-profile-render-container.linktree-style:not(:has([style*="color: rgb(255, 255, 255)"])) .rendered-product-item-linktree {
-   background: rgba(0, 0, 0, 0.05);
-}
+/* .user-profile-render-container.linktree-style:not(:has([style*="color: rgb(255, 255, 255)"])) .rendered-product-item-linktree { */
+   /* background: rgba(0, 0, 0, 0.05); // Se define en CardProductsGrid.css */
+/* } */
 
-.rendered-product-item-linktree img {
-  width: 100%;
-  aspect-ratio: 1;
-  object-fit: cover;
-  border-radius: 4px; /* Redondear imagen */
-}
+/* .rendered-product-item-linktree img { ... } // Estilos de imagen se definirán en CardProductsGrid.css */
+/* .rendered-product-info { ... } // Estilos de info se definirán en CardProductsGrid.css */
+/* .rendered-product-title { ... } // Estilos de título se definirán en CardProductsGrid.css */
+/* .rendered-product-price { ... } // Estilos de precio se definirán en CardProductsGrid.css */
 
-.rendered-product-info { 
-  padding: 0.5rem 0 0 0; /* Solo padding superior */
-}
+/* Modo oscuro para fondo producto */
+/* .user-profile-render-container.linktree-style:not(:has([style*="color: rgb(255, 255, 255)"])) .rendered-product-item-linktree { */
+   /* background: rgba(0, 0, 0, 0.05); // Se define en CardProductsGrid.css */
+/* } */
 
-.rendered-product-title {
-  font-size: 0.8rem;
-  font-weight: 500;
-  margin-bottom: 0.2rem;
-  line-height: 1.2;
-  height: 2.4em; /* Limitar a 2 líneas aprox */
-  overflow: hidden;
-}
-
-.rendered-product-price {
-  font-size: 0.85rem;
-  font-weight: 600;
-} 
+/* .rendered-product-item-linktree img { ... } // Estilos de imagen se definirán en CardProductsGrid.css */
+/* .rendered-product-info { ... } // Estilos de info se definirán en CardProductsGrid.css */
+/* .rendered-product-title { ... } // Estilos de título se definirán en CardProductsGrid.css */
+/* .rendered-product-price { ... } // Estilos de precio se definirán en CardProductsGrid.css */ 

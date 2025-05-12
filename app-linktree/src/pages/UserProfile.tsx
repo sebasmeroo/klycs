@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
-import { collection, query, where, getDocs, doc, getDoc, updateDoc, increment, addDoc, serverTimestamp, orderBy } from 'firebase/firestore';
+import { useParams, useLocation } from 'react-router-dom';
+import { collection, query, where, getDocs, doc, getDoc, updateDoc, increment, addDoc, serverTimestamp, orderBy, limit, startAfter, DocumentSnapshot } from 'firebase/firestore';
 import { auth, db } from '../firebase/config';
 // import UserCard from '../components/cardeditor/cardpreviewanduser/user/UserCard'; // Eliminado
 import { CardLink as LinkType, Product as ProductType, TemplateType, BookingSettings, CardSectionType, CARD_SECTION_TYPES, Card } from '../components/cardeditor/types'; // Asegurado: CardSectionType, CARD_SECTION_TYPES, y Card (que debe tener sectionOrder)
@@ -17,7 +17,14 @@ import CardDescription from '../components/profile/CardDescription'; // NUEVO: I
 import CardLinksList from '../components/profile/CardLinksList'; // NUEVO: Importar
 import CardProductsGrid from '../components/profile/CardProductsGrid'; // NUEVO: Importar
 import PremiumCoverSlider, { CoverMediaItem } from '../components/profile/PremiumCoverSlider'; // IMPORTADO
+import FloatingTabBar from '../components/profile/FloatingTabBar'; // << NUEVA IMPORTACIÓN
+import ProductDetailView from '../components/profile/ProductDetailView'; // << NUEVA IMPORTACIÓN PARA EL DETALLE DEL PRODUCTO
+import SectionPillsNav from '../components/profile/SectionPillsNav'; // << NUEVA IMPORTACIÓN
 // import { fetchLinksForUser } from '../services/linkService'; // Comentado temporalmente
+import PaymentSuccessModal from './PaymentSuccessModal'; // <<< NUEVA IMPORTACIÓN DEL MODAL
+import './PaymentSuccessModal.css'; // <<< IMPORTAR CSS DEL MODAL
+import PaymentCancelModal from './PaymentCancelModal'; // <<< NUEVA IMPORTACIÓN DEL MODAL DE CANCELACIÓN
+import './PaymentCancelModal.css'; // <<< IMPORTAR CSS DEL MODAL DE CANCELACIÓN
 
 // URLs para imágenes de respaldo seguras
 const FALLBACK_IMAGE_URL = 'https://firebasestorage.googleapis.com/v0/b/klycs-58190.appspot.com/o/defaults%2Fno-image.png?alt=media';
@@ -67,9 +74,12 @@ const sectionLabelsForUserProfile: Record<CardSectionType, string> = {
   booking: 'Reservas'
 };
 
+const PRODUCTS_PER_PAGE = 9; // Número de productos a cargar por página
+
 const UserProfile: React.FC = () => {
   // Extraer parámetros de la URL
   const params = useParams();
+  const location = useLocation();
   const username = params.username;
   const cardIdFromParams = params.cardId;
   const productId = params.productId;
@@ -100,6 +110,23 @@ const UserProfile: React.FC = () => {
   // *** Estados para controlar el flujo inline -> modal ***
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false); 
   const [inlineBookingData, setInlineBookingData] = useState<InitialBookingData | null>(null);
+  const [activeMainTab, setActiveMainTab] = useState<string>('home'); // << NUEVO ESTADO PARA LA PESTAÑA ACTIVA
+  const [selectedProduct, setSelectedProduct] = useState<ProductType | null>(null); // << NUEVO ESTADO
+
+  // Estados para la paginación de productos
+  const [allProductIds, setAllProductIds] = useState<string[]>([]); // Guardar todos los IDs asociados
+  const [loadedProductDetails, setLoadedProductDetails] = useState<Map<string, ProductType>>(new Map()); // Detalles de productos ya cargados
+  const [currentProductPageIds, setCurrentProductPageIds] = useState<string[]>([]); // IDs de la página actual a mostrar
+  const [hasMoreProducts, setHasMoreProducts] = useState(true);
+  const [loadingMoreProducts, setLoadingMoreProducts] = useState(false);
+  const [isInitialProductLoadDone, setIsInitialProductLoadDone] = useState(false); // Para controlar la carga inicial de IDs
+
+  const determinedSectionOrderRef = useRef<CardSectionType[]>(DEFAULT_USER_PROFILE_SECTION_ORDER);
+
+  // NUEVO: Estado para controlar el modal de éxito
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  // Mantener estado para el banner de cancelación (si se decide mantener)
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false); // <<< NUEVO ESTADO PARA MODAL DE CANCELACIÓN
 
   // NUEVO: Función para cargar enlaces de una tarjeta
   const fetchLinksForCard = async (cardIdToFetch: string) => {
@@ -116,41 +143,74 @@ const UserProfile: React.FC = () => {
     }
   };
 
-  // NUEVO: Función para cargar productos de una tarjeta
-  const fetchProductsForCard = async (cardIdToFetch: string, cardOwnerId: string) => {
-    try {
-      const associatedProductsRef = collection(db, 'cards', cardIdToFetch, 'cardProducts');
-      const associatedProductsQuery = query(associatedProductsRef, orderBy('order', 'asc')); // Asumiendo campo 'order'
-      const associatedProductsSnapshot = await getDocs(associatedProductsQuery);
-      
-      const productIdsToFetch = associatedProductsSnapshot.docs.map(doc => doc.data().productId as string);
+  // Modificada para paginación
+  const fetchProductsForCard = async (cardIdToFetch: string, cardOwnerId: string, loadMore = false) => {
+    if (loadingMoreProducts) return;
+    if (!loadMore && cardProducts.length > 0 && !selectedProduct && activeMainTab === 'shop') {
+        // Si no es "cargar más", ya hay productos, no estamos viendo un detalle, y estamos en la pestaña tienda, no recargar la primera página innecesariamente.
+        return;
+    }
 
-      if (productIdsToFetch.length > 0) {
-        const userProductsRef = collection(db, 'users', cardOwnerId, 'products');
-        // Firestore 'in' query tiene un límite de 30 elementos a la vez (antes era 10)
-        // Si esperas más de 30 productos por tarjeta, necesitarás paginar esta consulta.
-        const productDetailsQuery = query(userProductsRef, where('__name__', 'in', productIdsToFetch.slice(0, 30)));
-        const productDetailsSnapshot = await getDocs(productDetailsQuery);
+    setLoadingMoreProducts(true);
+
+    try {
+        let productIdsToDisplayThisBatch: string[];
+
+        if (!isInitialProductLoadDone) {
+            // Primera carga: obtener todos los IDs asociados y la primera página de detalles
+            const associatedProductsRef = collection(db, 'cards', cardIdToFetch, 'cardProducts');
+            const associatedProductsQuery = query(associatedProductsRef, orderBy('order', 'asc'));
+            const associatedProductsSnapshot = await getDocs(associatedProductsQuery);
+            const fetchedAllProductIds = associatedProductsSnapshot.docs.map(d => d.data().productId as string);
+            setAllProductIds(fetchedAllProductIds);
+            setIsInitialProductLoadDone(true);
+            
+            productIdsToDisplayThisBatch = fetchedAllProductIds.slice(0, PRODUCTS_PER_PAGE);
+            setCardProducts([]); // Limpiar productos para la carga inicial de esta tarjeta/pestaña
+        } else {
+            // Cargas subsecuentes ("cargar más")
+            const currentLoadedCount = cardProducts.length;
+            productIdsToDisplayThisBatch = allProductIds.slice(currentLoadedCount, currentLoadedCount + PRODUCTS_PER_PAGE);
+        }
+
+        if (productIdsToDisplayThisBatch.length === 0) {
+            setHasMoreProducts(false);
+            setLoadingMoreProducts(false);
+            return;
+        }
+
+        // Filtrar IDs que ya podríamos tener en `loadedProductDetails` para evitar re-fetch
+        const idsToFetchDetailsFor = productIdsToDisplayThisBatch.filter(id => !loadedProductDetails.has(id));
+
+        let newProductDetailsBatch: ProductType[] = [];
+        if (idsToFetchDetailsFor.length > 0) {
+            const userProductsRef = collection(db, 'users', cardOwnerId, 'products');
+            const productDetailsQuery = query(userProductsRef, where('__name__', 'in', idsToFetchDetailsFor.slice(0, 30))); // Mantener límite de 'in'
+            const productDetailsSnapshot = await getDocs(productDetailsQuery);
+            
+            const newDetailsMap = new Map<string, ProductType>();
+            productDetailsSnapshot.docs.forEach(d => {
+                newDetailsMap.set(d.id, { id: d.id, ...d.data() } as ProductType);
+            });
+            
+            // Actualizar el mapa general de detalles cargados
+            setLoadedProductDetails(prevMap => new Map([...Array.from(prevMap.entries()), ...Array.from(newDetailsMap.entries())]));
+            newProductDetailsBatch = idsToFetchDetailsFor.map(id => newDetailsMap.get(id)).filter((p): p is ProductType => p !== undefined);
+        }
         
-        const productDetailsMap = new Map<string, ProductType>();
-        productDetailsSnapshot.docs.forEach(doc => {
-          productDetailsMap.set(doc.id, { id: doc.id, ...doc.data() } as ProductType);
-        });
-        
-        const fetchedCardProducts = associatedProductsSnapshot.docs.map(assocDoc => {
-          const assocProductId = assocDoc.data().productId;
-          return productDetailsMap.get(assocProductId);
-        }).filter((p): p is ProductType => p !== undefined);
-        
-        setCardProducts(fetchedCardProducts);
-        console.log(`Productos asociados cargados para ${cardIdToFetch}:`, fetchedCardProducts.length);
-      } else {
-        setCardProducts([]);
-        console.log(`No hay productos asociados para ${cardIdToFetch}`);
-      }
+        // Construir la lista de productos para la UI con los detalles (nuevos y previamente cargados)
+        const productsForCurrentDisplay = productIdsToDisplayThisBatch
+            .map(id => loadedProductDetails.get(id) || newProductDetailsBatch.find(p => p.id === id))
+            .filter((p): p is ProductType => p !== undefined);
+
+        setCardProducts(prevProducts => loadMore ? [...prevProducts, ...productsForCurrentDisplay] : productsForCurrentDisplay);
+        setHasMoreProducts((loadMore ? cardProducts.length + productsForCurrentDisplay.length : productsForCurrentDisplay.length) < allProductIds.length);
+
     } catch (productError) {
-      console.error("Error cargando productos asociados en UserProfile:", productError);
-      setCardProducts([]); // Limpiar en caso de error
+        console.error("Error cargando productos en UserProfile:", productError);
+        if (!loadMore) setCardProducts([]);
+    } finally {
+        setLoadingMoreProducts(false);
     }
   };
 
@@ -163,6 +223,8 @@ const UserProfile: React.FC = () => {
       setPrimaryCard(null);
       setLinks([]); // NUEVO: Resetear links
       setCardProducts([]); // NUEVO: Resetear productos
+      setIsSuccessModalOpen(false); // Resetear modal al cargar perfil
+      setIsCancelModalOpen(false); // Resetear modal de cancelación
 
       if (!username) {
         setError('Usuario no especificado');
@@ -341,6 +403,33 @@ const UserProfile: React.FC = () => {
     }
   }, [singleCard, primaryCard, loading, lastUpdate, username]); // Fin useEffect updates
 
+  // --- MODIFICADO: useEffect para detectar parámetros de pago y mostrar modal/banner --- 
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const success = searchParams.get('payment_success');
+    const cancel = searchParams.get('payment_cancel');
+
+    if (success === 'true') {
+      setIsSuccessModalOpen(true); // Abrir el modal de éxito
+      // Limpiar parámetros de éxito de la URL inmediatamente (el modal controla su cierre)
+      const newSearchParams = new URLSearchParams(location.search);
+      newSearchParams.delete('payment_success');
+      newSearchParams.delete('session_id'); // Opcional: limpiar también session_id
+      newSearchParams.delete('product_id'); // Opcional: limpiar también product_id
+      window.history.replaceState({}, '', `${location.pathname}?${newSearchParams.toString()}`);
+
+    } else if (cancel === 'true') {
+      setIsCancelModalOpen(true); // <<< ABRIR MODAL DE CANCELACIÓN
+      // Limpiar parámetros de cancelación de la URL inmediatamente
+      const newSearchParams = new URLSearchParams(location.search);
+      newSearchParams.delete('payment_cancel');
+      newSearchParams.delete('session_id');
+      newSearchParams.delete('product_id');
+      window.history.replaceState({}, '', `${location.pathname}?${newSearchParams.toString()}`);
+    }
+
+  }, [location.search]); // Ejecutar cuando cambien los parámetros de búsqueda URL
+
   // --- Funciones auxiliares (handleImageError, getBackgroundStyle, isDarkBackground) ---
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>, imageId: string, fallbackUrl: string) => {
       const imgElement = e.target as HTMLImageElement;
@@ -395,6 +484,26 @@ const UserProfile: React.FC = () => {
     console.warn(`Error al cargar el medio: ${mediaId}. Usando fallback.`);
     e.currentTarget.onerror = null; 
     setFailedMedia(prev => ({ ...prev, [mediaId]: true }));
+  };
+
+  const handleProductSelect = (product: ProductType) => {
+    setSelectedProduct(product);
+  };
+
+  const handleCloseProductDetail = () => {
+    setSelectedProduct(null);
+  };
+
+  const handleNavigateToSection = (sectionId: CardSectionType) => {
+    const element = document.getElementById(`profile-section-${sectionId}`);
+    if (element) {
+      // Considerar la altura de la FloatingTabBar si está fija en la parte inferior
+      // const tabBarHeight = 80; // Ajusta este valor si es necesario
+      // const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+      // const offsetPosition = elementPosition - tabBarHeight;
+      // window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
 
   // --- Renderizado ---
@@ -468,7 +577,9 @@ const UserProfile: React.FC = () => {
   // Determinar qué datos de tarjeta usar (específica o principal)
   const cardToRender = singleCard || primaryCard;
   const currentBackgroundStyle = getBackgroundStyle(cardToRender);
-  const currentTextColor = isDarkBackground(cardToRender) ? '#ffffff' : '#333333';
+  const darkTheme = isDarkBackground(cardToRender);
+  const currentTextColor = darkTheme ? '#ffffff' : '#333333';
+  const accentColor = cardToRender?.theme?.primaryColor || '#007AFF'; // Usar color primario del tema o azul por defecto
   
   // MODIFICADO: Lógica mejorada para determinar currentSectionOrder, igual que en el editor
   let determinedSectionOrder: CardSectionType[];
@@ -485,14 +596,37 @@ const UserProfile: React.FC = () => {
   const currentSectionOrder = determinedSectionOrder;
   // FIN MODIFICACIÓN
 
+  // Colores para FloatingTabBar, priorizando los del tema de la tarjeta
+  const theme = cardToRender?.theme;
+  const tabBarBg = theme?.tabBarBackgroundColor || (darkTheme ? 'rgba(50, 50, 50, 0.75)' : 'rgba(255, 255, 255, 0.85)');
+  const tabBarActiveColor = theme?.tabBarActiveItemColor || theme?.primaryColor || '#007AFF';
+  const tabBarActiveBg = theme?.tabBarActiveItemBackgroundColor || (theme?.primaryColor ? `${theme.primaryColor}20` : 'rgba(0, 122, 255, 0.12)'); // Fallback con opacidad del primario
+  const tabBarInactiveColor = theme?.tabBarInactiveItemColor || (darkTheme ? '#A0A0A0' : '#8A8A8E');
+
   // Función para renderizar una sección específica DENTRO de UserProfile
   const renderSectionInUserProfile = (sectionType: CardSectionType) => {
-    if (!cardToRender) return null;
-    const sectionKey = `${cardToRender.id}-${sectionType}`;
+    const sectionKey = `${sectionType}-${cardToRender?.id || 'default'}`;
+    const sectionId = `profile-section-${sectionType}`;
+    const imageNavControls = (
+      <SectionPillsNav
+        availableSections={currentSectionOrder.filter(s => ['links', 'products', 'booking'].includes(s)) as CardSectionType[]}
+        onNavigate={handleNavigateToSection}
+      />
+    );
+
+    // Lógica de qué mostrar basado en la pestaña activa y el tipo de sección
+    if (activeMainTab === 'home') {
+      if (sectionType === 'products') return null; // No mostrar productos en 'home' si están en su propia pestaña
+      // Podríamos añadir lógica similar para 'booking' si se mueve o se gestiona diferente
+    } else if (activeMainTab === 'shop') {
+      if (sectionType !== 'products') return null; // En 'shop', solo mostrar productos
+    } else if (activeMainTab === 'contact') {
+      // En 'contact', no renderizar secciones típicas, se manejará por separado más abajo.
+      return null;
+    }
 
     switch (sectionType) {
       case 'userProfileInfo':
-        // Forzar el tipo aquí como último recurso antes de reiniciar
         const UserProfileHeaderComponent = UserProfileHeader as any;
         return (
           <UserProfileHeaderComponent 
@@ -507,102 +641,85 @@ const UserProfile: React.FC = () => {
           />
         );
       case 'header':
-        return (
-          <CardTitle 
-            key={sectionKey}
-            title={cardToRender.title} 
-            textColor={currentTextColor} 
-          />
-        );
+        return null;
       case 'image':
-        // Logs de diagnóstico para la sección 'image'
-        console.log('[UserProfile - image section] cardToRender:', cardToRender);
-        if (cardToRender) {
-          console.log('[UserProfile - image section] cardToRender.isPremiumUser:', cardToRender.isPremiumUser);
-          console.log('[UserProfile - image section] cardToRender.coverMediaItems:', cardToRender.coverMediaItems);
-          console.log('[UserProfile - image section] cardToRender.coverMediaItems && cardToRender.coverMediaItems.length > 1:', cardToRender.coverMediaItems && cardToRender.coverMediaItems.length > 1);
+        if (!cardToRender?.coverImageUrl && !(cardToRender?.coverMediaItems && cardToRender?.coverMediaItems.length > 0 && cardToRender?.isPremiumUser)) {
+          return null; 
         }
-
-        const isPremium = cardToRender?.isPremiumUser === true;
-        const hasMultipleItems = cardToRender?.coverMediaItems && cardToRender.coverMediaItems.length > 1;
-
-        console.log('[UserProfile - image section] Evaluado isPremium:', isPremium);
-        console.log('[UserProfile - image section] Evaluado hasMultipleItems:', hasMultipleItems);
-
-        if (isPremium && hasMultipleItems && cardToRender?.coverMediaItems) {
-          console.log("[UserProfile - image section] Condición CUMPLIDA: Renderizando PremiumCoverSlider");
+        if (cardToRender?.isPremiumUser && cardToRender?.coverMediaItems && cardToRender?.coverMediaItems.length > 0) {
           return (
-            <PremiumCoverSlider
-              key={sectionKey + '-slider'}
-              mediaItems={cardToRender.coverMediaItems}
-              fallbackImageUrl={FALLBACK_IMAGE_URL}
-              onErrorCallback={handleMediaError}
-              failedMedia={failedMedia}
-              className="mb-4"
-              loop={true}
-              autoplayDelay={5000}
-              effect="fade"
-            />
+            <div id={sectionId} key={sectionKey} className="profile-section-wrapper">
+              <PremiumCoverSlider 
+                mediaItems={cardToRender.coverMediaItems}
+                fallbackImageUrl={FALLBACK_IMAGE_URL}
+                onErrorCallback={handleMediaError}
+                failedMedia={failedMedia}
+                loop={cardToRender.coverMediaItems.length > 1}
+                autoplayDelay={cardToRender.coverMediaItems.length > 1 ? 5000 : undefined}
+              >
+                {imageNavControls}
+              </PremiumCoverSlider>
+            </div>
           );
-        } else {
-          console.log("[UserProfile - image section] Condición NO CUMPLIDA o fallback: Renderizando CardCoverImage");
-          const singleMediaUrl = cardToRender?.coverMediaItems && cardToRender.coverMediaItems.length > 0
-                                 ? cardToRender.coverMediaItems[0].url
-                                 : cardToRender?.coverImageUrl;
-          const singleMediaId = cardToRender?.coverMediaItems && cardToRender.coverMediaItems.length > 0
-                                ? cardToRender.coverMediaItems[0].id
-                                : cardToRender?.id + '-cover';
-
-          if (!singleMediaUrl) {
-            console.log("No hay URL para CardCoverImage (ni coverMediaItems[0] ni coverImageUrl)");
-            return null;
-          }
-          
-          console.log("Renderizando CardCoverImage con URL:", singleMediaUrl);
+        } else if (cardToRender?.coverImageUrl) {
           return (
-            <CardCoverImage
-              key={sectionKey + '-single'}
-              imageUrl={singleMediaUrl || undefined}
-              altText={cardToRender?.title || 'Imagen de portada'}
-              cardId={singleMediaId || cardToRender?.id || 'default-cover-id'} 
-              onErrorCallback={handleMediaError as (e: React.SyntheticEvent<HTMLImageElement>, imageId: string, fallbackUrl: string) => void}
-              fallbackImageUrl={FALLBACK_IMAGE_URL}
-              failedImages={failedMedia}
-              className="mb-4"
-            />
+            <div id={sectionId} key={sectionKey} className="profile-section-wrapper">
+              <CardCoverImage
+                imageUrl={cardToRender.coverImageUrl}
+                altText={cardToRender.displayName || 'Imagen de portada'}
+                cardId={cardToRender.id || 'cover'}
+                onErrorCallback={handleMediaError}
+                fallbackImageUrl={FALLBACK_IMAGE_URL}
+                failedImages={failedMedia}
+              >
+                {imageNavControls}
+              </CardCoverImage>
+            </div>
           );
         }
+        return null;
       case 'description':
         return (
-          <CardDescription 
-            key={sectionKey}
-            description={cardToRender.description}
-            textColor={currentTextColor}
-          />
+          <div id={sectionId} key={sectionKey} className="profile-section-wrapper">
+            <CardDescription 
+              description={cardToRender?.description}
+              textColor={currentTextColor}
+              title={cardToRender?.displayName || user?.displayName || 'Detalles'}
+              avatarForSummary={cardToRender?.avatarUrl || user?.photoURL || undefined}
+              className="mb-4"
+            />
+          </div>
         );
       case 'links':
         return (
-          <CardLinksList 
-            key={sectionKey}
-            links={links}
-          />
+          <div id={sectionId} key={sectionKey} className="profile-section-wrapper">
+            <CardLinksList links={links} />
+          </div>
         );
       case 'products':
+        if (activeMainTab === 'shop' && selectedProduct) {
+          // Si estamos en la pestaña tienda y hay un producto seleccionado, no renderizar la cuadrícula aquí.
+          // La vista de detalle del producto se maneja en el render principal.
+          return null;
+        }
         return (
-          <CardProductsGrid
-            key={sectionKey}
-            products={cardProducts}
-            textColor={currentTextColor}
-            failedImages={failedImages}
-            onErrorCallback={handleImageError}
-            fallbackImageUrl={FALLBACK_PRODUCT_IMAGE_URL}
-          />
+          <div id={sectionId} key={sectionKey} className="profile-section-wrapper">
+            <CardProductsGrid
+              products={cardProducts}
+              textColor={currentTextColor}
+              failedImages={failedImages}
+              onErrorCallback={handleImageError}
+              fallbackImageUrl={FALLBACK_PRODUCT_IMAGE_URL}
+              onProductSelect={handleProductSelect}
+            />
+          </div>
         );
       case 'booking':
         const bookingSettings = (cardToRender as any)?.bookingSettings as BookingSettings | undefined;
+        // Mantener la lógica de booking, podría estar en 'home' o necesitar su propia pestaña si es complejo.
         return (cardToRender?.template === 'shop' || cardToRender?.template === 'miniShop' || cardToRender?.template === 'headerStore') 
                 && bookingSettings?.enabled && !isBookingModalOpen ? (
-          <div className="inline-booking-container mb-4" key={sectionKey}>
+          <div id={sectionId} key={sectionKey} className="profile-section-wrapper">
             <BookingForm
               cardId={cardToRender.id}
               userId={cardToRender.userId || user?.uid || ''} 
@@ -614,20 +731,21 @@ const UserProfile: React.FC = () => {
           </div>
         ) : null;
       case 'coverSlider':
-        if (cardToRender.isPremiumUser === true && cardToRender.coverMediaItems && cardToRender.coverMediaItems.length > 0) {
-          console.log("Renderizando PremiumCoverSlider (vía case 'coverSlider')");
+         if (cardToRender?.isPremiumUser === true && cardToRender?.coverMediaItems && cardToRender?.coverMediaItems.length > 0) {
           return (
-            <PremiumCoverSlider
-              key={sectionKey + '-slider-explicit'}
-              mediaItems={cardToRender.coverMediaItems}
-              fallbackImageUrl={FALLBACK_IMAGE_URL}
-              onErrorCallback={handleMediaError}
-              failedMedia={failedMedia}
-              className="mb-4"
-              loop={true}
-              autoplayDelay={5000}
-              effect="fade"
-            />
+            <div id={sectionId} key={sectionKey} className="profile-section-wrapper">
+              <PremiumCoverSlider
+                mediaItems={cardToRender.coverMediaItems}
+                fallbackImageUrl={FALLBACK_IMAGE_URL}
+                onErrorCallback={handleMediaError}
+                failedMedia={failedMedia}
+                loop={true}
+                autoplayDelay={5000}
+                effect="fade"
+              >
+                {imageNavControls}
+              </PremiumCoverSlider>
+            </div>
           );
         }
         return null;
@@ -640,34 +758,73 @@ const UserProfile: React.FC = () => {
   return (
     <>
       <div
-        className={`user-profile-render-container linktree-style template-${cardToRender?.template || 'basic'}`}
-        style={{ ...currentBackgroundStyle, color: currentTextColor, minHeight: '100vh' }}
+        className={`user-profile-render-container linktree-style template-${cardToRender?.template || 'basic'} ${darkTheme ? 'dark-background' : ''}`}
+        style={{ ...currentBackgroundStyle, color: currentTextColor, minHeight: '100vh', paddingBottom: '80px' /* Espacio para TabBar */ }}
         data-store-name={cardToRender?.template === 'shop' ? cardToRender?.storeName || '' : undefined}
       >
         <div className="container py-4"> 
           <div className="row justify-content-center">
-            <div className="col-md-8 col-lg-6 col-xl-5"> 
+            <div className="col-md-8 col-lg-6 col-xl-8"> 
               
-              {/* --- Contenido de la Tarjeta (AHORA incluye la info de perfil si está en el orden) --- */} 
               {cardToRender ? (
                 <div className="rendered-card-content-linktree"> 
-                  {currentSectionOrder.map(sectionType => renderSectionInUserProfile(sectionType))}
+                  {/* Renderizado condicional basado en la pestaña activa */}
+                  {activeMainTab === 'home' && (
+                    determinedSectionOrderRef.current.map(sectionType => renderSectionInUserProfile(sectionType))
+                  )}
+                  {activeMainTab === 'shop' && (
+                    selectedProduct && user ? (
+                      <>
+                        {/* Log para depurar user.uid ANTES de renderizar ProductDetailView */}
+                        {(() => { console.log("Renderizando ProductDetailView con sellerId:", user.uid); return null; })()}
+                        <ProductDetailView 
+                          product={selectedProduct}
+                          textColor={currentTextColor}
+                          onClose={handleCloseProductDetail}
+                          onImageError={handleImageError}
+                          fallbackImageUrl={FALLBACK_PRODUCT_IMAGE_URL}
+                          sellerName={cardToRender?.displayName || user?.displayName || 'Tienda'} 
+                          sellerAvatarUrl={cardToRender?.avatarUrl || user?.photoURL || undefined}
+                          sellerId={user.uid} // Aseguramos que user.uid se pasa aquí
+                        />
+                      </>
+                    ) : activeMainTab === 'shop' && !selectedProduct ? (
+                      renderSectionInUserProfile('products')
+                    ) : null
+                  )}
+                  {activeMainTab === 'contact' && (
+                    <div style={{ textAlign: 'center', padding: '2rem' }}>
+                      <h4>Información de Contacto</h4>
+                      <p>{cardToRender.bio || user?.bio || 'No hay información de contacto disponible.'}</p>
+                      {/* Podríamos añadir email/teléfono si los tuviéramos */}
+                    </div>
+                  )}
                 </div> 
               ) : (
-                 // Mensaje si no hay tarjeta 
                  <div className="text-center py-5">
                    {error && <p className="text-danger mt-3">{error}</p>} 
                    {!error && <p className="text-muted mt-4">Este usuario aún no ha configurado una tarjeta.</p>}
                  </div>
               )}
-              {/* --- Fin Contenido Tarjeta --- */} 
 
             </div>
           </div>
         </div>
       </div> 
 
-      {/* ***** MODAL DE RESERVA (para paso final, permanece igual) ***** */} 
+      {/* Floating Tab Bar */}
+      {cardToRender && (
+        <FloatingTabBar 
+          activeTab={activeMainTab} 
+          onTabChange={setActiveMainTab} 
+          backgroundColor={tabBarBg}
+          activeItemColor={tabBarActiveColor}
+          activeItemBackgroundColor={tabBarActiveBg}
+          inactiveItemColor={tabBarInactiveColor}
+        />
+      )}
+
+      {/* MODAL DE RESERVA */}
       {isBookingModalOpen && cardToRender && inlineBookingData && (
         <BookingForm
           cardId={cardToRender.id}
@@ -679,8 +836,38 @@ const UserProfile: React.FC = () => {
           accentColor={cardToRender.theme?.primaryColor}
         />
       )}
-    </> 
-  ); // Fin return
+
+      {activeMainTab === 'shop' && !selectedProduct && (
+        <div className="text-center mt-3 mb-3">
+          {loadingMoreProducts && <p>Cargando productos...</p>}
+          {!loadingMoreProducts && hasMoreProducts && cardProducts.length > 0 && (
+            <button 
+              onClick={() => cardToRender && cardToRender.id && cardToRender.userId && fetchProductsForCard(cardToRender.id, cardToRender.userId, true)}
+              className="btn btn-outline-secondary btn-sm"
+              disabled={!cardToRender || !cardToRender.id || !cardToRender.userId}
+            >
+              Cargar más productos
+            </button>
+          )}
+          {!loadingMoreProducts && !hasMoreProducts && cardProducts.length > 0 && 
+            <p className="text-muted mt-2">No hay más productos para mostrar.</p>
+          }
+        </div>
+      )}
+
+      {/* <<< NUEVO: Renderizar el modal de éxito aquí >>> */}
+      <PaymentSuccessModal
+        isOpen={isSuccessModalOpen}
+        onClose={() => setIsSuccessModalOpen(false)} // Cierra el modal al hacer clic en el botón o overlay
+      />
+
+      {/* <<< NUEVO: Renderizar el modal de CANCELACIÓN aquí >>> */}
+      <PaymentCancelModal
+        isOpen={isCancelModalOpen}
+        onClose={() => setIsCancelModalOpen(false)}
+      />
+    </>
+  ); 
 };
 
 export default UserProfile; 

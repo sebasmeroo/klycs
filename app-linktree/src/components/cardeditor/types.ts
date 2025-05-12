@@ -42,6 +42,11 @@ export interface CardTheme {
   secondaryColor: string;
   textColor: string;
   linkColor: string;
+  // Nuevos colores para la FloatingTabBar
+  tabBarBackgroundColor?: string;
+  tabBarActiveItemColor?: string;
+  tabBarActiveItemBackgroundColor?: string;
+  tabBarInactiveItemColor?: string;
 }
 
 export interface Card {
@@ -49,11 +54,11 @@ export interface Card {
   userId: string;
   title: string;
   description?: string;
-  imageURL?: string;
-  coverImageUrl?: string;
-  avatarUrl?: string;
-  displayName?: string;
-  bio?: string;
+  imageURL?: string | null;
+  coverImageUrl?: string | null;
+  avatarUrl?: string | null;
+  displayName?: string | null;
+  bio?: string | null;
   active: boolean;
   views?: number;
   createdAt?: number;

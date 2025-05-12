@@ -1,0 +1,87 @@
+/* SectionPillsNav.css */
+
+.section-pills-nav-container {
+  position: absolute;
+  bottom: 25px; /* Ajustado para subirlo un poco */
+  left: 15px;  /* Vuelto a left */
+  right: auto;   /* Aseguramos que right no interfiera */
+  z-index: 5;
+
+  display: flex;
+  overflow-x: auto; /* Permite scroll horizontal si los botones no caben */
+  justify-content: flex-start; /* Vuelto a flex-start para alinear a la izquierda */
+  gap: 8px;
+  
+  background-color: rgba(0, 0, 0, 0.35); /* Fondo oscuro translúcido, como en la imagen */
+  padding: 8px 12px; 
+  border-radius: 20px; /* Bordes redondeados para el contenedor de píldoras */
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  max-width: calc(100% - 30px); /* Máximo ancho, dejando espacio a los lados */
+  /* Si hay muchos botones, el scroll horizontal se activará */
+}
+
+/* Scrollbar styling (opcional, para hacerlo más minimalista) */
+.section-pills-nav-container::-webkit-scrollbar {
+  height: 3px; /* Altura fina para el scrollbar horizontal */
+}
+
+.section-pills-nav-container::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.4);
+  border-radius: 3px;
+}
+
+.section-pills-nav-container::-webkit-scrollbar-track {
+  background: transparent; /* Sin fondo para el track */
+}
+
+.section-pill-button {
+  display: inline-flex; /* Para alinear icono y texto */
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.85); /* Fondo de píldora más opaco y claro */
+  color: #222222; /* Color de texto oscuro para buen contraste */
+  border: none;
+  border-radius: 16px; /* Bordes redondeados para efecto píldora */
+  padding: 6px 12px; /* Padding interno */
+  font-size: 0.8rem; /* Tamaño de fuente pequeño y limpio */
+  font-weight: 500; /* Un poco de peso */
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  text-decoration: none;
+  white-space: nowrap; /* Evitar que el texto de la píldora se parta */
+}
+
+.section-pill-button:hover {
+  background-color: rgba(255, 255, 255, 1); /* Blanco sólido al pasar el mouse */
+  /* Para tema oscuro: var(--pill-background-color-hover, #e4e6e9) */
+}
+
+.section-pill-button:active {
+  transform: scale(0.96); /* Efecto de presión */
+  background-color: #d8dbdf;
+}
+
+.pill-icon {
+  margin-right: 6px; /* Espacio entre el icono y el texto */
+  /* El color del icono se hereda del color del texto del botón */
+}
+
+.pill-label {
+  line-height: 1; /* Asegurar que el texto no cause altura extra */
+}
+
+/* Ejemplo de cómo se vería en un tema oscuro (requiere lógica para aplicar .dark-theme en un contenedor padre) */
+/*
+.dark-theme .section-pill-button {
+  background-color: #3a3b3c; 
+  color: #e4e6eb;
+}
+
+.dark-theme .section-pill-button:hover {
+  background-color: #4f5051;
+}
+
+.dark-theme .section-pill-button:active {
+  background-color: #5a5b5c;
+}
+*/ 

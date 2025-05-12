@@ -118,16 +118,20 @@ service cloud.firestore {
 
       // --- REGLAS PARA SUBCOLECCIÓN 'links' ---
       match /links/{linkId} {
-        // Solo el dueño de la tarjeta puede leer y escribir enlaces
-        allow read, write: if request.auth != null &&
+        // Permitir lectura pública de enlaces
+        allow read: if true;
+        // Solo el dueño de la tarjeta puede escribir enlaces
+        allow write: if request.auth != null &&
                                get(/databases/$(database)/documents/cards/$(cardId)).data.userId == request.auth.uid;
       }
       // --- FIN REGLAS 'links' ---
 
       // --- REGLAS PARA SUBCOLECCIÓN 'cardProducts' ---
       match /cardProducts/{cardProductId} {
-        // Solo el dueño de la tarjeta puede leer y escribir las asociaciones de productos
-        allow read, write: if request.auth != null &&
+        // Permitir lectura pública de las asociaciones de productos con la tarjeta
+        allow read: if true;
+        // Solo el dueño de la tarjeta puede escribir las asociaciones de productos
+        allow write: if request.auth != null &&
                                get(/databases/$(database)/documents/cards/$(cardId)).data.userId == request.auth.uid;
       }
       // --- FIN REGLAS 'cardProducts' ---

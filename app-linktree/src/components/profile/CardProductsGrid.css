@@ -1,72 +1,93 @@
-/* CardProductsGrid.css - Estilos para la cuadrícula de productos (Estilo iOS) */
+/* CardProductsGrid.css - Estilos para la cuadrícula de productos (Estilo iOS Refinado) */
 
-.rendered-section-title-linktree {
-  font-weight: 600; /* Un poco más bold, común en títulos iOS */
-  margin-bottom: 1.25rem;
-  text-align: center;
-  /* color: viene de style prop */
+/* Contenedor principal de la cuadrícula de productos */
+.products-grid-container {
+  /* Hereda el color del texto de UserProfile.css o del style prop */
 }
 
-.rendered-featured-products-linktree {
+/* La cuadrícula en sí */
+.products-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); /* Grid responsivo */
-  gap: 1rem;
-  /* margin-bottom: 1.5rem; (mb-4) viene de bootstrap */
+  /* Ajustar minmax para dar un poco más de espacio a cada producto */
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); 
+  gap: 1.25rem; /* Espaciado entre productos (ej. 20px) */
 }
 
-.rendered-product-item-linktree {
-  border-radius: 10px; /* Radio iOS más sutil */
+/* Cada item de producto */
+.product-item-linktree {
+  border-radius: 18px; /* Bordes más redondeados, estilo widget iOS */
   overflow: hidden;
-  background-color: #f9f9f9; /* Blanco ligeramente roto */
-  /* box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04); */ /* Sombra opcional muy sutil */
-  border: 1px solid rgba(0, 0, 0, 0.08); /* Borde fino */
+  background-color: var(--product-item-bg-light, rgba(242, 242, 247, 0.9)); /* iOS light grey, semi-transparente */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0,0,0,0.04); /* Sombra sutil */
   text-align: left; 
-  transition: background-color 0.2s ease;
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* Para que todos los items en una fila tengan la misma altura si el contenido varía */
 }
 
-/* Ajuste para fondo oscuro (asume que UserProfile añade esta clase al contenedor principal) */
-.dark-background .rendered-product-item-linktree {
-  background-color: #2c2c2e; /* Gris oscuro iOS */
-  border: 1px solid rgba(255, 255, 255, 0.15);
+.product-item-linktree:hover {
+   transform: translateY(-4px);
+   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0,0,0,0.05);
 }
 
-.rendered-product-item-linktree:hover {
-   background-color: #efeff4; 
-}
-.dark-background .rendered-product-item-linktree:hover {
-   background-color: #3a3a3c; 
+/* Ajuste para fondo oscuro (asume que UserProfile añade .dark-background al contenedor principal) */
+.dark-background .product-item-linktree {
+  background-color: var(--product-item-bg-dark, rgba(44, 44, 46, 0.9)); /* iOS dark grey, semi-transparente */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0,0,0,0.08); /* Sombra adaptada para oscuridad */
 }
 
-.rendered-product-image-linktree {
+.dark-background .product-item-linktree:hover {
+   /* No es necesario cambiar el transform, solo la sombra si se quiere */
+   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.product-image-linktree {
   width: 100%;
-  height: 120px; 
+  height: 160px; /* Un poco más de altura para la imagen */
   object-fit: cover;
-  background-color: #e5e5ea; 
+  background-color: #e5e5ea; /* Placeholder color si la imagen no carga */
+  /* No necesita border-radius si el contenedor tiene overflow:hidden */
 }
 
-.rendered-product-info {
-  padding: 10px 12px; 
+.dark-background .product-image-linktree {
+  background-color: #3A3A3C; /* Placeholder más oscuro */
 }
 
-.rendered-product-title {
-  font-size: 0.9rem; 
-  font-weight: 600; 
-  margin-bottom: 2px; 
+.product-info-linktree {
+  padding: 12px; 
+  flex-grow: 1; /* Para que ocupe el espacio restante y empuje el precio si está solo */
+  display: flex;
+  flex-direction: column;
+}
+
+.product-title-linktree {
+  font-size: 1rem; /* 16px */
+  font-weight: 500; /* Medium weight */
+  line-height: 1.3;
+  margin-bottom: 4px; 
+  /* Color se heredará del contenedor .products-grid-container (que recibe textColor de props) */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #1c1c1e; 
-}
-.dark-background .rendered-product-title {
-  color: #f2f2f7; 
 }
 
-.rendered-product-price {
-  font-size: 0.85rem; 
-  color: #8a8a8e; 
-  opacity: 1; 
-  margin-top: 0;
+.dark-background .product-title-linktree {
+  /* No es necesaria una regla de color específica si se hereda y .dark-background ya ajusta el textColor general */
+  /* color: var(--text-color-dark-theme, #f2f2f7); */ 
 }
-.dark-background .rendered-product-price {
-   color: #8d8d92; 
+
+.product-price-linktree {
+  font-size: 0.9rem; /* 14px */
+  font-weight: 400; /* Regular weight */
+  /* Color se heredará. Si se quiere un color secundario, se puede usar una opacidad o variable. */
+  /* color: var(--product-price-color, #6c6c70); */ 
+  opacity: 0.8; /* Ejemplo: Hacer el precio ligeramente menos prominente que el título heredado */
+  margin-top: auto; 
+  padding-top: 4px; 
+}
+
+.dark-background .product-price-linktree {
+   /* No es necesaria una regla de color específica si se hereda. La opacidad se mantiene. */
+   /* color: var(--product-price-color-dark, #98989d); */ 
 } 

@@ -29,14 +29,19 @@ const ProductItem: React.FC<ProductItemProps> = ({ product, profileData }) => {
       await recordProductView({ productId: product.id, profileId: profileData.uid });
 
       const createCheckoutSession = httpsCallable(functions, 'createCheckoutSession');
-      const result = await createCheckoutSession({
+      
+      // Log para depurar los datos enviados
+      const checkoutData = {
         productId: product.id,
         sellerId: profileData.uid,
         productName: product.title,
         productDescription: product.description,
         productPrice: product.price,
         productType: product.type
-      });
+      };
+      console.log("Datos enviados a createCheckoutSession:", checkoutData);
+      
+      const result = await createCheckoutSession(checkoutData);
 
       if (result.data && (result.data as any).url) {
         window.location.href = (result.data as any).url;

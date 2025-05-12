@@ -1,26 +1,116 @@
 /* CardLinksList.css - Estilos para la lista de enlaces de la tarjeta */
 
 .rendered-links-container-linktree {
-  /* Estilos para el contenedor si son necesarios */
-  /* margin-bottom: 1.5rem; (mb-4) viene de bootstrap */
+  background-color: #FFFFFF; /* Fondo blanco para el contenedor */
+  border-radius: 18px;      /* Bordes redondeados consistentes */
+  padding: 16px;            /* Padding interno para el contenedor blanco */
+  display: flex;            /* Para usar gap para el espaciado interno */
+  flex-direction: column;   /* Apilar botones verticalmente */
+  gap: 18px;                /* Espaciado generoso entre botones de enlace */
+  /* El margin-bottom para este contenedor (para separarlo de la SIGUIENTE sección)
+     se maneja ahora por la clase .profile-section en UserProfile.tsx o el CSS del propio componente UserProfile */
+  /* margin-bottom: 5px; */ /* Si necesitas un margen específico para este contenedor en sí */
 }
 
 .rendered-link-button-linktree {
-  /* Copiar estilos de botones de enlace desde UserProfile.css */
-  display: block;
-  margin-bottom: 1rem;
-  padding: 12px 15px;
-  border: 1px solid transparent; 
-  border-radius: 8px; 
-  text-align: center;
+  display: flex; /* Mantenemos flex para el <a> principal, pero la dirección la controla el wrapper */
+  /* flex-direction: row; Ya no es necesario aquí, lo manejará el wrapper */
+  align-items: center; /* Centra el link-content-wrapper verticalmente si es necesario */
+  /* justify-content: flex-start; Ya no es necesario aquí, lo manejará el wrapper */
+  padding: 0; /* El padding se aplicará al wrapper o a los hijos */
   text-decoration: none;
-  /* background-color: ...; - Estos dependen del tema de la tarjeta, 
-     se deberían aplicar tal vez con variables CSS o inline styles desde el padre */
-  /* color: ...; */
-  transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  border-radius: 18px;
+  background-color: var(--link-button-background, #e9e9e9); 
+  color: var(--link-button-text-color, #333); 
+  /* box-shadow: 
+    5px 5px 10px var(--link-button-shadow-dark, #d1d1d1),
+    -5px -5px 10px var(--link-button-shadow-light, #ffffff); */
+  border: 1px solid var(--link-button-border-color, #d1d1d1); /* Borde sutil en lugar de sombra */
+  transition: transform 0.2s ease-out, background-color 0.2s ease-out; /* Ajuste de transición */
+  position: relative;
+  overflow: hidden;
+  text-align: left; /* Esto es para el <a>, pero el control final será del title-container */
 }
 
-.rendered-link-button-linktree:hover {
-  transform: scale(1.03);
-  /* Podríamos añadir estilos de hover específicos aquí */
-} 
+.dark-background .rendered-link-button-linktree {
+  background-color: var(--link-button-background-dark, #3a3a3c);
+  color: var(--link-button-text-color-dark, #f0f0f0);
+  /* box-shadow: 
+    5px 5px 10px var(--link-button-shadow-dark-darkbg, #2c2c2e),
+    -5px -5px 10px var(--link-button-shadow-light-darkbg, #48484a); */
+  border: 1px solid var(--link-button-border-color-dark, #48484a); /* Borde sutil para modo oscuro */
+}
+
+.rendered-link-button-linktree:hover,
+.rendered-link-button-linktree:focus-visible {
+  /* box-shadow: 
+    inset 3px 3px 6px var(--link-button-shadow-dark, #d1d1d1),
+    inset -3px -3px 6px var(--link-button-shadow-light, #ffffff); */
+  background-color: var(--link-button-background-hover, #e0e0e0); /* Ligero cambio de fondo en hover */
+  outline: none;
+}
+
+.dark-background .rendered-link-button-linktree:hover,
+.dark-background .rendered-link-button-linktree:focus-visible {
+  /* box-shadow: 
+    inset 3px 3px 6px var(--link-button-shadow-dark-darkbg, #2c2c2e),
+    inset -3px -3px 6px var(--link-button-shadow-light-darkbg, #48484a); */
+  background-color: var(--link-button-background-dark-hover, #4a4a4c); /* Ligero cambio de fondo en hover para modo oscuro */
+}
+
+/* Nuevo: Contenedor principal dentro del <a> */
+.link-content-wrapper {
+  display: flex;
+  flex-direction: row; /* Icono y título en fila */
+  align-items: center; /* Alinea verticalmente el icono y el título */
+  justify-content: space-between; /* Icono a la izquierda, título a la derecha */
+  width: 100%; /* Ocupa todo el ancho del botón */
+  padding: 16px 20px; /* Padding que antes estaba en rendered-link-button-linktree */
+}
+
+/* Nuevo: Contenedor del icono */
+.link-icon-container {
+  margin-right: 12px; /* Espacio entre icono y texto */
+  display: flex; /* Para centrar el span del icono si fuera necesario */
+  align-items: center;
+  flex-shrink: 0; /* Evita que el contenedor del icono se encoja */
+}
+
+.link-icon {
+  /* margin-right: 12px; Movido a link-icon-container */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  /* flex-shrink: 0; Movido a link-icon-container */
+}
+
+.link-favicon-img {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  object-fit: contain;
+}
+
+/* Nuevo: Contenedor del título */
+.link-title-container {
+  /* flex-grow: 1; Ya no es necesario con space-between en el padre */
+  display: flex; /* Para controlar alineación del texto si fuera necesario */
+  align-items: center; /* Asegura alineación vertical con el icono */
+}
+
+.link-title {
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.4;
+  /* flex-grow: 1; Movido a link-title-container */
+  text-align: left;
+}
+
+/* Limpieza de estilos anteriores si es necesario */
+/* Por ejemplo, si había estilos para .button-pill-light, .button-pill-dark etc. */
+.rendered-link-button-linktree.button-pill-light,
+.rendered-link-button-linktree.button-pill-dark {
+    /* Resetear/anular propiedades específicas de esos estilos antiguos si entran en conflicto */
+    /* O simplemente asegurarse de que esas clases ya no se apliquen desde el TSX */
+}

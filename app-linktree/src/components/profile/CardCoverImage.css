@@ -1,7 +1,8 @@
 /* CardCoverImage.css - Estilos para el componente de imagen de portada */
 
 .rendered-main-image-container {
-  margin-bottom: 1.5rem;
+  /* margin-bottom: 1.5rem; */ /* Comentado o eliminado anteriormente */
+  margin-bottom: 1px; /* Establecido a 1px */
   overflow: hidden; /* Clave para que el border-radius de la imagen interna no sobresalga */
   border-radius: 18px; /* Bordes más redondeados, estilo iOS */
   /* Considera añadir una sombra aquí si quieres que el contenedor tenga la sombra en lugar de la imagen directamente */

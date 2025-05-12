@@ -4,6 +4,7 @@ import { db } from '../../firebase/config';
 import { BookingSettings, BookingService, Professional } from '../cardeditor/types'; // Importar Professional, quitar Card si no se usa directamente aquí
 import './BookingForm.css';
 import { FiArrowLeft } from 'react-icons/fi';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import ServiceStep from './bookingFormSteps/ServiceStep'; // <-- IMPORTAR NUEVO COMPONENTE
 import DateStep from './bookingFormSteps/DateStep'; // <-- IMPORTAR NUEVO COMPONENTE
 import TimeStep from './bookingFormSteps/TimeStep'; // <-- IMPORTAR NUEVO COMPONENTE
@@ -311,44 +312,89 @@ const BookingForm: React.FC<BookingFormProps> = ({
   // Manejador del envío final (AJUSTADO para incluir professionalId y ruta correcta)
   const handleBookingSubmit = async (e?: React.FormEvent) => {
     if(e) e.preventDefault(); 
-    if(!validateDetails()) return; // Validar detalles antes de enviar
+    if(!validateDetails()) return; 
 
     setFormError(null);
-    setBookingSuccess(false);
     setIsSubmitting(true);
 
+    const selectedService = settings?.services?.find(s => s.id === selectedServiceId);
+    const requiresPayment = settings?.acceptOnlinePayments && selectedService && selectedService.price && selectedService.price > 0;
+
     try {
-       const dateTimeString = `${selectedDate}T${selectedTime}:00`;
-       const bookingDateTime = new Date(dateTimeString);
-       const serviceName = settings?.services?.find(s => s.id === selectedServiceId)?.name || 'Servicio no especificado';
-       const professionalName = professionalStepAvailable ? professionals.find(p => p.id === selectedProfessionalId)?.name : undefined;
+      if (requiresPayment && selectedService) {
+        console.log("Iniciando proceso de pago para reserva...");
+        
+        const functions = getFunctions();
+        const createCheckoutSession = httpsCallable(functions, 'createCheckoutSession');
+        
+        const checkoutData = {
+            productId: selectedServiceId, 
+            sellerId: userId,             
+            productName: selectedService.name,
+            productDescription: selectedService.description || `Reserva para ${selectedService.name}`,
+            productPrice: selectedService.price, 
+            currency: 'eur', 
+            productType: 'booking', 
+            metadata: {
+                cardId: cardId,
+                serviceId: selectedServiceId,
+                dateTime: `${selectedDate}T${selectedTime}:00`, 
+                customerName: customerName,
+                customerEmail: customerEmail,
+                sellerUserId: userId,
+                professionalId: professionalStepAvailable ? selectedProfessionalId : undefined,
+                professionalName: professionalStepAvailable ? professionals.find(p => p.id === selectedProfessionalId)?.name : undefined
+            }
+        };
+        
+        console.log("Llamando a createCheckoutSession con datos:", checkoutData);
+        const result = await createCheckoutSession(checkoutData);
+        const data = result.data as any;
 
-       const newBookingData: any = {
-         professionalUserId: userId, 
-         cardId: cardId,
-         serviceId: selectedServiceId,
-         serviceName: serviceName,
-         customerName: customerName,
-         customerEmail: customerEmail,
-         dateTime: Timestamp.fromDate(bookingDateTime),
-         status: 'pending',
-         createdAt: Timestamp.now(),
-       };
+        if (data?.url) {
+            console.log("Sesión de Stripe Checkout creada, redirigiendo a:", data.url);
+            window.location.href = data.url; 
+        } else {
+            throw new Error('No se recibió URL de Stripe Checkout');
+        }
+        
+      } else {
+        console.log("Creando reserva directamente en Firestore (sin pago requerido)...");
+        const dateTimeString = `${selectedDate}T${selectedTime}:00`;
+        const bookingDateTime = new Date(dateTimeString);
+        const serviceName = selectedService?.name || 'Servicio no especificado';
+        const professionalName = professionalStepAvailable ? professionals.find(p => p.id === selectedProfessionalId)?.name : undefined;
 
-       if (professionalStepAvailable && selectedProfessionalId && professionalName) {
-         newBookingData.professionalId = selectedProfessionalId;
-         newBookingData.professionalName = professionalName;
-       }
+        const newBookingData: any = {
+          professionalUserId: userId, 
+          cardId: cardId,
+          serviceId: selectedServiceId,
+          serviceName: serviceName,
+          customerName: customerName,
+          customerEmail: customerEmail,
+          dateTime: Timestamp.fromDate(bookingDateTime),
+          status: 'pending', 
+          createdAt: Timestamp.now(),
+          paymentMethod: 'offline' 
+        };
 
-       const targetBookingCollectionPath = `users/${userId}/bookings`;
-       await addDoc(collection(db, targetBookingCollectionPath), newBookingData);
-       setBookingSuccess(true); 
+        if (professionalStepAvailable && selectedProfessionalId && professionalName) {
+          newBookingData.professionalId = selectedProfessionalId;
+          newBookingData.professionalName = professionalName;
+        }
+
+        const targetBookingCollectionPath = `users/${userId}/bookings`;
+        await addDoc(collection(db, targetBookingCollectionPath), newBookingData);
+        console.log("Reserva guardada en Firestore:", targetBookingCollectionPath);
+        setBookingSuccess(true); 
+        setIsSubmitting(false); 
+      }
+
     } catch (error: any) {
-      setFormError(`Ocurrió un error al guardar tu reserva: ${error.message}.`);
-      setBookingSuccess(false);
-    } finally {
-       setIsSubmitting(false);
-    }
+       console.error("Error durante handleBookingSubmit:", error);
+       setFormError(`Ocurrió un error al procesar tu solicitud: ${error.message}.`);
+       setIsSubmitting(false); 
+    } 
   };
 
   // --- Renderizado Principal (SIN MODAL) ---

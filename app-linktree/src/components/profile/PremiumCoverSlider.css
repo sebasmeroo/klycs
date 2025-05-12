@@ -1,44 +1,47 @@
 /* PremiumCoverSlider.css - Estilos para el carrusel de portada premium */
 
 .premium-cover-slider-container {
-  margin-bottom: 1.5rem;
+  /* margin-bottom: 1.5rem; */ /* Comentado o eliminado anteriormente */
+  margin-bottom: 5px; /* Establecido a 1px */
   overflow: hidden;
   border-radius: 18px; /* Bordes redondeados, estilo iOS */
   position: relative; /* Necesario para la navegación/paginación de Swiper */
   background-color: #f0f0f0; /* Color de fondo mientras carga o si falla todo */
+  height: 800px; /* Altura fija para el contenedor principal - CORREGIDO A 800px */
 }
 
 .premium-cover-slider-container.fallback-active .fallback-image {
   /* Estilos para la imagen de fallback cuando no hay items */
   width: 100%;
-  min-height: 300px; /* Una altura menor para el fallback general */
-  object-fit: contain; /* Para que se vea el placeholder sin recortar mucho */
+  height: 800px; /* Altura fija para la imagen de fallback */
+  object-fit: cover; /* Asegurar que el fallback también use cover */
   border-radius: 18px;
   background-color: #e0e0e0;
 }
 
 .premium-swiper-instance {
   width: 100%;
-  height: 100%; 
-  border-radius: 18px; 
+  height: 100%; /* Ocupa la altura del contenedor padre (800px) */
+  border-radius: 18px;
 }
 
 .premium-swiper-slide {
   display: flex;
   justify-content: center;
   align-items: center;
-  overflow: hidden; 
-  border-radius: 18px; 
-  background-color: #f0f0f0; 
+  overflow: hidden;
+  border-radius: 18px;
+  background-color: #f0f0f0;
+  height: 800px; /* Altura fija para cada slide */
 }
 
 .premium-slide-media {
   display: block;
   width: 100%;
-  min-height: 600px; /* Sincronizado con CardCoverImage.css */
-  object-fit: cover;
+  height: 800px; /* Altura fija para imágenes y videos */
+  object-fit: cover; /* Contenido se ajusta cubriendo el área */
   border-radius: 18px;
-  background-color: #e0e0e0; 
+  background-color: #e0e0e0;
   /* Sombra sutil y moderna, inspirada en elementos de iOS */
   /* Aplicar directamente aquí o en el contenedor .premium-cover-slider-container */
   /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0,0,0,0.05); */
@@ -48,41 +51,81 @@
 /* Ajustes para la navegación y paginación de Swiper */
 .premium-swiper-instance .swiper-button-next,
 .premium-swiper-instance .swiper-button-prev {
-  color: #ffffff;
-  background-color: rgba(0, 0, 0, 0.3);
-  border-radius: 50%;
-  width: 44px; /* Un poco más grandes */
-  height: 44px;
-  transition: background-color 0.2s ease, opacity 0.2s ease;
-  opacity: 0.7;
+  color: #ffffff; /* Color del icono de la flecha */
+  background-color: rgba(0, 0, 0, 0.25); /* Fondo oscuro semi-transparente */
+  backdrop-filter: blur(8px); /* Efecto glassmorphism iOS */
+  -webkit-backdrop-filter: blur(8px); /* Para compatibilidad con Safari */
+  border-radius: 50%; /* Botones circulares */
+  width: 48px; /* Tamaño ligeramente aumentado para un toque más premium */
+  height: 48px;
+  transition: background-color 0.25s ease-out, opacity 0.25s ease-out, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), visibility 0.25s ease-out; /* Transiciones suaves estilo iOS, añadida visibility */
+  opacity: 0; /* MODIFICADO: Oculto por defecto */
+  pointer-events: none; /* MODIFICADO: No interactuable por defecto */
+  visibility: hidden; /* MODIFICADO: Completamente oculto por defecto */
+  display: flex; /* Para centrar el pseudo-elemento ::after */
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* Sombra sutil */
 }
 
 .premium-swiper-instance:hover .swiper-button-next,
 .premium-swiper-instance:hover .swiper-button-prev {
-  opacity: 1;
+  opacity: 1; /* Totalmente visible al pasar el cursor sobre el carrusel */
+  pointer-events: auto; /* MODIFICADO: Interactuable al pasar el cursor */
+  visibility: visible; /* MODIFICADO: Visible al pasar el cursor */
 }
 
 .premium-swiper-instance .swiper-button-next:hover,
 .premium-swiper-instance .swiper-button-prev:hover {
+  background-color: rgba(0, 0, 0, 0.4); /* Fondo se oscurece un poco más */
+  transform: scale(1.08); /* Botón se agranda ligeramente */
+}
+
+.premium-swiper-instance .swiper-button-next:active,
+.premium-swiper-instance .swiper-button-prev:active {
   background-color: rgba(0, 0, 0, 0.5);
+  transform: scale(0.96); /* Efecto de presión */
+  transition-duration: 0.1s; /* Reacción más rápida al click */
 }
 
 .premium-swiper-instance .swiper-button-next::after,
 .premium-swiper-instance .swiper-button-prev::after {
-  font-size: 1.5rem; 
+  font-size: 1.4rem; /* Icono de flecha ligeramente más pequeño para estética iOS */
+  font-weight: 600; /* Ligeramente más grueso si la fuente lo permite */
+}
+
+/* Ajuste para que los botones no se corten si el carrusel es muy angosto */
+.premium-swiper-instance .swiper-button-prev {
+  left: 12px;
+}
+.premium-swiper-instance .swiper-button-next {
+  right: 12px;
 }
 
 .premium-swiper-instance .swiper-pagination-bullet {
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.7); /* Ligeramente más translúcido para mejor contraste sobre fondos variados */
   opacity: 1;
-  width: 8px;
-  height: 8px;
-  transition: background-color 0.2s ease;
+  width: 7px; /* Ligeramente más pequeños */
+  height: 7px;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  margin: 0 3px !important; /* Aseguramos un espaciado consistente */
 }
 
 .premium-swiper-instance .swiper-pagination-bullet-active {
-  background: #ffffff;
-  transform: scale(1.2);
+  background: #ffffff; /* Blanco sólido para el activo */
+  transform: scale(1.3) !important; /* Un poco más grande el activo, asegurando que se aplique */
+}
+
+/* Estilos para el contenedor de paginación de Swiper - NUEVO */
+.premium-swiper-instance .swiper-pagination {
+  position: absolute; /* Aseguramos la posición absoluta */
+  bottom: 40px;       /* Posición desde abajo */
+  left: auto;         /* Desactivamos el posicionamiento izquierdo */
+  right: 20px;        /* Posición desde la derecha */
+  width: auto;        /* Ajustamos el ancho al contenido */
+  display: flex;      /* Para alinear los bullets si es necesario */
+  justify-content: flex-end; /* Alinea los bullets a la derecha dentro del contenedor */
+  padding: 0;         /* Quitamos padding por si Swiper añade alguno por defecto */
 }
 
 /* Adaptación para tema oscuro (si se implementa una clase .dark-theme) */
@@ -101,13 +144,20 @@
 
 .dark-theme .premium-swiper-instance .swiper-button-next,
 .dark-theme .premium-swiper-instance .swiper-button-prev {
-  color: #1c1c1e; /* Flechas oscuras sobre fondo claro de botón */
-  background-color: rgba(255, 255, 255, 0.4);
+  color: #000000; /* Flechas oscuras */
+  background-color: rgba(255, 255, 255, 0.25); /* Fondo claro semi-transparente */
+  /* backdrop-filter se hereda y debería funcionar bien con fondo claro */
+  box-shadow: 0 2px 8px rgba(255,255,255,0.1);
 }
 
 .dark-theme .premium-swiper-instance .swiper-button-next:hover,
 .dark-theme .premium-swiper-instance .swiper-button-prev:hover {
-  background-color: rgba(255, 255, 255, 0.6);
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+.dark-theme .premium-swiper-instance .swiper-button-next:active,
+.dark-theme .premium-swiper-instance .swiper-button-prev:active {
+  background-color: rgba(255, 255, 255, 0.5);
 }
 
 .dark-theme .premium-swiper-instance .swiper-pagination-bullet {

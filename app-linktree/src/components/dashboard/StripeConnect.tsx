@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import './StripeConnect.css'; // Asegúrate de crear este archivo CSS
 
 interface StripeConnectProps {
   userData: any;
@@ -17,23 +19,34 @@ const StripeConnect: React.FC<StripeConnectProps> = ({ userData }) => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [commissionRate, setCommissionRate] = useState(5); // Porcentaje de comisión predeterminado
 
+  // Estado para rastrear el uso de Stripe Connect (más moderno) vs API Keys (forma básica)
+  const [useStripeConnect, setUseStripeConnect] = useState(true);
+  const [stripeConnectLoading, setStripeConnectLoading] = useState(false);
+
   // Cargar el estado de conexión de Stripe cuando se monta el componente
   useEffect(() => {
     if (userData) {
-      setConnected(userData.stripeConnected || false);
-      
-      if (userData.stripePublicKey) {
+      // Determinar qué tipo de conexión se está utilizando
+      if (userData.stripeAccountId) {
+        setUseStripeConnect(true);
+        setConnected(userData.stripeConnected || false);
+      } else if (userData.stripePublicKey) {
+        setUseStripeConnect(false);
+        setConnected(userData.stripeConnected || false);
         setPublicKey(userData.stripePublicKey);
-      }
-      
-      if (userData.stripeSecretKey) {
-        // Por seguridad, no mostramos la clave secreta completa
-        setSecretKey('****************************************');
+        
+        if (userData.stripeSecretKey) {
+          // Por seguridad, no mostramos la clave secreta completa
+          setSecretKey('****************************************');
+        }
+      } else {
+        // No hay ninguna conexión establecida aún
+        setConnected(false);
       }
     }
   }, [userData]);
 
-  // Guardar claves de Stripe en Firestore
+  // Guardar claves de Stripe en Firestore (método tradicional)
   const saveStripeKeys = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -76,7 +89,59 @@ const StripeConnect: React.FC<StripeConnectProps> = ({ userData }) => {
     }
   };
 
-  // Desconectar Stripe
+  // Iniciar el proceso de Stripe Connect (método moderno y recomendado)
+  const initiateStripeConnect = async () => {
+    if (!userData?.uid) return;
+    
+    setStripeConnectLoading(true);
+    setError(null);
+    
+    try {
+      const functions = getFunctions();
+      const createStripeConnectAccountLink = httpsCallable(functions, 'createStripeConnectAccountLink');
+      
+      const result = await createStripeConnectAccountLink({});
+      const data = result.data as any;
+      
+      if (data?.url) {
+        // Redirigir al usuario a la página de onboarding de Stripe
+        window.location.href = data.url;
+      } else {
+        throw new Error('No se recibió URL de Stripe Connect');
+      }
+    } catch (error: any) {
+      console.error('Error al iniciar Stripe Connect:', error);
+      setError('Error al conectar con Stripe: ' + (error.message || 'Intenta de nuevo más tarde'));
+    } finally {
+      setStripeConnectLoading(false);
+    }
+  };
+
+  // Desconectar Stripe usando la función Firebase (para Stripe Connect)
+  const disconnectStripeConnect = async () => {
+    if (!userData?.uid) return;
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const functions = getFunctions();
+      const disconnectStripeAccount = httpsCallable(functions, 'disconnectStripeAccount');
+      
+      await disconnectStripeAccount({});
+      
+      setConnected(false);
+      setSuccess('Conexión con Stripe desactivada correctamente.');
+      setTimeout(() => setSuccess(null), 5000);
+    } catch (error: any) {
+      console.error('Error al desconectar Stripe Connect:', error);
+      setError('Error al desconectar Stripe: ' + (error.message || 'Intenta de nuevo'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Desconectar Stripe (método tradicional con claves API)
   const disconnectStripe = async () => {
     if (!userData || !userData.uid) return;
     
@@ -109,7 +174,7 @@ const StripeConnect: React.FC<StripeConnectProps> = ({ userData }) => {
   };
 
   return (
-    <div>
+    <div className="stripe-connect-container">
       <h2 className="mb-4">Conectar con Stripe</h2>
       
       {/* Mensajes de error y éxito */}
@@ -133,7 +198,23 @@ const StripeConnect: React.FC<StripeConnectProps> = ({ userData }) => {
           <p>{connected ? 'Conectado a Stripe' : 'No conectado a Stripe'}</p>
         </div>
         
-        {connected && (
+        {connected && useStripeConnect && (
+          <div>
+            <p className="mb-2"><strong>Cuenta Stripe Connect:</strong> Conectada y activa</p>
+            <p className="mb-3 text-secondary">Tu cuenta de Stripe está conectada. Puedes recibir pagos y configurar tu dashboard en Stripe.</p>
+            
+            <button 
+              type="button" 
+              className="btn btn-danger"
+              onClick={disconnectStripeConnect}
+              disabled={loading}
+            >
+              {loading ? 'Desconectando...' : 'Desconectar Stripe'}
+            </button>
+          </div>
+        )}
+
+        {connected && !useStripeConnect && (
           <div>
             <p className="mb-2"><strong>Clave pública:</strong> {publicKey.substring(0, 8)}...{publicKey.substring(publicKey.length - 4)}</p>
             <p className="mb-3 text-secondary">Tus pagos están configurados y listos para usar.</p>
@@ -150,10 +231,33 @@ const StripeConnect: React.FC<StripeConnectProps> = ({ userData }) => {
         )}
       </div>
       
-      {/* Formulario de conexión (si no está conectado) */}
+      {/* Método de conexión recomendado: Stripe Connect */}
+      {!connected && (
+        <div className="card mb-4">
+          <h3 className="mb-3">Configurar Stripe Connect (Recomendado)</h3>
+          <p className="mb-3">
+            Conecta tu cuenta de Stripe utilizando Stripe Connect para procesar pagos de forma segura y recibir transferencias automáticas.
+          </p>
+          
+          <button 
+            type="button" 
+            className="btn btn-primary"
+            onClick={initiateStripeConnect}
+            disabled={stripeConnectLoading}
+          >
+            {stripeConnectLoading ? 'Iniciando conexión...' : 'Conectar con Stripe'}
+          </button>
+          
+          <p className="mt-3 text-secondary">
+            Serás redirigido/a a Stripe para completar la configuración de tu cuenta.
+          </p>
+        </div>
+      )}
+      
+      {/* Método alternativo: API Keys (menos recomendado) */}
       {!connected && (
         <form onSubmit={saveStripeKeys} className="card mb-4">
-          <h3 className="mb-3">Configurar acceso a Stripe</h3>
+          <h3 className="mb-3">Configurar acceso a Stripe con API Keys (Alternativo)</h3>
           
           <div className="form-group">
             <label htmlFor="publicKey">Clave pública de Stripe (pk_...)</label>

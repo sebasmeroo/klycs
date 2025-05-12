@@ -9,6 +9,7 @@ interface CardCoverImageProps {
   fallbackImageUrl: string; // URL de la imagen de respaldo
   failedImages: Record<string, boolean>; // Objeto para rastrear imágenes que ya fallaron
   className?: string;       // Clase CSS adicional para el contenedor
+  children?: React.ReactNode; // Añadido
 }
 
 const CardCoverImage: React.FC<CardCoverImageProps> = ({
@@ -18,7 +19,8 @@ const CardCoverImage: React.FC<CardCoverImageProps> = ({
   onErrorCallback,
   fallbackImageUrl,
   failedImages,
-  className = '' // Clase por defecto vacía
+  className = '', // Clase por defecto vacía
+  children // Añadido
 }) => {
 
   // No renderizar nada si no hay imageUrl
@@ -39,6 +41,7 @@ const CardCoverImage: React.FC<CardCoverImageProps> = ({
         className="rendered-main-image-linktree" 
         onError={(e) => onErrorCallback(e, cardId, fallbackImageUrl)}
       />
+      {children}
     </div>
   );
 };

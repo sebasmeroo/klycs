@@ -6,4 +6,147 @@
   /* Ejemplo: line-height: 1.6; */
   /* text-align: center; y margin-bottom: 1.5rem; (mb-4) vienen de clases bootstrap */
   /* color: viene de style prop */
+}
+
+.card-description-wrapper {
+  /* margin-bottom: 1.5rem; */
+}
+
+.neumorphic-container {
+  border-radius: 20px;
+  background: var(--card-background-color, #f0f0f0); /* Color base ligeramente ajustado, un gris muy claro */
+  /* box-shadow: 
+    6px 6px 12px var(--neumorphic-shadow-dark, #bebebe),
+    -6px -6px 12px var(--neumorphic-shadow-light, #ffffff); */ /* Sombra eliminada */
+  /* padding: 3px; */ /* Padding eliminado ya que no hay sombra que contener */
+  transition: background-color 0.3s ease-in-out; /* Transición para el fondo si cambia */
+  color: var(--card-desc-text-color);
+  border: 1px solid var(--neumorphic-border-color, rgba(0,0,0,0.05)); /* Borde muy sutil para definir el contenedor */
+}
+
+.neumorphic-container.is-open {
+  /* Estilos cuando está abierto, si son diferentes */
+}
+
+.dark-background .neumorphic-container {
+  background: var(--card-background-color-dark, #2c2c2e);
+  /* box-shadow: 
+    6px 6px 12px var(--neumorphic-shadow-dark-darkbg, #1a1a1a),
+    -6px -6px 12px var(--neumorphic-shadow-light-darkbg, #3c3c3e); */ /* Sombra eliminada */
+  border-color: var(--neumorphic-border-color-dark, rgba(255,255,255,0.1));
+}
+
+.card-description-details {
+  border-top: 1px solid rgba(0, 0, 0, 0.1); /* Línea superior fina, estilo iOS */
+  /* Considera una variable para el color del borde si el tema es oscuro */
+  /* border-bottom: 1px solid rgba(0, 0, 0, 0.1); */ /* Opcional: línea inferior si es el último elemento */
+  margin: 0; /* Resetear márgenes por defecto de details */
+  color: var(--card-desc-text-color, #333); /* Color del texto del contenido */
+}
+
+.dark-background .card-description-details { /* Adaptación para tema oscuro */
+  border-top-color: rgba(255, 255, 255, 0.2);
+  /* border-bottom-color: rgba(255, 255, 255, 0.2); */
+}
+
+.card-description-summary {
+  padding: 16px 20px; /* Mantener padding para el área clickeable del sumario */
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  outline: none;
+  position: relative;
+}
+
+.card-description-summary::-webkit-details-marker {
+  display: none; 
+}
+
+.summary-content-collapsed {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.summary-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--neumorphic-avatar-border, rgba(0,0,0,0.08)); /* Borde ligeramente más visible */
+}
+.dark-background .summary-avatar {
+  border-color: var(--neumorphic-avatar-border-dark, rgba(255,255,255,0.15));
+}
+
+.summary-avatar-placeholder {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: rgba(0,0,0,0.05); /* Ajustado para ser más sutil */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2em;
+  font-weight: 500;
+}
+.dark-background .summary-avatar-placeholder {
+  background-color: rgba(255,255,255,0.1);
+}
+
+.summary-title-text {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.card-description-summary::after {
+  content: '›';
+  font-size: 1.8em;
+  font-weight: 300;
+  color: var(--card-desc-text-color);
+  opacity: 0.5;
+  transform: rotate(90deg);
+  transition: transform 0.3s ease-in-out;
+  margin-left: 10px;
+}
+
+.neumorphic-container.is-open > .card-description-summary::after {
+  transform: rotate(-90deg);
+}
+
+/* Ajustar padding del contenido para reducir espacio superior cuando está abierto */
+.card-description-content-animated {
+  padding: 0px 20px 0px 20px; /* Padding superior e inferior a 0 inicialmente */
+  font-size: 0.95rem;
+  line-height: 1.6;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.35s ease-in-out, opacity 0.35s ease-in-out, padding-bottom 0.35s ease-in-out;
+  will-change: max-height, opacity, padding-bottom;
+}
+
+.card-description-content-animated.content-visible {
+  max-height: 1000px; /* Valor grande para permitir expansión completa */
+  opacity: 1;
+  padding-bottom: 20px; /* Padding inferior solo cuando está visible y expandido */
+}
+
+/* No necesitamos .content-hidden explícitamente si los valores por defecto de .card-description-content-animated ya lo ocultan */
+
+.card-description-content-animated p {
+  margin-bottom: 0.75em;
+}
+
+.card-description-content-animated p:last-child {
+  margin-bottom: 0;
+}
+
+/* Clases de animación y keyframes comentados por ahora */
+
+.rendered-description-linktree, 
+.card-description-details:not(.neumorphic-container) {
+  display: none; 
 } 

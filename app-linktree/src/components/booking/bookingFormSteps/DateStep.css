@@ -244,6 +244,18 @@ body {
   transform: none;
 }
 
+.step-actions.internal-actions.justify-end {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin: 3.5px 0 0;
+  padding: 3.5px 14px 15px;
+  box-shadow: none; /* Eliminado cualquier sombra */
+  background: transparent; /* Puedes ajustar el fondo si lo necesitas */
+  border: none; /* Si había bordes por defecto */
+}
+
+
 /* Vistas Año/Década/Siglo */
 .react-calendar__year-view .react-calendar__tile,
 .react-calendar__decade-view .react-calendar__tile,
